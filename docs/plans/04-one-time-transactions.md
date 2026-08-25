@@ -421,8 +421,7 @@ feat: add monthly transaction history
 
 Verification record (2026-08-25):
 
-- 24 focused unit tests passed across calendar, money, service, page, and
-  protected-navigation coverage;
+- the full unit suite passed at 107 tests across 19 files;
 - the real E2E (`auth-login` and `transactions-read`) passed on both the
   desktop and mobile Chromium projects against local Auth and the local Data
   API, covering RLS isolation between two accounts, month navigation, empty
@@ -434,6 +433,20 @@ Verification record (2026-08-25):
   BRL formatting, income/expense distinguished by icon and color (not color
   alone), 44 px interactive targets, no horizontal overflow, and the
   disabled "Adicionar" action with its next-step explanation.
+
+Correction before delivery: review caught four Tailwind classes written as
+arbitrary values that already have a canonical form, one `tracking-` and three
+`shadow-`. The gate could not see them because neither `oxlint` nor `prettier`
+parses Tailwind classes. They were corrected in the delivered commit, the same
+pattern in five pre-existing files was cleaned up separately, and the
+convention plus the gate's blind spot are now recorded in `AGENTS.md`.
+
+Delivered commits:
+
+```text
+66b48cf feat: add monthly transaction history
+87642b3 chore: use canonical tailwind class forms
+```
 
 ### 3. Deliver one-time transaction creation
 
