@@ -3,19 +3,14 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 import { deleteLocalAuthUserByEmail } from './support/auth-admin'
-import { findMailpitMessageByRecipient } from './support/mailpit'
+import {
+  findMailpitMessageByRecipient,
+  readMailpitMessageLink,
+} from './support/mailpit'
 
 const password = 'local-password-123'
 
 let email: string
-
-function readConfirmationLink(html: string) {
-  const href = html.match(/href=["']([^"']+)["']/i)?.[1]
-
-  if (!href) throw new Error('Local confirmation email did not contain a link.')
-
-  return href.replaceAll('&amp;', '&')
-}
 
 test.beforeEach(async ({ browserName }, testInfo) => {
   email = `auth-registration-${browserName}-${testInfo.project.name}-${randomUUID()}@example.com`
@@ -50,7 +45,7 @@ test('should create an account, confirm it from Mailpit, and open the app', asyn
   await expect(page).toHaveURL('/login?redirect=%2Fapp')
 
   const message = await findMailpitMessageByRecipient(email)
-  await page.goto(readConfirmationLink(message.HTML))
+  await page.goto(readMailpitMessageLink(message))
 
   await expect(page).toHaveURL('/app')
   await expect(

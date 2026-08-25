@@ -20,6 +20,17 @@ export interface MailpitMessage extends MailpitMessageSummary {
   Text: string
 }
 
+export function readMailpitMessageLink(message: Pick<MailpitMessage, 'HTML'>) {
+  const href = message.HTML.match(/href=["']([^"']+)["']/i)?.[1]
+
+  if (!href) throw new Error('Local email did not contain a link.')
+
+  return assertLoopbackUrl(
+    href.replaceAll('&amp;', '&'),
+    'Local email link',
+  ).toString()
+}
+
 interface FindMessageOptions {
   mailpitUrl?: string
   pollIntervalMs?: number

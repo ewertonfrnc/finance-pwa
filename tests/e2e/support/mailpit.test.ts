@@ -1,12 +1,37 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { findMailpitMessageByRecipient } from './mailpit'
+import {
+  findMailpitMessageByRecipient,
+  readMailpitMessageLink,
+} from './mailpit'
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
 
 describe('local Mailpit boundary', () => {
+  it('should read the first safe navigation link from an email', () => {
+    expect(
+      readMailpitMessageLink({
+        HTML: '<a href="http://127.0.0.1:54321/auth/v1/verify?token=one&amp;type=recovery">Recover</a>',
+      }),
+    ).toBe('http://127.0.0.1:54321/auth/v1/verify?token=one&type=recovery')
+  })
+
+  it('should reject an email without a link', () => {
+    expect(() => readMailpitMessageLink({ HTML: '<p>No link</p>' })).toThrow(
+      'Local email did not contain a link.',
+    )
+  })
+
+  it('should reject a hosted link from a local email', () => {
+    expect(() =>
+      readMailpitMessageLink({
+        HTML: '<a href="https://auth.example.com/verify">Recover</a>',
+      }),
+    ).toThrow('Local email link must use a loopback HTTP URL.')
+  })
+
   it('should reject a hosted Mailpit URL before making a request', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
 
