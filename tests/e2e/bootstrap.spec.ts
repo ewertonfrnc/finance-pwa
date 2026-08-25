@@ -66,22 +66,22 @@ test('should expose an installable manifest and register its service worker', as
   expect(manifest.icons).toEqual([
     expect.objectContaining({
       sizes: '192x192',
-      src: '/pwa-192x192-v2.png',
+      src: '/pwa-192x192-v3.png',
     }),
     expect.objectContaining({
       sizes: '512x512',
-      src: '/pwa-512x512-v2.png',
+      src: '/pwa-512x512-v3.png',
     }),
     expect.objectContaining({
       sizes: '512x512',
-      src: '/pwa-maskable-512x512-v2.png',
+      src: '/pwa-maskable-512x512-v3.png',
     }),
   ])
 
   const appleTouchIcon = page.locator('link[rel="apple-touch-icon"]')
   await expect(appleTouchIcon).toHaveAttribute(
     'href',
-    '/apple-touch-icon-v2.png',
+    '/apple-touch-icon-v3.png',
   )
   await expect(appleTouchIcon).toHaveAttribute('sizes', '180x180')
 
@@ -159,7 +159,7 @@ test('should expose an installable manifest and register its service worker', as
         ),
       )
     },
-    ['/apple-touch-icon-v2.png', ...manifest.icons.map((icon) => icon.src)],
+    ['/apple-touch-icon-v3.png', ...manifest.icons.map((icon) => icon.src)],
   )
 
   expect(iconEvidence.map(({ height, width }) => ({ height, width }))).toEqual([
