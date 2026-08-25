@@ -29,6 +29,10 @@ effect of future and recurring transactions before spending.
 - Use TanStack Router for routing and TanStack Query for remote state.
 - Use Tailwind CSS v4 with CSS custom properties for design tokens and
   light/dark themes.
+- Prefer the canonical Tailwind class over an arbitrary value that resolves to
+  the same declaration. Write `tracking-tight`, not `tracking-[-0.025em]`, and
+  `shadow-(--finance-shadow)`, not `shadow-[var(--finance-shadow)]`. Reserve
+  bracket syntax for values the scale genuinely does not express.
 - Add Zustand only after a concrete shared client-state requirement appears.
   Do not use it for Supabase data or duplicate TanStack Query caches.
 - Organize code by feature. Keep route files thin and place business-facing UI,
@@ -160,6 +164,11 @@ bunx supabase test db
 - Run the smallest relevant subset while developing, then the complete gate
   before merging to `main`.
 - Report only commands and runtime behavior that were actually observed.
+- The gate does not lint Tailwind classes. `oxlint` and `prettier` know nothing
+  about them, so a green `bun run check` is not evidence that new markup is
+  clean. Tailwind's own diagnostics surface only in the editor. After changing
+  markup, grep the diff for bracket-syntax classes and replace any that have a
+  canonical form.
 
 ## Planning
 

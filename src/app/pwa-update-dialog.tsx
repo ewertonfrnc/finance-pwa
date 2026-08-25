@@ -18,7 +18,7 @@ export function PwaUpdateDialog({
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-live="polite"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-3xl border border-line bg-panel p-5 text-left shadow-[var(--finance-shadow-strong)] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:mx-0"
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-3xl border border-line bg-panel p-5 text-left shadow-(--finance-shadow-strong) sm:inset-x-auto sm:right-6 sm:bottom-6 sm:mx-0"
       open
     >
       <div className="flex items-start gap-3">
