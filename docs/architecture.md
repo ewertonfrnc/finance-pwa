@@ -1,6 +1,6 @@
 # Finance PWA architecture
 
-Last reviewed: 2026-08-24
+Last reviewed: 2026-08-25
 
 ## Scope
 
@@ -27,6 +27,8 @@ versions live in `bun.lock`; compatible ranges live in `package.json`.
 | Language                    | TypeScript 7.0.2 with bundler resolution | [TypeScript `moduleResolution`](https://www.typescriptlang.org/tsconfig/moduleResolution.html)                |
 | Routes                      | TanStack Router 1.170.32                 | [Manual setup](https://tanstack.com/router/latest/docs/framework/react/installation/manual)                   |
 | Remote state                | TanStack Query 5.102.3                   | [`QueryClientProvider`](https://tanstack.com/query/latest/docs/framework/react/reference/QueryClientProvider) |
+| Database client             | Supabase JS 2.112.4                      | [JavaScript client setup](https://supabase.com/docs/reference/javascript/installing)                          |
+| Database tooling            | Supabase CLI 2.115.0                     | [Local development CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)               |
 | Styling                     | Tailwind CSS 4.3.3                       | [Vite installation](https://tailwindcss.com/docs/installation/using-vite)                                     |
 | PWA                         | Vite PWA 1.3.0 and Workbox Window 7.4.1  | [React integration](https://vite-pwa-org.netlify.app/frameworks/react.html)                                   |
 | Static analysis             | Oxlint 1.80.0 and Prettier 3.9.6         | [Oxlint configuration](https://oxc.rs/docs/guide/usage/linter/config)                                         |
@@ -51,7 +53,7 @@ src/
   routes/       thin TanStack Router route declarations
   styles/       Tailwind entrypoint and design tokens
 supabase/
-  migrations/   versioned database changes, introduced in step 2
+  migrations/   versioned database changes
   tests/database/ pgTAP authorization and finance-rule tests
 tests/e2e/       browser-visible user paths
 ```
@@ -59,6 +61,24 @@ tests/e2e/       browser-visible user paths
 Route files only connect paths to feature-owned pages. Future Supabase calls
 belong in small feature services, and TanStack Query owns their remote cache.
 Shared client state will not be added until a concrete requirement exists.
+
+## Data boundary
+
+Versioned migrations own the PostgreSQL schema. `supabase db reset` applies
+them to a clean local database and then loads deterministic development data
+from `supabase/seed.sql`. Dashboard edits are not part of the development
+workflow, and seed data is not pushed to production.
+
+`starting_positions` stores one signed opening balance per user. It stays
+separate from `transactions`, so an opening balance never inflates income.
+`transactions` initially supports only one-time `income` and `expense` rows.
+Money uses integer centavos and financial dates use PostgreSQL `date`.
+
+RLS protects both tables. Authenticated users can read only rows whose
+`user_id` matches `auth.uid()`, and anonymous roles receive no table access.
+The idempotent `initialize_starting_position` function derives the owner from
+the access token. Exact wire types, grants, and errors live in
+[`finance-rules.md`](finance-rules.md).
 
 ## Application composition
 
@@ -108,6 +128,10 @@ future preview can mutate data.
 The local gate is:
 
 ```bash
+bunx supabase start
+bunx supabase db reset
+bunx supabase test db
+bun run db:types
 bun run check
 bunx tsc --noEmit
 bun run test
