@@ -255,8 +255,10 @@ Progress (2026-08-25):
 - Delivery step 1 in the detailed plan is complete. Local Auth configuration,
   the documented contract, the credential-safe E2E launcher, loopback-only
   Auth Admin and Mailpit helpers, and the full-stack CI boundary are ready.
-- Delivery step 2, session restoration, login, logout, and protected
-  navigation, is next.
+- Delivery step 2 is complete. The application restores sessions before
+  mounting the router, protects `/app`, validates post-login redirects, keeps
+  query data isolated across identities, and supports local logout.
+- Delivery step 3, registration and email confirmation, is next.
 
 ### 4. Deliver one-time transactions end to end
 

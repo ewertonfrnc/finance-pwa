@@ -160,6 +160,8 @@ Implementation record (2026-08-25):
 
 ### 2. Deliver session restoration, login, and logout
 
+Status: completed on 2026-08-25
+
 Create:
 
 - `src/features/auth/auth-service.ts` as the only feature boundary that calls
@@ -182,10 +184,9 @@ Update:
 - `src/app/app.tsx`, `providers.tsx`, `router-context.ts`, and `router.ts` to
   provide the resolved auth state to the router and invalidate it after auth
   changes;
-- `src/app/query-client.ts` integration so logout or a user-ID change removes
+- the Auth session provider integration so logout or a user-ID change removes
   the previous user's remote cache;
-- `src/features/home/home-page.tsx` so login and registration are discoverable
-  from `/`.
+- `src/features/home/home-page.tsx` so login is discoverable from `/`.
 
 Acceptance criteria:
 
@@ -215,6 +216,21 @@ Proposed commit:
 feat: add email login and protected navigation
 ```
 
+Implementation record (2026-08-25):
+
+- The application now waits for `INITIAL_SESSION`, restores persisted sessions,
+  and clears TanStack Query before a different user or anonymous state renders.
+  Token refreshes for the same user preserve the cache.
+- `/app` is protected by the pathless `_authenticated` route. Login accepts
+  only same-origin application paths, uses stable Portuguese error copy, and
+  ordinary logout affects only the current session.
+- Focused tests cover the Auth boundary, initial session, identity changes,
+  cleanup, form behavior, redirects, and protected navigation. The local E2E
+  flow passed in mobile and desktop Chromium with real GoTrue sessions.
+- Login and the authenticated placeholder were inspected at 360 by 800 and
+  1280 by 800 CSS pixels. Registration discoverability moves with the real
+  `/register` route in delivery step 3, avoiding a dead link in this step.
+
 ### 3. Deliver registration and email confirmation
 
 Create:
@@ -228,6 +244,10 @@ Create:
   failures, and authenticated redirects;
 - `tests/e2e/auth-registration.spec.ts`, which creates the account through the
   form, follows the captured Mailpit link, and reaches `/app`.
+
+Update:
+
+- `src/features/home/home-page.tsx` so registration is discoverable from `/`.
 
 Acceptance criteria:
 
