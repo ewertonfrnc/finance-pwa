@@ -22,5 +22,5 @@
     "noUncheckedSideEffectImports": true,
     "types": ["vite/client", "vite-plugin-pwa/react", "node"]
   },
-  "include": ["src", "tests", "*.ts"]
+  "include": ["scripts", "src", "tests", "*.ts"]
 }

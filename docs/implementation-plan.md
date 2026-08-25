@@ -206,9 +206,11 @@ feat: establish Supabase data foundation
 
 ### 3. Add authentication and protected navigation
 
-Status: pending
+Status: in progress
 
 Branch: `feat/authentication`
+
+Detailed plan: [`docs/plans/03-authentication.md`](plans/03-authentication.md)
 
 Create:
 
@@ -216,7 +218,10 @@ Create:
 - login, registration, forgotten-password, and reset-password routes;
 - authenticated route protection and session restoration;
 - explicit logout behavior;
-- redirect handling for localhost, Netlify production, and Deploy Previews.
+- account confirmation and password-recovery callbacks;
+- query-cache isolation across logout and user changes;
+- redirect handling and Supabase environment isolation for localhost, Netlify
+  production, and Deploy Previews.
 
 Acceptance criteria:
 
@@ -225,6 +230,8 @@ Acceptance criteria:
 - Invalid credentials show a useful error without revealing account existence.
 - Logout removes access to private routes.
 - A password-reset link returns to the correct environment.
+- Confirmation and recovery links remove sensitive URL data after use.
+- A Deploy Preview cannot use the production Supabase project.
 
 Validation:
 
@@ -232,7 +239,7 @@ Validation:
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e -- auth
+bun run test:e2e:local -- auth
 bun run build
 bunx supabase test db
 ```
@@ -242,6 +249,14 @@ Proposed commit:
 ```text
 feat: add user authentication
 ```
+
+Progress (2026-08-25):
+
+- Delivery step 1 in the detailed plan is complete. Local Auth configuration,
+  the documented contract, the credential-safe E2E launcher, loopback-only
+  Auth Admin and Mailpit helpers, and the full-stack CI boundary are ready.
+- Delivery step 2, session restoration, login, logout, and protected
+  navigation, is next.
 
 ### 4. Deliver one-time transactions end to end
 
@@ -391,9 +406,9 @@ Branch: `chore/prepare-beta`
 
 Complete:
 
-- production and preview environment separation;
+- re-audit production and preview environment separation;
 - Netlify security and cache headers, including a restrictive CSP;
-- production Auth redirect URLs and password-reset flow;
+- re-run the production Auth confirmation and password-reset flows;
 - RLS and RPC permission audit;
 - database backup procedure and a restore rehearsal using non-production data;
 - error monitoring without financial payloads;
