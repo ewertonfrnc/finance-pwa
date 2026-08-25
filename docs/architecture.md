@@ -80,6 +80,21 @@ The idempotent `initialize_starting_position` function derives the owner from
 the access token. Exact wire types, grants, and errors live in
 [`finance-rules.md`](finance-rules.md).
 
+Transaction reads use direct table access with the existing owner-only RLS
+policy. Transaction writes use three narrowly granted RPCs while direct
+`insert`, `update`, and `delete` privileges remain revoked from
+`authenticated`.
+
+The transaction mutation RPCs use `security definer` because `security
+invoker` would inherit the caller's intentionally read-only table privileges
+and could not perform the write. Each function derives ownership from
+`auth.uid()`, accepts no user ID, schema-qualifies database objects, sets an
+empty `search_path`, and returns only a caller-owned row. Execute privileges are
+revoked from `public` and `anon` and granted to `authenticated` and
+`service_role`. Create uses its client-generated transaction ID for idempotent
+retries; update and delete lock the owned row and compare its `updated_at`
+before mutating it.
+
 ## Application composition
 
 `src/main.tsx` mounts React with `createRoot`. `AppProviders` supplies one

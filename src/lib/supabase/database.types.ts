@@ -68,6 +68,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_transaction: {
+        Args: {
+          p_amount_cents: number
+          p_description: string
+          p_id: string
+          p_kind: Database['public']['Enums']['transaction_kind']
+          p_transaction_date: string
+        }
+        Returns: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database['public']['Enums']['transaction_kind']
+          transaction_date: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'transactions'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      delete_transaction: {
+        Args: { p_expected_updated_at: string; p_id: string }
+        Returns: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database['public']['Enums']['transaction_kind']
+          transaction_date: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'transactions'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       initialize_starting_position: {
         Args: { p_balance_cents: number; p_effective_on: string }
         Returns: {
@@ -79,6 +123,32 @@ export type Database = {
         SetofOptions: {
           from: '*'
           to: 'starting_positions'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_transaction: {
+        Args: {
+          p_amount_cents: number
+          p_description: string
+          p_expected_updated_at: string
+          p_id: string
+          p_kind: Database['public']['Enums']['transaction_kind']
+          p_transaction_date: string
+        }
+        Returns: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database['public']['Enums']['transaction_kind']
+          transaction_date: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'transactions'
           isOneToOne: true
           isSetofReturn: false
         }

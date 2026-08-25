@@ -303,9 +303,12 @@ is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 
-Status: pending
+Status: in progress — mutation boundary completed locally on 2026-08-25
 
 Branch: `feat/transactions`
+
+Detailed plan:
+[`docs/plans/04-one-time-transactions.md`](plans/04-one-time-transactions.md)
 
 Create:
 
@@ -313,12 +316,16 @@ Create:
 - an RLS-protected monthly transaction query;
 - `src/features/transactions/` services, schemas, query options, mutations,
   forms, list UI, and tests;
-- optimistic UI only where rollback behavior is explicit;
+- a mobile-first visual treatment that preserves the established Finance
+  hierarchy while adding safe areas, grouped surfaces, segmented controls, and
+  restrained iOS-like navigation behavior;
+- no optimistic financial UI in this step; persisted results appear after the
+  RPC and affected-month refetch succeed;
 - focused cache invalidation for the affected month.
 
 Acceptance criteria:
 
-- A signed-in user records a R$ 50.00 expense on a selected calendar date.
+- A signed-in user records a R$ 50,00 expense on a selected calendar date.
 - The transaction appears in the selected month after submission and reload.
 - Editing changes the visible amount and deleting removes the transaction.
 - Invalid amounts and dates fail on both the form and server boundaries.
@@ -333,7 +340,7 @@ bun run db:types
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e -- transactions
+bun run test:e2e:local -- transactions
 bun run build
 ```
 
@@ -342,6 +349,13 @@ Proposed commit:
 ```text
 feat: add one-time transaction management
 ```
+
+Known dependency before step 5:
+
+- The data boundary for `starting_positions` exists, but its onboarding UI is
+  not represented by a roadmap delivery step. Plan and deliver that flow after
+  one-time transactions and before monthly balance work. Do not absorb it into
+  `feat/transactions`.
 
 Release checkpoint:
 
