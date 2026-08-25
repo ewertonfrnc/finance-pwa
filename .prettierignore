@@ -1,0 +1,10 @@
+bun.lock
+dist/
+node_modules/
+playwright-report/
+test-results/
+src/routeTree.gen.ts
+netlify.toml
+AGENTS.md
+CLAUDE.md
+docs/implementation-plan.md

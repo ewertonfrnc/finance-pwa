@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "env": {
+    "browser": true,
+    "builtin": true,
+    "node": true,
+    "vitest": true
+  },
+  "ignorePatterns": [
+    "dist/",
+    "dev-dist/",
+    "node_modules/",
+    "playwright-report/",
+    "test-results/",
+    "src/routeTree.gen.ts"
+  ],
+  "options": {
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "plugins": [
+    "eslint",
+    "react",
+    "typescript",
+    "oxc",
+    "unicorn",
+    "vitest",
+    "jsx-a11y"
+  ],
+  "rules": {
+    "react/react-in-jsx-scope": "off"
+  }
+}
