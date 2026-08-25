@@ -30,10 +30,7 @@ export function PwaUpdateDialog({
         </span>
 
         <div>
-          <h2
-            className="font-display text-lg font-semibold text-ink"
-            id={titleId}
-          >
+          <h2 className="text-lg font-semibold text-ink" id={titleId}>
             {isUpdate
               ? 'Nova versão disponível'
               : 'App pronto para abrir offline'}

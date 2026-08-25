@@ -27,7 +27,7 @@ export function MonthSelector({ month, onMonthChange }: MonthSelectorProps) {
         <ChevronIcon direction="left" />
       </button>
 
-      <h1 className="truncate text-center font-display text-lg font-semibold tracking-tight text-ink sm:text-xl">
+      <h1 className="truncate text-center text-lg font-semibold tracking-tight text-ink sm:text-xl">
         {formatTransactionMonth(month)}
       </h1>
 

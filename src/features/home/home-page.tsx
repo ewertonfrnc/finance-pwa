@@ -17,7 +17,7 @@ export function HomePage() {
       <header className="relative mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-12 lg:py-8">
         <div className="flex items-center gap-3">
           <BrandMark className="size-11 text-ink" />
-          <span className="font-display text-xl font-semibold tracking-tight text-ink">
+          <span className="text-xl font-semibold tracking-tight text-ink">
             Finance
           </span>
         </div>
@@ -36,7 +36,7 @@ export function HomePage() {
             <span className="size-2 rounded-full bg-accent-ink" />
             Seu mês, antes de acontecer
           </p>
-          <h1 className="mt-7 max-w-3xl font-display text-[clamp(3rem,9vw,6.4rem)] leading-[0.94] font-semibold tracking-[-0.055em] text-ink">
+          <h1 className="mt-7 max-w-3xl text-[clamp(3rem,9vw,6.4rem)] leading-[0.94] font-semibold tracking-[-0.055em] text-ink">
             Veja o mês inteiro antes de gastar.
           </h1>
           <p className="mt-7 max-w-xl text-lg leading-8 text-muted sm:text-xl sm:leading-9">
@@ -72,7 +72,7 @@ export function HomePage() {
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-accent-ink">
               Primeira versão
             </p>
-            <h2 className="mt-4 max-w-md font-display text-4xl font-semibold tracking-[-0.035em] text-ink sm:text-5xl">
+            <h2 className="mt-4 max-w-md text-4xl font-semibold tracking-[-0.035em] text-ink sm:text-5xl">
               O básico precisa responder uma pergunta difícil.
             </h2>
           </div>
@@ -81,7 +81,7 @@ export function HomePage() {
               <span className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-ink">
                 <PencilIcon />
               </span>
-              <h3 className="mt-8 font-display text-2xl font-semibold text-ink">
+              <h3 className="mt-8 text-2xl font-semibold text-ink">
                 O que mudou no meu saldo?
               </h3>
               <p className="mt-3 leading-7 text-muted">
@@ -92,7 +92,7 @@ export function HomePage() {
               <span className="grid size-11 place-items-center rounded-2xl bg-canvas/10 text-accent">
                 <CalendarIcon />
               </span>
-              <h3 className="mt-8 font-display text-2xl font-semibold">
+              <h3 className="mt-8 text-2xl font-semibold">
                 Quanto ainda posso gastar?
               </h3>
               <p className="mt-3 leading-7 text-canvas/70">
@@ -125,7 +125,7 @@ function MonthPreview() {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-canvas/55">
               Prévia
             </p>
-            <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight">
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
               Visão do mês
             </h2>
           </div>

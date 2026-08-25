@@ -46,10 +46,10 @@ export function TransactionList({ transactions }: TransactionListProps) {
                 </div>
 
                 <p
-                  className={`shrink-0 text-right font-display font-semibold tabular-nums ${
+                  className={`shrink-0 text-right font-mono font-semibold tabular-nums ${
                     transaction.kind === 'income'
-                      ? 'text-income'
-                      : 'text-expense'
+                      ? 'text-income-ink'
+                      : 'text-expense-ink'
                   }`}
                 >
                   <span aria-hidden="true">

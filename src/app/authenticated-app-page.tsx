@@ -42,7 +42,7 @@ export function AuthenticatedAppPage({
           <div className="flex min-h-14 items-center justify-between gap-3">
             <a
               aria-label="Ir para o início"
-              className="inline-flex min-h-11 items-center gap-2 rounded-2xl font-display font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="inline-flex min-h-11 items-center gap-2 rounded-2xl font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               href="/"
             >
               <BrandMark className="size-9 text-ink" />

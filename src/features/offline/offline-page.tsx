@@ -17,7 +17,7 @@ export function OfflinePage() {
         <p className="mt-10 text-sm font-semibold uppercase tracking-[0.14em] text-accent-ink">
           Modo offline
         </p>
-        <h1 className="mt-4 max-w-xl font-display text-4xl leading-tight font-semibold tracking-[-0.04em] text-ink sm:text-6xl">
+        <h1 className="mt-4 max-w-xl text-4xl leading-tight font-semibold tracking-[-0.04em] text-ink sm:text-6xl">
           Sem internet, sem dados desatualizados.
         </h1>
         <p className="mt-6 max-w-xl text-lg leading-8 text-muted">

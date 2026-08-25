@@ -29,7 +29,7 @@ export function TransactionsPage({ month, userId }: TransactionsPageProps) {
             Histórico mensal
           </p>
           <h2
-            className="mt-1 font-display text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl"
+            className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl"
             id="transaction-history-title"
           >
             Lançamentos
@@ -92,7 +92,7 @@ function EmptyState() {
       >
         <ReceiptIcon />
       </span>
-      <h3 className="mt-5 font-display text-xl font-semibold text-ink">
+      <h3 className="mt-5 text-xl font-semibold text-ink">
         Nenhum lançamento neste mês.
       </h3>
       <p className="mx-auto mt-2 max-w-sm leading-7 text-muted">
@@ -115,7 +115,7 @@ function OfflineState() {
       >
         <OfflineIcon />
       </span>
-      <h3 className="mt-5 font-display text-xl font-semibold text-ink">
+      <h3 className="mt-5 text-xl font-semibold text-ink">
         Conecte-se para ver seus lançamentos.
       </h3>
       <p className="mx-auto mt-2 max-w-sm leading-7 text-muted">
@@ -138,7 +138,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
       >
         <AlertIcon />
       </span>
-      <h3 className="mt-5 font-display text-xl font-semibold text-ink">
+      <h3 className="mt-5 text-xl font-semibold text-ink">
         Não foi possível carregar o mês.
       </h3>
       <p className="mx-auto mt-2 max-w-sm leading-7 text-muted">

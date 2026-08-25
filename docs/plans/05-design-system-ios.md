@@ -204,7 +204,7 @@ passes.
 
 ### 1. Replace the color token layer
 
-Status: pending
+Status: implemented; full route matrix pending
 
 Update:
 
@@ -258,17 +258,21 @@ feat: adopt the finance color system
 
 ### 2. Replace the typography layer
 
-Status: pending
+Status: complete
 
 Create:
 
-- `public/fonts/jetbrains-mono-money.woff2`, a subset limited to the glyphs the
+- `src/assets/fonts/jetbrains-mono-money.woff2`, a subset limited to the glyphs the
   product renders in monetary context: digits, `R`, `$`, `.`, `,`, space, the
   ASCII hyphen, the Unicode minus `U+2212`, and `+`.
 
+The source file lives under `src/assets/` rather than `public/` because Vite
+copies public assets without a fingerprint. The build then rewrites the CSS and
+preload references to the same fingerprinted output.
+
 The subset is produced with the documented command below and its provenance is
-recorded as a comment beside the `@font-face` rule. Record the observed byte
-size in this plan when the step runs; do not predict it.
+recorded as a comment beside the `@font-face` rule. The observed file size is
+4,660 bytes.
 
 ```bash
 curl -sG 'https://fonts.googleapis.com/css2' \
@@ -301,9 +305,16 @@ Acceptance criteria:
 - the produced woff2 is at most 12 KB; a larger file means the subset is wrong;
 - the production build emits the font with a fingerprinted name and the
   preload resolves without a console warning;
-- `font-display` appears nowhere in `src/`;
+- the only `font-display` occurrence in `src/` is the required
+  `font-display: swap` declaration in the `@font-face` rule;
 - existing component tests pass without modification, because font choice
   changes no accessible name.
+
+Observed locally on 2026-08-25 at 390 by 844: both monetary values resolved to
+JetBrains Mono 600 with tabular numerals, while the "Entrada" label resolved to
+the system UI stack. The values' decimal separators shared the same horizontal
+coordinate. The clean browser tab loaded the 4,660-byte fingerprinted font
+through the preload without a console warning.
 
 Validation:
 

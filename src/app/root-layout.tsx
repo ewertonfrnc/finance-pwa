@@ -22,7 +22,7 @@ export function NotFoundPage() {
         <p className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-accent-ink">
           Página não encontrada
         </p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-ink">
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">
           Este endereço não existe.
         </h1>
         <p className="mt-4 leading-7 text-muted">
