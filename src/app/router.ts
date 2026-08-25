@@ -5,7 +5,10 @@ import { queryClient } from './query-client'
 
 export const router = createRouter({
   routeTree,
-  context: { queryClient },
+  context: {
+    auth: { session: null, status: 'anonymous' },
+    queryClient,
+  },
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
