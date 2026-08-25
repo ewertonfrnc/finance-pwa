@@ -298,6 +298,8 @@ Implementation record (2026-08-25):
 
 ### 4. Deliver password recovery and replacement
 
+Status: completed on 2026-08-25
+
 Create:
 
 - `src/features/auth/forgot-password-page.tsx` with generic completion copy;
@@ -337,6 +339,28 @@ Proposed commit:
 ```text
 feat: add password recovery
 ```
+
+Implementation record (2026-08-25):
+
+- Delivered in `ec72e53` (feature and focused tests) and `97b3381`
+  (local end-to-end verification).
+- Password recovery now sends the local, preview, or production origin back to
+  `/auth/update-password` and always uses the same completion copy for existing
+  and unknown well-formed addresses. Rate-limit and provider details stay out
+  of the UI.
+- The session context retains the `PASSWORD_RECOVERY` event separately from an
+  ordinary authenticated session. Recovery sessions cannot open `/app`, and
+  only a valid recovery event exposes the password-replacement form.
+- Recovery callbacks remove query and fragment data before paint. A successful
+  replacement signs out globally and returns to login with a safe success
+  message; invalid and expired links offer a new recovery request.
+- Focused component tests, the complete 84-test Vitest suite, and all 16 local
+  browser tests passed. The real Mailpit flow proved identical request copy,
+  URL cleanup, global logout, rejection of the old password, and login with the
+  new password in mobile and desktop Chromium.
+- The request and replacement screens were inspected at 360 by 800 and 1280 by
+  800 CSS pixels. Keyboard order on the replacement form was logo, new
+  password, confirmation, and submit.
 
 ### 5. Verify environment isolation and close the feature
 
