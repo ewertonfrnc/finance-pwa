@@ -1,4 +1,4 @@
-import { assertLoopbackUrl } from './auth-admin'
+import { assertLoopbackUrl } from '../../../scripts/loopback-url'
 
 interface MailpitAddress {
   Address: string

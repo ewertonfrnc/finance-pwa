@@ -4,6 +4,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { promisify } from 'node:util'
 
+import { assertLoopbackUrl } from './loopback-url'
+
 const execFileAsync = promisify(execFile)
 const readinessTimeoutMs = 30_000
 
@@ -22,33 +24,6 @@ function requireStatusValue(
   }
 
   throw new Error(`Local Supabase status did not include ${label}.`)
-}
-
-function assertLoopbackUrl(value: string, label: string) {
-  let url: URL
-
-  try {
-    url = new URL(value)
-  } catch {
-    throw new Error(`${label} is not a valid URL.`)
-  }
-
-  const hostname = url.hostname.replace(/^\[|\]$/g, '')
-  const isLoopback =
-    hostname === 'localhost' ||
-    hostname === '::1' ||
-    /^127(?:\.\d{1,3}){3}$/.test(hostname)
-
-  if (
-    !isLoopback ||
-    !['http:', 'https:'].includes(url.protocol) ||
-    url.username ||
-    url.password
-  ) {
-    throw new Error(`${label} must use a loopback HTTP URL.`)
-  }
-
-  return url
 }
 
 async function readLocalSupabaseStatus() {
@@ -105,18 +80,21 @@ function withoutSupabaseVariables(environment: Environment) {
 async function assertCredentialIsAbsent(directory: string, credential: string) {
   const entries = await readdir(directory, { withFileTypes: true })
 
-  for (const entry of entries) {
-    const entryPath = path.join(directory, entry.name)
+  await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = path.join(directory, entry.name)
 
-    if (entry.isDirectory()) {
-      await assertCredentialIsAbsent(entryPath, credential)
-      continue
-    }
+      if (entry.isDirectory()) {
+        return assertCredentialIsAbsent(entryPath, credential)
+      }
 
-    if ((await readFile(entryPath)).includes(credential)) {
-      throw new Error('Vite build contained the local service role credential.')
-    }
-  }
+      if ((await readFile(entryPath)).includes(credential)) {
+        throw new Error(
+          'Vite build contained the local service role credential.',
+        )
+      }
+    }),
+  )
 }
 
 async function runCommand(
