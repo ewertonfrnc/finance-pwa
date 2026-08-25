@@ -11,6 +11,28 @@ import {
 
 import { observeAuthState } from './auth-service'
 
+const PASSWORD_RECOVERY_USER_ID_KEY = 'finance-pwa:password-recovery-user-id'
+
+function readPasswordRecoveryUserId() {
+  try {
+    return window.localStorage.getItem(PASSWORD_RECOVERY_USER_ID_KEY)
+  } catch {
+    return null
+  }
+}
+
+function storePasswordRecoveryUserId(userId: string | null) {
+  try {
+    if (userId) {
+      window.localStorage.setItem(PASSWORD_RECOVERY_USER_ID_KEY, userId)
+    } else {
+      window.localStorage.removeItem(PASSWORD_RECOVERY_USER_ID_KEY)
+    }
+  } catch {
+    // The current page still retains recovery mode when browser storage is unavailable.
+  }
+}
+
 type ResolvingAuthSession = {
   session: null
   status: 'resolving'
@@ -43,11 +65,16 @@ type AuthSessionProviderProps = {
 
 export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   const queryClient = useQueryClient()
+  const passwordRecoveryUserId = useRef<string | null | undefined>(undefined)
   const previousUserId = useRef<string | null | undefined>(undefined)
   const [state, setState] = useState<AuthSessionState>({
     session: null,
     status: 'resolving',
   })
+
+  if (passwordRecoveryUserId.current === undefined) {
+    passwordRecoveryUserId.current = readPasswordRecoveryUserId()
+  }
 
   useEffect(() => {
     return observeAuthState((event, session) => {
@@ -61,20 +88,23 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       }
 
       previousUserId.current = nextUserId
-      setState((currentState) => {
-        if (!session) return { session: null, status: 'anonymous' }
 
-        const sameRecoveryUser =
-          currentState.status === 'authenticated' &&
-          currentState.isPasswordRecovery &&
-          currentState.session.user.id === session.user.id
+      if (!session) {
+        passwordRecoveryUserId.current = null
+        storePasswordRecoveryUserId(null)
+        setState({ session: null, status: 'anonymous' })
+        return
+      }
 
-        return {
-          isPasswordRecovery: event === 'PASSWORD_RECOVERY' || sameRecoveryUser,
-          session,
-          status: 'authenticated',
-        }
-      })
+      const isPasswordRecovery =
+        event === 'PASSWORD_RECOVERY' ||
+        passwordRecoveryUserId.current === session.user.id
+
+      passwordRecoveryUserId.current = isPasswordRecovery
+        ? session.user.id
+        : null
+      storePasswordRecoveryUserId(passwordRecoveryUserId.current)
+      setState({ isPasswordRecovery, session, status: 'authenticated' })
     })
   }, [queryClient])
 

@@ -96,8 +96,9 @@ those tokens instead of embedding theme colors.
 `src/features/auth/auth-service.ts` is the only feature boundary that calls
 `supabase.auth`. `AuthSessionProvider` owns the browser session and waits for
 the initial Auth event before the router mounts. Recovery events remain
-distinct from ordinary authenticated sessions, so a password-recovery link
-cannot open `/app`.
+distinct from ordinary authenticated sessions. A non-sensitive user ID marker
+retains recovery mode across reloads and clears on logout or identity change,
+so a password-recovery session cannot open `/app`.
 
 The resolved Auth state reaches TanStack Router through `RouterContext`. The
 pathless `_authenticated` route protects `/app` in `beforeLoad`; PostgreSQL

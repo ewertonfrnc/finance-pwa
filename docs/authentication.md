@@ -1,6 +1,6 @@
 # Authentication contract
 
-Status: delivered locally; hosted verification in progress
+Status: delivered locally; hosted recovery verified, confirmation pending
 
 Last reviewed: 2026-08-25
 
@@ -50,6 +50,10 @@ Ordinary logout uses `signOut({ scope: 'local' })`, so sessions on other
 devices remain valid. A successful password replacement uses global sign-out
 to revoke every refresh token for the user, then returns to login with a
 success message.
+
+Password recovery stores only the recovery user ID in browser storage. This
+keeps recovery mode after a reload without persisting a token or callback URL.
+An anonymous event or a different authenticated user removes the marker.
 
 ## Redirect and callback rules
 
@@ -138,19 +142,27 @@ cleanup step.
 
 The complete local delivery gate passed on 2026-08-25. A clean database reset
 applied the versioned migration and seed, all 19 pgTAP checks passed, generated
-database types stayed unchanged, and static checks, TypeScript, 84 Vitest
+database types stayed unchanged, and static checks, TypeScript, 85 Vitest
 tests, and the PWA production build passed. All 18 Playwright cases passed in
 mobile and desktop Chromium against real local GoTrue and Mailpit services.
 Those browser cases cover registration, confirmation, login, reload, logout,
-recovery, new-password login, home, offline, not-found recovery, manifest, and
-service-worker registration.
+recovery reload and route isolation, new-password login, home, offline,
+not-found recovery, manifest, and service-worker registration.
 
-Dashboard evidence confirms that hosted projects and redirect allow-lists are
-separate. The remaining hosted proof is a real Deploy Preview registration and
-recovery smoke that stays on its own origin and sends every Auth request to
-`finance-pwa-dev`. Pull request #4 received the distinct preview
-`https://deploy-preview-4--finance-pwa-prod.netlify.app`. Do not treat a ready
-deployment or configuration screenshots as runtime proof.
+Pull request #4 received the distinct preview
+`https://deploy-preview-4--finance-pwa-prod.netlify.app`. A recovery smoke on
+2026-08-25 directly observed a `200` response from
+`qmyfgttdhswjvxliedcc.supabase.co/auth/v1/recover`, with `redirect_to` set to
+the same preview origin at `/auth/update-password`. This proves that the
+preview artifact uses `finance-pwa-dev` for recovery and does not contact the
+production project in that flow.
+
+The browser console contained only four `ERR_BLOCKED_BY_CLIENT` failures for
+Netlify Deploy Preview toolbar telemetry sent to Segment and Bugsnag. Helium
+blocked those third-party requests; they were not application or Supabase
+errors and contained no application credential. Account confirmation on the
+preview, anonymous RLS denial, and the final Netlify log review remain before
+the hosted verification is complete.
 
 ## References
 

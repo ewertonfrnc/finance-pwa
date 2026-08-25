@@ -70,6 +70,17 @@ test('should replace the password through Mailpit and require the new credential
     }),
   ).toHaveCount(0)
 
+  await page.reload()
+  await expect(
+    page.getByRole('heading', { name: 'Crie uma nova senha.' }),
+  ).toBeVisible()
+
+  await page.goto('/app')
+  await expect(page).toHaveURL('/auth/update-password')
+  await expect(
+    page.getByRole('heading', { name: 'Crie uma nova senha.' }),
+  ).toBeVisible()
+
   await page.getByLabel('Nova senha', { exact: true }).fill(newPassword)
   await page.getByLabel('Confirme a nova senha').fill(newPassword)
   await page.getByRole('button', { name: 'Alterar senha' }).click()

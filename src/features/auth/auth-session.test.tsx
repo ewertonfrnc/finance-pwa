@@ -79,6 +79,7 @@ function renderSession(
 
 describe('AuthSessionProvider', () => {
   beforeEach(() => {
+    window.localStorage.clear()
     authServiceMocks.observeAuthState.mockReset()
     authServiceMocks.unsubscribe.mockReset()
     authServiceMocks.observeAuthState.mockImplementation((listener) => {
@@ -122,6 +123,20 @@ describe('AuthSessionProvider', () => {
 
     act(() => emitAuthState('USER_UPDATED', session))
     act(() => emitAuthState('TOKEN_REFRESHED', session))
+
+    expect(screen.getByText('recovery')).toBeVisible()
+  })
+
+  it('should restore password recovery after the provider remounts', () => {
+    const session = createSession('user-a', 'user-a@example.com')
+    const firstRender = renderSession()
+
+    act(() => emitAuthState('PASSWORD_RECOVERY', session))
+    expect(screen.getByText('recovery')).toBeVisible()
+
+    firstRender.unmount()
+    renderSession()
+    act(() => emitAuthState('INITIAL_SESSION', session))
 
     expect(screen.getByText('recovery')).toBeVisible()
   })

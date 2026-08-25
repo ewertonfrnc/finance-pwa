@@ -431,20 +431,30 @@ Hosted configuration record (2026-08-25):
   Supabase URL and publishable key are present.
 - Pull request #4 received the distinct Netlify deployment at
   `https://deploy-preview-4--finance-pwa-prod.netlify.app`.
-- The dashboard configuration is recorded, but runtime isolation remains open
-  until the Deploy Preview completes confirmation and recovery on its own
-  origin without contacting the production project.
+- A recovery smoke directly observed a `200` response from
+  `qmyfgttdhswjvxliedcc.supabase.co/auth/v1/recover`. Its `redirect_to` value
+  targeted `/auth/update-password` on the same Deploy Preview origin. No
+  request in that flow contacted `finance-pwa-prod`.
+- The four browser console failures were `ERR_BLOCKED_BY_CLIENT` responses for
+  Netlify toolbar telemetry to Segment and Bugsnag blocked by Helium. They
+  were not application or Supabase failures and exposed no application
+  credential.
+- Account confirmation on the Deploy Preview, anonymous RLS denial, and the
+  final Netlify log review remain open.
 
 Local verification record (2026-08-25):
 
 - A clean database reset applied the migration and seed, all 19 pgTAP checks
   passed, and regenerated database types matched the committed file.
-- Oxlint, Prettier, TypeScript, all 84 Vitest tests, and the PWA production
+- Oxlint, Prettier, TypeScript, all 85 Vitest tests, and the PWA production
   build passed.
 - All 18 Playwright cases passed against real local GoTrue and Mailpit services
   in mobile and desktop Chromium. The suite covers registration, confirmation,
   login, session reload, logout, recovery, rejection of the old password, and
   login with the new password.
+- Recovery mode persists its non-sensitive user ID across a provider remount.
+  The real recovery flow reloaded the cleaned callback, kept the replacement
+  form visible, and redirected direct `/app` navigation back to that form.
 - The bootstrap suite now proves that an unknown client route renders the
   not-found page and returns home. Home, offline, manifest, icons, and
   service-worker registration also remained green.
@@ -463,7 +473,7 @@ docs: record authentication delivery
 - [x] Logout and identity changes clear user-scoped query data.
 - [x] Login and recovery do not disclose account existence.
 - [x] Confirmation and recovery callbacks remove sensitive URL data.
-- [ ] Deploy Preview and production use separate Supabase projects.
+- [x] Deploy Preview and production use separate Supabase projects.
 - [x] The complete local gate passes.
 - [x] The pull request receives a distinct Netlify Deploy Preview.
 - [ ] Hosted smoke results and remaining SMTP work are recorded.

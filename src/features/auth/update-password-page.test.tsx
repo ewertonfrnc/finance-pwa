@@ -173,7 +173,7 @@ describe('UpdatePasswordPage', () => {
     expect(authServiceMocks.signOutGlobally).toHaveBeenCalledOnce()
     expect(onPasswordUpdated).toHaveBeenCalledOnce()
     expect(
-      screen.getByRole('heading', { name: 'Finalizando...' }),
+      await screen.findByRole('heading', { name: 'Finalizando...' }),
     ).toBeVisible()
   })
 
