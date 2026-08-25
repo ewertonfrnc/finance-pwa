@@ -91,6 +91,20 @@ Tailwind CSS v4 runs through its Vite plugin. Semantic CSS custom properties in
 `src/styles/index.css` define the light and dark palettes, while components use
 those tokens instead of embedding theme colors.
 
+## Authentication boundary
+
+`src/features/auth/auth-service.ts` is the only feature boundary that calls
+`supabase.auth`. `AuthSessionProvider` owns the browser session and waits for
+the initial Auth event before the router mounts. Recovery events remain
+distinct from ordinary authenticated sessions, so a password-recovery link
+cannot open `/app`.
+
+The resolved Auth state reaches TanStack Router through `RouterContext`. The
+pathless `_authenticated` route protects `/app` in `beforeLoad`; PostgreSQL
+grants and RLS still authorize financial data. A logout or authenticated user
+ID change clears the TanStack Query cache before the next identity renders.
+Refreshes for the same user keep the cache.
+
 ## Installability and updates
 
 Vite PWA generates the web app manifest and Workbox service worker during a
@@ -119,9 +133,12 @@ client routes, gives fingerprinted assets long-lived immutable caching, and
 forces revalidation for the HTML, manifest, service worker, and Workbox files.
 Its explicit Netlify Dev block prevents TanStack Router's package from being
 misdetected as a full-stack framework and proxies the Vite server on port 5173.
-Production is expected to track `main`; pull requests are expected to use
-Netlify Deploy Previews with a non-production Supabase environment whenever a
-future preview can mutate data.
+Production tracks `main`. Netlify production builds use the
+`finance-pwa-prod` Supabase project, while Deploy Previews and other hosted
+non-production contexts use `finance-pwa-dev`. Netlify stores separate
+contextual values for the public Supabase URL and publishable key; no Supabase
+secret reaches a Vite build. Supabase Auth allows a preview wildcard only in
+the development project and exact callback URLs only in production.
 
 ## Verification boundary
 
@@ -135,12 +152,12 @@ bun run db:types
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e
+bun run test:e2e:local
 bun run build
 ```
 
 Component tests cover the controlled service-worker update decision. Browser
-tests cover the 360 px and desktop layouts, client-route navigation, manifest,
-icons, and service-worker output. A local browser proves the responsive shell,
-but it does not substitute for a Netlify Deploy Preview or installation tests
-on a physical Android phone and iPhone.
+tests cover the 360 px and desktop layouts, client-route navigation, recovery
+from an unknown route, manifest, icons, and service-worker output. A local
+browser proves the responsive shell, but it does not substitute for a Netlify
+Deploy Preview or installation tests on a physical Android phone and iPhone.

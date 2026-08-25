@@ -38,6 +38,21 @@ test('should open a client route directly and return home', async ({
   await expect(page).toHaveURL('/')
 })
 
+test('should recover from an unknown client route', async ({ page }) => {
+  await page.goto('/missing-page')
+
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Este endereço não existe.',
+    }),
+  ).toBeVisible()
+
+  await page.getByRole('link', { name: 'Ir para o início' }).click()
+
+  await expect(page).toHaveURL('/')
+})
+
 test('should expose an installable manifest and register its service worker', async ({
   page,
 }) => {

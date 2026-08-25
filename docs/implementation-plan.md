@@ -258,7 +258,35 @@ Progress (2026-08-25):
 - Delivery step 2 is complete. The application restores sessions before
   mounting the router, protects `/app`, validates post-login redirects, keeps
   query data isolated across identities, and supports local logout.
-- Delivery step 3, registration and email confirmation, is next.
+- Delivery step 3 is complete. Registration requires email confirmation and
+  the callback removes sensitive URL data before opening `/app`.
+- Delivery step 4 is complete. Recovery uses an isolated recovery session,
+  replaces the password, signs out globally, and verifies the new credential
+  through the local Mailpit flow.
+- Delivery step 5 is in progress. Separate hosted Supabase projects and
+  contextual Netlify values are configured. The complete local gate passed
+  with 19 pgTAP checks, 84 Vitest tests, and 18 Playwright cases in mobile and
+  desktop Chromium. Pull request #4 received a distinct Netlify Deploy Preview;
+  its confirmation and recovery smoke remains before closure.
+
+Delivered branch commits to date:
+
+```text
+4e6dafa test: prepare local authentication verification
+32466e0 refactor: harden local authentication tooling
+c298705 feat: restore authenticated sessions
+4a14fc8 feat: add email login and protected navigation
+4ae5944 test: isolate protected navigation from Supabase config
+12a8465 style: use canonical Tailwind utilities
+f4a0322 docs: record authentication step two completion
+854698d feat: add account registration and confirmation
+ec72e53 feat: add password recovery
+97b3381 test: verify password recovery locally
+9271388 docs: record password recovery completion
+```
+
+Custom SMTP remains an external beta prerequisite. The hosted default mailer
+is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 

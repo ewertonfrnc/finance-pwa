@@ -1,6 +1,6 @@
 # Authentication contract
 
-Status: implementation contract for roadmap step 3
+Status: delivered locally; hosted verification in progress
 
 Last reviewed: 2026-08-25
 
@@ -90,17 +90,19 @@ must not state whether the account exists.
 
 ## Environment contract
 
-| Context                      | Supabase project   | Allowed Auth destination                                          |
-| ---------------------------- | ------------------ | ----------------------------------------------------------------- |
-| Local Vite                   | Local CLI stack    | `http://127.0.0.1:5173/**` and `http://localhost:5173/**`         |
-| Local preview and Playwright | Local CLI stack    | `http://127.0.0.1:4173/**`                                        |
-| Netlify Deploy Preview       | `finance-pwa-dev`  | `https://**--finance-pwa-prod.netlify.app/**`                     |
-| Netlify production           | Production project | Exact production `/auth/confirm` and `/auth/update-password` URLs |
+| Context                      | Supabase project                            | Allowed Auth destination                                                   |
+| ---------------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
+| Local Vite                   | Local CLI stack                             | `http://127.0.0.1:5173/**` and `http://localhost:5173/**`                  |
+| Local preview and Playwright | Local CLI stack                             | `http://127.0.0.1:4173/**`                                                 |
+| Netlify Deploy Preview       | `finance-pwa-dev` (`qmyfgttdhswjvxliedcc`)  | `https://**--finance-pwa-prod.netlify.app/**`                              |
+| Netlify production           | `finance-pwa-prod` (`nosbuwfgfwvixamkgbpy`) | Exact production `/auth/confirm` and `/auth/update-password` callback URLs |
 
-Netlify must define the Supabase URL and publishable key separately for the
-`deploy-preview` and production contexts. A Deploy Preview must never receive
-the production project URL or key. Browser code may receive only
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
+Netlify defines `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY` with different contextual values. Production
+targets `finance-pwa-prod`; Deploy Previews and other hosted non-production
+contexts target `finance-pwa-dev`. The Netlify Free plan exposes these public
+browser values to all scopes, and neither value is marked as secret. No
+Supabase secret or `service_role` key is stored in Netlify.
 
 The local E2E launcher reads its values from `supabase status --output json`.
 It sends only the local API URL and publishable key to the Vite build. The
@@ -108,12 +110,17 @@ service role key stays in the Node test processes and the Playwright web server
 receives an empty value. Auth administration and Mailpit helpers reject every
 non-loopback URL before creating a client or making a request.
 
-Hosted projects must also enable email confirmation, set the minimum password
-length to eight, and configure only the destinations in the table. These are
-dashboard settings and do not come from local `config.toml`. The hosted default
-mailer is acceptable for a limited smoke test. Custom SMTP remains required
-before external users are invited because the default mailer is rate-limited
-and best-effort.
+The hosted Auth settings were configured on 2026-08-25. Both projects require
+email confirmation, accept new email users, reject anonymous sign-ins, require
+eight password characters, and add no composition rule. `finance-pwa-dev`
+uses `http://localhost:5173` as its safe fallback Site URL and accepts the
+Netlify preview pattern. `finance-pwa-prod` uses
+`https://finance-pwa-prod.netlify.app` as its Site URL and allows only the
+exact confirmation and recovery callback URLs for that origin.
+
+The hosted default mailer is acceptable for the approved smoke test. Custom
+SMTP remains required before external users are invited because the default
+mailer is rate-limited and best-effort.
 
 Creating or changing a hosted Supabase project, Netlify environment variables,
 Auth settings, SMTP, or deployment requires explicit authorization.
@@ -128,6 +135,22 @@ recipient through Mailpit. Neither helper can target a hosted service.
 CI starts the full local Supabase stack, resets and tests the database, runs
 browser tests through the local launcher, and stops the stack in an `always`
 cleanup step.
+
+The complete local delivery gate passed on 2026-08-25. A clean database reset
+applied the versioned migration and seed, all 19 pgTAP checks passed, generated
+database types stayed unchanged, and static checks, TypeScript, 84 Vitest
+tests, and the PWA production build passed. All 18 Playwright cases passed in
+mobile and desktop Chromium against real local GoTrue and Mailpit services.
+Those browser cases cover registration, confirmation, login, reload, logout,
+recovery, new-password login, home, offline, not-found recovery, manifest, and
+service-worker registration.
+
+Dashboard evidence confirms that hosted projects and redirect allow-lists are
+separate. The remaining hosted proof is a real Deploy Preview registration and
+recovery smoke that stays on its own origin and sends every Auth request to
+`finance-pwa-dev`. Pull request #4 received the distinct preview
+`https://deploy-preview-4--finance-pwa-prod.netlify.app`. Do not treat a ready
+deployment or configuration screenshots as runtime proof.
 
 ## References
 

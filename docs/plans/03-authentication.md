@@ -364,6 +364,8 @@ Implementation record (2026-08-25):
 
 ### 5. Verify environment isolation and close the feature
 
+Status: in progress
+
 Update:
 
 - `docs/authentication.md` with the observed local and hosted behavior;
@@ -415,6 +417,38 @@ Runtime checks after explicit authorization:
 - verify an anonymous request to existing RLS-protected data still fails;
 - stop every local process started for the checks.
 
+Hosted configuration record (2026-08-25):
+
+- Supabase development and production use distinct projects:
+  `finance-pwa-dev` (`qmyfgttdhswjvxliedcc`) and `finance-pwa-prod`
+  (`nosbuwfgfwvixamkgbpy`).
+- Development Auth uses `http://localhost:5173` as its fallback Site URL and
+  permits `https://**--finance-pwa-prod.netlify.app/**`. Production Auth uses
+  the exact Netlify production origin and permits only `/auth/confirm` and
+  `/auth/update-password` on that origin.
+- Netlify production values target `finance-pwa-prod`; Deploy Preview and
+  hosted non-production values target `finance-pwa-dev`. Only the public
+  Supabase URL and publishable key are present.
+- Pull request #4 received the distinct Netlify deployment at
+  `https://deploy-preview-4--finance-pwa-prod.netlify.app`.
+- The dashboard configuration is recorded, but runtime isolation remains open
+  until the Deploy Preview completes confirmation and recovery on its own
+  origin without contacting the production project.
+
+Local verification record (2026-08-25):
+
+- A clean database reset applied the migration and seed, all 19 pgTAP checks
+  passed, and regenerated database types matched the committed file.
+- Oxlint, Prettier, TypeScript, all 84 Vitest tests, and the PWA production
+  build passed.
+- All 18 Playwright cases passed against real local GoTrue and Mailpit services
+  in mobile and desktop Chromium. The suite covers registration, confirmation,
+  login, session reload, logout, recovery, rejection of the old password, and
+  login with the new password.
+- The bootstrap suite now proves that an unknown client route renders the
+  not-found page and returns home. Home, offline, manifest, icons, and
+  service-worker registration also remained green.
+
 Proposed commit:
 
 ```text
@@ -424,14 +458,14 @@ docs: record authentication delivery
 ## Final merge gate
 
 - [ ] All five delivery steps have focused commits on `feat/authentication`.
-- [ ] Local Auth email confirmation is enabled and covered through Mailpit.
-- [ ] Auth state reaches the router only after initial session restoration.
-- [ ] Logout and identity changes clear user-scoped query data.
-- [ ] Login and recovery do not disclose account existence.
-- [ ] Confirmation and recovery callbacks remove sensitive URL data.
+- [x] Local Auth email confirmation is enabled and covered through Mailpit.
+- [x] Auth state reaches the router only after initial session restoration.
+- [x] Logout and identity changes clear user-scoped query data.
+- [x] Login and recovery do not disclose account existence.
+- [x] Confirmation and recovery callbacks remove sensitive URL data.
 - [ ] Deploy Preview and production use separate Supabase projects.
-- [ ] The complete local gate passes.
-- [ ] The pull request receives a distinct Netlify Deploy Preview.
+- [x] The complete local gate passes.
+- [x] The pull request receives a distinct Netlify Deploy Preview.
 - [ ] Hosted smoke results and remaining SMTP work are recorded.
 - [ ] The roadmap marks step 3 complete in the same pull request.
 
