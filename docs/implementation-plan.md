@@ -206,9 +206,11 @@ feat: establish Supabase data foundation
 
 ### 3. Add authentication and protected navigation
 
-Status: pending
+Status: in progress
 
 Branch: `feat/authentication`
+
+Detailed plan: [`docs/plans/03-authentication.md`](plans/03-authentication.md)
 
 Create:
 
@@ -216,7 +218,10 @@ Create:
 - login, registration, forgotten-password, and reset-password routes;
 - authenticated route protection and session restoration;
 - explicit logout behavior;
-- redirect handling for localhost, Netlify production, and Deploy Previews.
+- account confirmation and password-recovery callbacks;
+- query-cache isolation across logout and user changes;
+- redirect handling and Supabase environment isolation for localhost, Netlify
+  production, and Deploy Previews.
 
 Acceptance criteria:
 
@@ -225,6 +230,8 @@ Acceptance criteria:
 - Invalid credentials show a useful error without revealing account existence.
 - Logout removes access to private routes.
 - A password-reset link returns to the correct environment.
+- Confirmation and recovery links remove sensitive URL data after use.
+- A Deploy Preview cannot use the production Supabase project.
 
 Validation:
 
@@ -232,7 +239,7 @@ Validation:
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e -- auth
+bun run test:e2e:local -- auth
 bun run build
 bunx supabase test db
 ```
@@ -242,6 +249,50 @@ Proposed commit:
 ```text
 feat: add user authentication
 ```
+
+Progress (2026-08-25):
+
+- Delivery step 1 in the detailed plan is complete. Local Auth configuration,
+  the documented contract, the credential-safe E2E launcher, loopback-only
+  Auth Admin and Mailpit helpers, and the full-stack CI boundary are ready.
+- Delivery step 2 is complete. The application restores sessions before
+  mounting the router, protects `/app`, validates post-login redirects, keeps
+  query data isolated across identities, and supports local logout.
+- Delivery step 3 is complete. Registration requires email confirmation and
+  the callback removes sensitive URL data before opening `/app`.
+- Delivery step 4 is complete. Recovery uses an isolated recovery session,
+  replaces the password, signs out globally, and verifies the new credential
+  through the local Mailpit flow.
+- Delivery step 5 is in progress. Separate hosted Supabase projects and
+  contextual Netlify values are configured. The complete local gate passed
+  with 19 pgTAP checks, 85 Vitest tests, and 18 Playwright cases in mobile and
+  desktop Chromium. Pull request #4 received a distinct Netlify Deploy Preview;
+  a recovery request returned `200` from `finance-pwa-dev` and kept its callback
+  on the preview origin. Hosted confirmation, anonymous RLS denial, and the
+  final Netlify log review remain before closure.
+- Recovery mode now survives a provider remount. The local browser flow
+  reloaded the cleaned password-update URL, rejected direct navigation to
+  `/app`, replaced the password, and required the new credential.
+
+Delivered branch commits to date:
+
+```text
+4e6dafa test: prepare local authentication verification
+32466e0 refactor: harden local authentication tooling
+c298705 feat: restore authenticated sessions
+4a14fc8 feat: add email login and protected navigation
+4ae5944 test: isolate protected navigation from Supabase config
+12a8465 style: use canonical Tailwind utilities
+f4a0322 docs: record authentication step two completion
+854698d feat: add account registration and confirmation
+ec72e53 feat: add password recovery
+97b3381 test: verify password recovery locally
+9271388 docs: record password recovery completion
+f19d588 feat: enhance authentication documentation and tests for recovery flow
+```
+
+Custom SMTP remains an external beta prerequisite. The hosted default mailer
+is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 
@@ -391,9 +442,9 @@ Branch: `chore/prepare-beta`
 
 Complete:
 
-- production and preview environment separation;
+- re-audit production and preview environment separation;
 - Netlify security and cache headers, including a restrictive CSP;
-- production Auth redirect URLs and password-reset flow;
+- re-run the production Auth confirmation and password-reset flows;
 - RLS and RPC permission audit;
 - database backup procedure and a restore rehearsal using non-production data;
 - error monitoring without financial payloads;

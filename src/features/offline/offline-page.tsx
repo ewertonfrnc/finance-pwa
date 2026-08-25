@@ -12,7 +12,7 @@ export function OfflinePage() {
         aria-hidden="true"
         className="absolute -top-24 -right-24 size-72 rounded-full bg-accent/25 blur-3xl"
       />
-      <section className="relative w-full max-w-2xl rounded-[2rem] border border-line bg-panel p-7 shadow-[var(--finance-shadow)] sm:p-10">
+      <section className="relative w-full max-w-2xl rounded-4xl border border-line bg-panel p-7 shadow-[var(--finance-shadow)] sm:p-10">
         <BrandMark className="size-12 text-ink" />
         <p className="mt-10 text-sm font-semibold uppercase tracking-[0.14em] text-accent-ink">
           Modo offline

@@ -24,8 +24,8 @@ jobs:
       - name: Install dependencies
         run: bun ci
 
-      - name: Start local Postgres
-        run: bunx supabase db start
+      - name: Start local Supabase
+        run: bunx supabase start > /dev/null
 
       - name: Reset local database
         run: bunx supabase db reset
@@ -51,7 +51,7 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Run browser tests
-        run: bun run test:e2e
+        run: bun run test:e2e:local
 
       - name: Build production application
         run: bun run build

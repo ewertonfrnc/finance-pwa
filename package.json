@@ -13,7 +13,8 @@
     "check:fix": "oxlint --fix . && prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "vite build && playwright test"
+    "test:e2e": "vite build && playwright test",
+    "test:e2e:local": "bun scripts/with-local-supabase.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",
