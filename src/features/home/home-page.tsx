@@ -129,7 +129,7 @@ function MonthPreview() {
               Visão do mês
             </h2>
           </div>
-          <span className="rounded-full bg-accent px-3 py-1.5 text-xs font-bold text-ink">
+          <span className="rounded-full bg-accent-ink px-3 py-1.5 text-xs font-bold text-accent-contrast">
             Em construção
           </span>
         </div>

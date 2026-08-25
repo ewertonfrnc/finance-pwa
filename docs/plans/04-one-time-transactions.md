@@ -4,6 +4,9 @@ Status: in implementation
 
 Last reviewed: 2026-08-25
 
+Revised: 2026-08-25, after the design system decisions in
+[`05-design-system-ios.md`](05-design-system-ios.md)
+
 Roadmap step: 4
 
 Planning branch: `chore/plan-transactions`
@@ -41,7 +44,7 @@ The following boundaries already exist on `main` and must be preserved:
   is next, but the roadmap has no UI delivery step for it.
 
 Starting-position onboarding is a separate product gap. It must be planned
-before the monthly balance screen in roadmap step 5, but it does not block
+before the daily balance ledger in roadmap step 8, but it does not block
 one-time transaction CRUD and is not folded into this feature branch.
 
 ## Scope
@@ -225,43 +228,41 @@ the few required controls.
 
 ### Visual direction
 
-Preserve the product language already visible in the legacy Finance app and
-web app without importing their code:
+Superseded on 2026-08-25 by
+[`05-design-system-ios.md`](05-design-system-ios.md), which owns roadmap step 5.
 
-- month navigation remains the primary temporal control;
-- the amount is the strongest element in the form;
-- income and expense use semantic color in addition to text and iconography;
-- transaction rows remain compact, readable, and grouped by calendar date;
-- create and edit stay focused tasks rather than expanding inline inside the
-  ledger.
+The section previously recorded here named the warm canvas, the lime accent,
+and the existing typography as the source of truth, told this branch not to
+transplant the legacy teal palette, and excluded Liquid Glass vocabulary. All
+four statements were reversed by explicit decision. The reasoning is preserved
+in this plan's history; do not implement from it.
 
-The current PWA remains the source of truth for the Trajeto mark, warm canvas,
-lime accent, typography, and automatic light/dark themes. Do not transplant the
-legacy teal palette wholesale. Add only `income` and `expense` semantic tokens,
-derived from the existing success and coral families, with contrast checked in
-both themes.
+What binds this branch now:
 
-Make the financial workspace more iOS-like through layout and interaction, not
-through imitation:
+- the color, typography, safe-area, and chrome decisions live in the design
+  system plan, and this branch does not choose any of them;
+- roadmap step 5 is sequenced before the remaining form steps here, so the form
+  is built on settled tokens rather than on tokens chosen inside a feature
+  branch;
+- inset grouped lists, the sheet chrome with a leading dismiss and a trailing
+  confirm, the footnote helper text below a card, and the `>` versus menu
+  disclosure distinction are delivered by the form steps in this plan,
+  following the reference language recorded in the design system plan;
+- form actions do not sit at the end of a scroll. The create and edit surfaces
+  present as sheets whose confirm action lives in the top chrome, because a
+  bottom action is off screen once the iOS keyboard opens;
+- the type control stays a field inside the form body and does not move into
+  the navigation chrome, and it widens to four options in roadmap step 6;
+- swipe-to-delete stays out of this branch. Delete keeps an explicit,
+  confirmable control.
 
-- respect `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)` in
-  standalone mode;
-- use a restrained translucent sticky top bar with clear contrast, a centered
-  month title, and 44 px minimum tap targets;
-- use inset grouped surfaces, thin separators, moderate radii, and fewer deep
-  shadows than the marketing/Auth cards;
-- use a two-option segmented control for **Saída** and **Entrada**;
-- keep form actions in a safe-area-aware sticky bottom region on phones;
-- use a full-page form on narrow viewports and a centered, bounded panel on
-  desktop instead of maintaining separate mobile and desktop implementations;
-- limit transitions to short opacity/translation feedback and honor the
-  existing `prefers-reduced-motion` rule;
-- use a destructive confirmation sheet on phones and a centered confirmation
-  dialog at wider breakpoints; do not hide delete behind a swipe gesture.
+Two contract corrections that this branch owns:
 
-“iOS-like” does not mean reproducing UIKit, Liquid Glass, SF Symbols, native
-haptics, or platform-specific navigation. Financial values and actions must
-remain legible on Android, desktop, dark mode, and reduced-motion settings.
+- the description counter follows the schema limit of 120 characters, not the
+  200 used by the legacy form; a form that permits 180 characters produces a
+  `description_too_long` failure at the server boundary;
+- monetary text uses the ink-level category token. The dot-level color that
+  marks a chip does not carry enough contrast to be numerals.
 
 ## Delivery steps
 
@@ -635,8 +636,8 @@ Update:
 - this plan with delivered commit IDs, actual check counts, visual observations,
   and any explicitly deferred physical-device or hosted check;
 - `docs/implementation-plan.md` to mark roadmap step 4 complete only after its
-  local runtime gate passes and to retain the starting-position onboarding gap
-  before step 5.
+  local runtime gate passes and to retain the starting-position onboarding
+  gap, which is now roadmap step 7.
 
 Acceptance criteria:
 
@@ -708,7 +709,7 @@ authorized:
   categories, gestures, dashboard cards, or personalization.
 
 The unresolved starting-position UI must receive its own detailed plan before
-roadmap step 5 starts. It should not be retrofitted into the transaction branch
+roadmap step 7 starts. It should not be retrofitted into the transaction branch
 after validation begins.
 
 ## Official references verified for this plan

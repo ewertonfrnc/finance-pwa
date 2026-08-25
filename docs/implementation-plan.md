@@ -28,6 +28,17 @@ dependency for implementation.
   receive Deploy Previews.
 - The new product does not maintain compatibility with the legacy applications.
 - Money uses integer centavos and calendar dates use `YYYY-MM-DD`.
+- The visual system comes from `legacy/finance-app`: white and teal surfaces,
+  category triples, and balance tiers. The warm canvas and lime accent of the
+  bootstrap are retired from the product, including the public and Auth
+  screens.
+- The UI font is the platform font. Monetary numerals keep a subsetted
+  JetBrains Mono because vertical digit alignment is what makes a column of
+  amounts comparable.
+- Transactions carry four kinds: `income`, `expense`, `daily`, and `savings`.
+  The enum is widened through a forward migration.
+- The monthly screen is a daily balance ledger with one row per calendar day,
+  not a list of transactions. A list of transactions belongs to the day detail.
 
 ## Initial scope
 
@@ -35,8 +46,9 @@ The first beta includes:
 
 - registration, login, logout, and password recovery;
 - a starting financial position;
-- one-time income and expense transactions;
-- monthly transaction history;
+- one-time transactions across the four kinds;
+- a daily balance ledger for the selected month;
+- the day detail with its transaction list;
 - running and projected monthly balance;
 - recurring transactions with `single`, `following`, and `all` mutation scopes;
 - installability on Android and iOS;
@@ -275,7 +287,7 @@ Completion record (2026-08-25):
   kept its callback on the preview origin.
 - Hosted account confirmation, anonymous RLS denial, the final Netlify log
   review, and custom SMTP were not observed before merge. They remain explicit
-  pre-beta checks in step 7 and do not block transaction development.
+  pre-beta checks in step 10 and do not block transaction development.
 - Recovery mode now survives a provider remount. The local browser flow
   reloaded the cleaned password-update URL, rejected direct navigation to
   `/app`, replaced the password, and required the new credential.
@@ -317,9 +329,8 @@ Create:
 - an RLS-protected monthly transaction query;
 - `src/features/transactions/` services, schemas, query options, mutations,
   forms, list UI, and tests;
-- a mobile-first visual treatment that preserves the established Finance
-  hierarchy while adding safe areas, grouped surfaces, segmented controls, and
-  restrained iOS-like navigation behavior;
+- create, edit, and delete forms presented as focused tasks;
+- the day detail screen that owns the transaction list;
 - no optimistic financial UI in this step; persisted results appear after the
   RPC and affected-month refetch succeed;
 - focused cache invalidation for the affected month.
@@ -351,12 +362,16 @@ Proposed commit:
 feat: add one-time transaction management
 ```
 
-Known dependency before step 5:
+Scope change accepted on 2026-08-25:
 
-- The data boundary for `starting_positions` exists, but its onboarding UI is
-  not represented by a roadmap delivery step. Plan and deliver that flow after
-  one-time transactions and before monthly balance work. Do not absorb it into
-  `feat/transactions`.
+- The monthly list delivered in `66b48cf` is not the monthly screen. The
+  monthly screen is a daily balance ledger and arrives in step 8. That list
+  keeps its value as the day detail list and is not extended into a month view.
+- The visual treatment originally planned inside this step moves to step 5, so
+  that the ledger consumes a settled design system instead of one chosen inside
+  a feature branch.
+- The `starting_positions` onboarding gap, previously an unowned dependency,
+  becomes step 7.
 
 Release checkpoint:
 
@@ -367,7 +382,151 @@ Release checkpoint:
 
 Deploying or creating real financial data requires explicit user authorization.
 
-### 5. Add the monthly financial view
+### 5. Adopt the design system and the iOS shell
+
+Status: pending
+
+Branch: `chore/design-system`
+
+Detailed plan:
+[`docs/plans/05-design-system-ios.md`](plans/05-design-system-ios.md)
+
+Create:
+
+- the replacement color token layer in `src/styles/index.css`, derived from
+  `legacy/finance-app/src/lib/designTokens.ts`;
+- the typography layer: the platform UI font and one subsetted JetBrains Mono
+  face for monetary numerals;
+- viewport, safe-area, and scroll behavior for a standalone iOS PWA;
+- floating capsule chrome on the authenticated workspace, replacing the sticky
+  header.
+
+This step adds no route, table, RPC, or financial capability. Every screen that
+exists before it exists after it with the same accessible names.
+
+Acceptance criteria:
+
+- The five existing routes render at 390 by 844 and 1280 by 800 CSS pixels, in
+  light and dark, with no dark text on the teal accent fill.
+- Monetary amounts render in the monospace face and align on the decimal
+  separator; every other string renders in the platform font.
+- No source file outside `src/styles/index.css` contains a color literal.
+- The month control and the account actions float over the scrolling list, and
+  neither the first nor the last row is ever covered.
+- Every control keeps its accessible name, a 44 by 44 CSS pixel target, and a
+  visible keyboard focus ring.
+
+Validation:
+
+```bash
+bun run check
+bunx tsc --noEmit
+bun run test
+bun run test:e2e
+bun run build
+```
+
+Proposed commit:
+
+```text
+chore: adopt the finance design system
+```
+
+### 6. Widen the transaction kinds
+
+Status: pending
+
+Branch: `feat/transaction-kinds`
+
+Create:
+
+- a forward migration that adds `daily` and `savings` to
+  `public.transaction_kind`; `20260825010000_database_foundation.sql` has
+  reached `main` and must not be edited;
+- the documented semantics of each kind in `docs/finance-rules.md`, in
+  particular that `daily` participates in the daily projection and `savings`
+  leaves the available balance without being an expense;
+- pgTAP coverage for the widened enum across the mutation RPCs;
+- the four-way type control in the transaction form, and the category triple
+  tokens for `daily` and `savings`.
+
+Acceptance criteria:
+
+- A signed-in user records one transaction of each of the four kinds and sees
+  each rendered with its own category mark and label after a reload.
+- A request carrying an unknown kind fails at the server boundary.
+- Existing `income` and `expense` rows are unchanged by the migration.
+- Regenerated database types match the local schema with no manual edit.
+
+Validation:
+
+```bash
+bunx supabase db reset
+bunx supabase test db
+bun run db:types
+git diff --exit-code -- src/lib/supabase/database.types.ts
+bun run check
+bunx tsc --noEmit
+bun run test
+bun run test:e2e:local -- transactions
+bun run build
+```
+
+Proposed commit:
+
+```text
+feat: widen the transaction kinds
+```
+
+### 7. Deliver starting-position onboarding
+
+Status: pending
+
+Branch: `feat/starting-position`
+
+Create:
+
+- the onboarding flow that calls `initialize_starting_position` for a user who
+  has no row;
+- the routing rule that sends a user without a starting position to onboarding
+  and never traps a user who already has one;
+- the retry path, since an identical repeat is safe and a conflicting repeat
+  returns `23505`;
+- a later path to inspect the recorded position, so a wrong entry is not
+  permanent from the user's point of view.
+
+The data boundary and the RPC already exist. This step delivers only the UI and
+the routing rule.
+
+Acceptance criteria:
+
+- A new user completes registration, records an opening balance and its date,
+  and reaches the workspace.
+- A returning user with a starting position never sees onboarding again.
+- Submitting the same values twice does not create a second row and does not
+  show an error.
+- A user who abandons onboarding and returns resumes it rather than losing the
+  entry point.
+
+Validation:
+
+```bash
+bunx supabase db reset
+bunx supabase test db
+bun run check
+bunx tsc --noEmit
+bun run test
+bun run test:e2e:local -- onboarding
+bun run build
+```
+
+Proposed commit:
+
+```text
+feat: add starting position onboarding
+```
+
+### 8. Add the daily balance ledger
 
 Status: pending
 
@@ -375,23 +534,40 @@ Branch: `feat/month-balance`
 
 Create:
 
-- a documented RPC contract for monthly running and projected balance;
-- PostgreSQL tests for carry-forward and day-by-day results;
-- `src/features/balance/` service, query, mobile-first screen, and tests;
-- loading, empty, error, and negative-balance states;
-- currency formatting only at the presentation boundary.
+- a documented RPC contract for daily running and projected balance across a
+  month;
+- PostgreSQL tests for carry-forward, day-by-day results, and the daily
+  projection that resets at midnight;
+- `src/features/balance/` service, query, ledger screen, and tests;
+- one row per calendar day, including days without movement, with the
+  end-of-day balance in its own cell;
+- the balance tier palette, with a second channel that is not hue, because a
+  fill that separates only by hue does not survive deuteranopia and the tier is
+  the most important signal on the screen;
+- the week strip on the day detail, carrying a tier dot under each day;
+- the "Hoje" pill, shown only when the current day is off screen, and the
+  today rule with a labeled pill in the margin;
+- loading, empty, error, and negative-balance states.
 
 Implement the calculation without a persisted month cache. Measure the query
 before proposing one.
+
+Evaluate replacing the absolute tier thresholds with a runway derived from the
+user's own daily spending. Fixed bands of R$ 2.000 and R$ 1.000 describe one
+spending level and turn into noise at any other.
 
 Acceptance criteria:
 
 - The user sees the opening balance, movements, running balance, and projected
   closing balance for a selected month.
+- Every calendar day of the month has a row, including days without movement,
+  and each row carries the balance at the close of that day.
 - Adding, editing, or deleting a transaction updates the affected month.
 - A month without transactions has an intentional empty state.
 - Negative projections are communicated without hiding the amount or using
   shame-based language.
+- The tier of a row is distinguishable without relying on hue.
+- The last row of the month is fully readable above the floating chrome.
 
 Validation:
 
@@ -402,17 +578,17 @@ bun run db:types
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e -- balance
+bun run test:e2e:local -- balance
 bun run build
 ```
 
 Proposed commit:
 
 ```text
-feat: add monthly balance projection
+feat: add the daily balance ledger
 ```
 
-### 6. Add recurring transactions
+### 9. Add recurring transactions
 
 Status: pending
 
@@ -456,7 +632,7 @@ Proposed commit:
 feat: add recurring transaction management
 ```
 
-### 7. Prepare the external beta
+### 10. Prepare the external beta
 
 Status: pending
 
@@ -522,7 +698,7 @@ chore: prepare finance PWA beta
 
 Invite external users only when all conditions below are observed:
 
-- [ ] Steps 1 through 7 are complete.
+- [ ] Steps 1 through 10 are complete.
 - [ ] Production and preview use isolated data environments.
 - [ ] RLS denial tests pass for every user-owned table.
 - [ ] Critical user paths pass on Android and iPhone.

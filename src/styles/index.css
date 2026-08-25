@@ -7,43 +7,73 @@
   --color-ink: var(--finance-ink);
   --color-ink-soft: var(--finance-ink-soft);
   --color-muted: var(--finance-muted);
+  --color-faint: var(--finance-faint);
   --color-line: var(--finance-line);
+  --color-line-strong: var(--finance-line-strong);
   --color-accent: var(--finance-accent);
   --color-accent-soft: var(--finance-accent-soft);
   --color-accent-ink: var(--finance-accent-ink);
+  --color-accent-contrast: var(--finance-accent-contrast);
   --color-coral: var(--finance-coral);
   --color-warning: var(--finance-warning);
   --color-warning-ink: var(--finance-warning-ink);
   --color-success: var(--finance-success);
   --color-income: var(--finance-income);
   --color-income-soft: var(--finance-income-soft);
+  --color-income-ink: var(--finance-income-ink);
   --color-expense: var(--finance-expense);
   --color-expense-soft: var(--finance-expense-soft);
+  --color-expense-ink: var(--finance-expense-ink);
   --font-sans: var(--finance-font-sans);
   --font-display: var(--finance-font-display);
 }
 
+/*
+ * Color values come from `legacy/finance-app/src/lib/designTokens.ts`, which is
+ * the shipped source of truth. The legacy name for each token is noted so the
+ * palette stays auditable against that file. Values that legacy does not
+ * express are derived with `color-mix` instead of inventing a new hex.
+ */
 :root {
   color-scheme: light;
-  --finance-canvas: #f3eee4;
-  --finance-panel: #fbf8f1;
-  --finance-subtle: #e9e2d6;
-  --finance-ink: #123c35;
-  --finance-ink-soft: #1b4b43;
-  --finance-muted: #5e6d67;
-  --finance-line: #d8d1c4;
-  --finance-accent: #c9f277;
-  --finance-accent-soft: #e3f8bd;
-  --finance-accent-ink: #37601f;
-  --finance-coral: #ee8d72;
-  --finance-warning: #f5cf77;
-  --finance-warning-ink: #5a3b00;
-  --finance-success: #3f8a63;
-  --finance-income: #2f7451;
-  --finance-income-soft: #dcecdf;
-  --finance-expense: #ad4d38;
-  --finance-expense-soft: #f6ddd6;
-  --finance-mark-accent: #c9f277;
+  --finance-canvas: #ffffff; /* bg */
+  --finance-panel: #f8fafa; /* surface */
+  --finance-subtle: #eef2f2; /* canvasBg */
+  --finance-ink: #1a2e35; /* text */
+  --finance-ink-soft: color-mix(
+    in srgb,
+    var(--finance-ink) 86%,
+    var(--finance-muted)
+  );
+  --finance-muted: #4a6269; /* mute */
+  --finance-faint: #93a3a7; /* faint */
+  --finance-line: #e8ebec; /* hair */
+  --finance-line-strong: #d4dcdb; /* hairStrong */
+  --finance-accent: #328f97; /* green */
+  --finance-accent-soft: #e3f4f2; /* greenTint */
+  /* The accent measures 3.81:1 on white, so small text needs a deeper step. */
+  --finance-accent-ink: color-mix(
+    in srgb,
+    var(--finance-accent) 85%,
+    var(--finance-ink)
+  );
+  --finance-accent-contrast: #ffffff; /* accentForeground */
+  --finance-coral: #bd413f; /* red */
+  --finance-warning: #ffeec5; /* amberBg */
+  /* Legacy `amber` #a06200 measures 4.31:1 on `amberBg`. The status banner sets
+     it at 14px, so it is deepened toward ink to clear 4.5:1. */
+  --finance-warning-ink: color-mix(in srgb, #a06200 85%, var(--finance-ink));
+  --finance-success: #2f6a4a; /* greenDeep */
+  --finance-income: #129868; /* entrada.dot */
+  --finance-income-soft: #dff5eb; /* entrada.bg */
+  --finance-income-ink: #0b593f; /* entrada.ink */
+  --finance-expense: #bf5317; /* saida.dot */
+  --finance-expense-soft: #ffe9dc; /* saida.bg */
+  --finance-expense-ink: #79320d; /* saida.ink */
+  /* The brand mark paints its plate with `currentColor`, which is always ink.
+     It keeps one accent in both schemes so the glyph stays legible on a plate
+     that inverts. */
+  --finance-mark-accent: #328f97;
   --finance-font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     'Segoe UI', sans-serif;
@@ -62,24 +92,29 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --finance-canvas: #0f1c19;
-    --finance-panel: #162622;
-    --finance-subtle: #22342f;
-    --finance-ink: #eef4e8;
-    --finance-ink-soft: #dce9d8;
-    --finance-muted: #a8b7b0;
-    --finance-line: #30443e;
-    --finance-accent: #c9f277;
-    --finance-accent-soft: #29412d;
-    --finance-accent-ink: #bde970;
-    --finance-coral: #bd705d;
-    --finance-warning: #e1b857;
-    --finance-warning-ink: #332300;
-    --finance-success: #77c39a;
-    --finance-income: #83d2a7;
-    --finance-income-soft: #1f3b2e;
-    --finance-expense: #ff9f86;
-    --finance-expense-soft: #44271f;
+    --finance-canvas: #0b1114;
+    --finance-panel: #131d21;
+    --finance-subtle: #080e11;
+    --finance-ink: #e0ede9;
+    --finance-muted: #a0bfba;
+    --finance-faint: #6f8884;
+    --finance-line: #1c2a2c;
+    --finance-line-strong: #2e4244;
+    --finance-accent: #8de5db;
+    --finance-accent-soft: #163230;
+    /* greenSoft. The light derivation would land next to the accent itself. */
+    --finance-accent-ink: #4f9b94;
+    --finance-accent-contrast: #0a100d;
+    --finance-coral: #ed756e;
+    --finance-warning: #42370d;
+    --finance-warning-ink: #baa44d; /* amber, already 4.77:1 on the fill */
+    --finance-success: #6ec89a; /* greenMid, so the status dot stays visible */
+    --finance-income: #1e8f68;
+    --finance-income-soft: #1d3d32;
+    --finance-income-ink: #ebfff6;
+    --finance-expense: #b15c2d;
+    --finance-expense-soft: #432a20;
+    --finance-expense-ink: #fff2ea;
     --finance-shadow: 0 24px 70px rgb(0 0 0 / 24%);
     --finance-shadow-strong: 0 32px 90px rgb(0 0 0 / 38%);
     --finance-shadow-button: 0 14px 32px rgb(0 0 0 / 24%);
@@ -124,7 +159,7 @@ button {
 
 ::selection {
   background: var(--finance-accent);
-  color: #123c35;
+  color: var(--finance-accent-contrast);
 }
 
 @media (prefers-reduced-motion: reduce) {
