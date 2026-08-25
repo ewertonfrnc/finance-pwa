@@ -1,6 +1,6 @@
 # Authentication flow implementation plan
 
-Status: in progress
+Status: completed on 2026-08-25
 
 Last reviewed: 2026-08-25
 
@@ -364,7 +364,11 @@ Implementation record (2026-08-25):
 
 ### 5. Verify environment isolation and close the feature
 
-Status: in progress
+Status: completed for feature delivery on 2026-08-25
+
+The code, local behavior, environment isolation, and preview recovery request
+were verified before merge. Hosted confirmation, anonymous RLS denial, final
+Netlify log review, and custom SMTP remain pre-beta checks under roadmap step 7. Their results are not implied by this completion status.
 
 Update:
 
@@ -440,7 +444,8 @@ Hosted configuration record (2026-08-25):
   were not application or Supabase failures and exposed no application
   credential.
 - Account confirmation on the Deploy Preview, anonymous RLS denial, and the
-  final Netlify log review remain open.
+  final Netlify log review were not observed before merge and moved to roadmap
+  step 7.
 
 Local verification record (2026-08-25):
 
@@ -467,7 +472,7 @@ docs: record authentication delivery
 
 ## Final merge gate
 
-- [ ] All five delivery steps have focused commits on `feat/authentication`.
+- [x] All five delivery steps have focused commits on `feat/authentication`.
 - [x] Local Auth email confirmation is enabled and covered through Mailpit.
 - [x] Auth state reaches the router only after initial session restoration.
 - [x] Logout and identity changes clear user-scoped query data.
@@ -476,8 +481,15 @@ docs: record authentication delivery
 - [x] Deploy Preview and production use separate Supabase projects.
 - [x] The complete local gate passes.
 - [x] The pull request receives a distinct Netlify Deploy Preview.
-- [ ] Hosted smoke results and remaining SMTP work are recorded.
-- [ ] The roadmap marks step 3 complete in the same pull request.
+- [x] Hosted smoke results and remaining SMTP work are recorded.
+- [x] The roadmap marks step 3 complete after pull request #4.
+
+## Deferred pre-beta checks
+
+- [ ] Complete account confirmation on an approved hosted origin.
+- [ ] Prove anonymous RLS denial against the hosted non-production project.
+- [ ] Review final Netlify build and runtime logs.
+- [ ] Configure custom SMTP before inviting external users.
 
 ## References
 
