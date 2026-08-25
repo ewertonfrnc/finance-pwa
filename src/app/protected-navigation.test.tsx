@@ -12,7 +12,10 @@ vi.mock('../features/auth/auth-service', () => ({
   signInWithEmail:
     vi.fn<(input: { email: string; password: string }) => Promise<unknown>>(),
   registerWithEmail: vi.fn<() => Promise<unknown>>(),
+  requestPasswordRecovery: vi.fn<() => Promise<unknown>>(),
+  signOutGlobally: vi.fn<() => Promise<void>>(),
   signOutLocally: vi.fn<() => Promise<void>>(),
+  updatePassword: vi.fn<() => Promise<void>>(),
 }))
 
 import type { ResolvedAuthSession } from '../features/auth/auth-session'
@@ -58,6 +61,7 @@ describe('protected navigation', () => {
       user: { email: 'user@example.com', id: 'user-a' },
     } as Session
     const router = createTestRouter('/login', {
+      isPasswordRecovery: false,
       session,
       status: 'authenticated',
     })
@@ -76,6 +80,7 @@ describe('protected navigation', () => {
       user: { email: 'user@example.com', id: 'user-a' },
     } as Session
     const router = createTestRouter('/register', {
+      isPasswordRecovery: false,
       session,
       status: 'authenticated',
     })
@@ -86,6 +91,45 @@ describe('protected navigation', () => {
       }),
     ).toBeVisible()
     expect(screen.queryByText('Crie sua conta.')).not.toBeInTheDocument()
+    expect(router.state.location.href).toBe('/app')
+  })
+
+  it('should keep a recovery session out of the authenticated app', async () => {
+    const session = {
+      user: { email: 'user@example.com', id: 'user-a' },
+    } as Session
+    const router = createTestRouter('/app', {
+      isPasswordRecovery: true,
+      session,
+      status: 'authenticated',
+    })
+
+    expect(
+      await screen.findByRole('heading', { name: 'Crie uma nova senha.' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Seu espaço financeiro começa aqui.',
+      }),
+    ).not.toBeInTheDocument()
+    expect(router.state.location.href).toBe('/auth/update-password')
+  })
+
+  it('should send an authenticated user away from password recovery', async () => {
+    const session = {
+      user: { email: 'user@example.com', id: 'user-a' },
+    } as Session
+    const router = createTestRouter('/forgot-password', {
+      isPasswordRecovery: false,
+      session,
+      status: 'authenticated',
+    })
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Seu espaço financeiro começa aqui.',
+      }),
+    ).toBeVisible()
     expect(router.state.location.href).toBe('/app')
   })
 })

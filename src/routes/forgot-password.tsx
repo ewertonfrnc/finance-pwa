@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import { RegisterPage } from '../features/auth/register-page'
+import { ForgotPasswordPage } from '../features/auth/forgot-password-page'
 
-export const Route = createFileRoute('/register')({
+export const Route = createFileRoute('/forgot-password')({
   beforeLoad: ({ context }) => {
     if (context.auth.status === 'authenticated') {
       throw redirect({
@@ -11,5 +11,5 @@ export const Route = createFileRoute('/register')({
       })
     }
   },
-  component: RegisterPage,
+  component: ForgotPasswordPage,
 })

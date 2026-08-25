@@ -10,6 +10,10 @@ export const Route = createFileRoute('/_authenticated')({
       })
     }
 
+    if (context.auth.isPasswordRecovery) {
+      throw redirect({ replace: true, to: '/auth/update-password' })
+    }
+
     return { session: context.auth.session }
   },
 })

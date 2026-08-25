@@ -38,6 +38,19 @@ describe('LoginPage', () => {
       'autocomplete',
       'current-password',
     )
+    expect(
+      screen.getByRole('link', { name: 'Esqueci minha senha' }),
+    ).toHaveAttribute('href', '/forgot-password')
+  })
+
+  it('should show a safe password replacement notice', () => {
+    render(
+      <LoginPage notice="password-updated" onSignedIn={vi.fn<() => void>()} />,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Senha alterada. Entre com sua nova senha.',
+    )
   })
 
   it('should submit trimmed email credentials and the requested internal path', async () => {

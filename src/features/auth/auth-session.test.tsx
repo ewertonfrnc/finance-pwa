@@ -30,11 +30,16 @@ function SessionProbe() {
   const auth = useAuthSession()
 
   return (
-    <p>
-      {auth.status === 'authenticated'
-        ? `${auth.status}:${auth.session.user.email}`
-        : auth.status}
-    </p>
+    <>
+      <p>
+        {auth.status === 'authenticated'
+          ? `${auth.status}:${auth.session.user.email}`
+          : auth.status}
+      </p>
+      {auth.status === 'authenticated' ? (
+        <p>{auth.isPasswordRecovery ? 'recovery' : 'standard'}</p>
+      ) : null}
+    </>
   )
 }
 
@@ -103,6 +108,34 @@ describe('AuthSessionProvider', () => {
     )
 
     expect(screen.getByText('authenticated:user-a@example.com')).toBeVisible()
+    expect(screen.getByText('standard')).toBeVisible()
+  })
+
+  it('should retain password recovery through user updates and token refreshes', () => {
+    renderSession()
+    const session = createSession('user-a', 'user-a@example.com')
+
+    act(() => emitAuthState('INITIAL_SESSION', session))
+    act(() => emitAuthState('PASSWORD_RECOVERY', session))
+
+    expect(screen.getByText('recovery')).toBeVisible()
+
+    act(() => emitAuthState('USER_UPDATED', session))
+    act(() => emitAuthState('TOKEN_REFRESHED', session))
+
+    expect(screen.getByText('recovery')).toBeVisible()
+  })
+
+  it('should clear password recovery when a different user signs in', () => {
+    renderSession()
+    const firstSession = createSession('user-a', 'user-a@example.com')
+    const secondSession = createSession('user-b', 'user-b@example.com')
+
+    act(() => emitAuthState('PASSWORD_RECOVERY', firstSession))
+    act(() => emitAuthState('SIGNED_IN', secondSession))
+
+    expect(screen.getByText('authenticated:user-b@example.com')).toBeVisible()
+    expect(screen.getByText('standard')).toBeVisible()
   })
 
   it('should preserve cached data for refreshes from the same user', () => {

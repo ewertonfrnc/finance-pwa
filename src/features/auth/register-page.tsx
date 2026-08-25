@@ -23,12 +23,12 @@ export function RegisterPage() {
     setErrorCopy(null)
 
     if (password.length < MINIMUM_PASSWORD_LENGTH) {
-      setErrorCopy(AUTH_ERROR_COPY.registrationWeakPassword)
+      setErrorCopy(AUTH_ERROR_COPY.weakPassword)
       return
     }
 
     if (password !== passwordConfirmation) {
-      setErrorCopy('As senhas não coincidem.')
+      setErrorCopy(AUTH_ERROR_COPY.passwordMismatch)
       return
     }
 

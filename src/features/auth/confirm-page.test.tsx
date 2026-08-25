@@ -23,6 +23,7 @@ function openConfirmation(
 describe('ConfirmPage', () => {
   it('should clean callback tokens before opening the authenticated app', async () => {
     const auth = {
+      isPasswordRecovery: false,
       session: {
         user: { email: 'user@example.com', id: 'user-a' },
       } as Session,

@@ -18,12 +18,14 @@ export function App() {
 function ResolvedAppRouter() {
   const auth = useAuthSession()
   const queryClient = useQueryClient()
-  const authIdentity =
-    auth.status === 'authenticated' ? auth.session.user.id : auth.status
+  const authRoutingState =
+    auth.status === 'authenticated'
+      ? `${auth.session.user.id}:${auth.isPasswordRecovery ? 'recovery' : 'standard'}`
+      : auth.status
 
   useEffect(() => {
-    if (authIdentity !== 'resolving') void router.invalidate()
-  }, [authIdentity])
+    if (authRoutingState !== 'resolving') void router.invalidate()
+  }, [authRoutingState])
 
   if (auth.status === 'resolving') return <SessionLoadingPage />
 

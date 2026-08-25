@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 
-import { getLoginErrorCopy } from './auth-errors'
+import { AUTH_ERROR_COPY, getLoginErrorCopy } from './auth-errors'
 import { AuthShell } from './auth-shell'
 import { signInWithEmail } from './auth-service'
 
@@ -31,11 +31,12 @@ export function resolveLoginDestination(
 }
 
 type LoginPageProps = {
+  notice?: 'password-updated'
   onSignedIn: (destination: string) => Promise<void> | void
   redirect?: unknown
 }
 
-export function LoginPage({ onSignedIn, redirect }: LoginPageProps) {
+export function LoginPage({ notice, onSignedIn, redirect }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errorCopy, setErrorCopy] = useState<string | null>(null)
@@ -62,6 +63,11 @@ export function LoginPage({ onSignedIn, redirect }: LoginPageProps) {
       eyebrow="Acesso"
       title="Entre na sua conta."
     >
+      {notice === 'password-updated' ? (
+        <output className="mb-5 block rounded-2xl border border-success/40 bg-success/10 px-4 py-3 text-sm font-medium text-ink">
+          {AUTH_ERROR_COPY.passwordUpdated}
+        </output>
+      ) : null}
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
           <label className="text-sm font-semibold text-ink" htmlFor="email">
@@ -83,9 +89,20 @@ export function LoginPage({ onSignedIn, redirect }: LoginPageProps) {
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-ink" htmlFor="password">
-            Senha
-          </label>
+          <div className="flex items-center justify-between gap-4">
+            <label
+              className="text-sm font-semibold text-ink"
+              htmlFor="password"
+            >
+              Senha
+            </label>
+            <a
+              className="text-sm font-semibold text-ink underline decoration-line decoration-2 underline-offset-4 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              href="/forgot-password"
+            >
+              Esqueci minha senha
+            </a>
+          </div>
           <input
             autoComplete="current-password"
             className="mt-2 min-h-12 w-full rounded-2xl border border-line bg-canvas px-4 text-base text-ink outline-none transition focus:border-accent-ink focus:ring-3 focus:ring-accent/35"

@@ -11,11 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
+import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,6 +26,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -51,57 +58,87 @@ const AuthConfirmRoute = AuthConfirmRouteImport.update({
   path: '/auth/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthUpdatePasswordRoute = AuthUpdatePasswordRouteImport.update({
+  id: '/auth/update-password',
+  path: '/auth/update-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/offline': typeof OfflineRoute
   '/register': typeof RegisterRoute
   '/app': typeof AuthenticatedAppRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/offline': typeof OfflineRoute
   '/register': typeof RegisterRoute
   '/app': typeof AuthenticatedAppRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/offline': typeof OfflineRoute
   '/register': typeof RegisterRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/offline' | '/register' | '/app' | '/auth/confirm'
+    | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/offline'
+    | '/register'
+    | '/app'
+    | '/auth/confirm'
+    | '/auth/update-password'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/offline' | '/register' | '/app' | '/auth/confirm'
+  to:
+    | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/offline'
+    | '/register'
+    | '/app'
+    | '/auth/confirm'
+    | '/auth/update-password'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/forgot-password'
     | '/login'
     | '/offline'
     | '/register'
     | '/_authenticated/app'
     | '/auth/confirm'
+    | '/auth/update-password'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   OfflineRoute: typeof OfflineRoute
   RegisterRoute: typeof RegisterRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
+  AuthUpdatePasswordRoute: typeof AuthUpdatePasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -118,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -155,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/update-password': {
+      id: '/auth/update-password'
+      path: '/auth/update-password'
+      fullPath: '/auth/update-password'
+      preLoaderRoute: typeof AuthUpdatePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -173,10 +224,12 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   OfflineRoute: OfflineRoute,
   RegisterRoute: RegisterRoute,
   AuthConfirmRoute: AuthConfirmRoute,
+  AuthUpdatePasswordRoute: AuthUpdatePasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

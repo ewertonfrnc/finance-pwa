@@ -1,34 +1,8 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 
+import { cleanAuthCallbackUrl, readAuthCallbackFailure } from './auth-callback'
 import type { ResolvedAuthSession } from './auth-session'
 import { AuthShell } from './auth-shell'
-
-const EXPIRED_CALLBACK_CODES = new Set(['flow_state_expired', 'otp_expired'])
-
-type ConfirmationFailure = 'denied' | 'expired' | 'invalid'
-
-function readCallbackParameters(url: URL) {
-  const fragment = new URLSearchParams(url.hash.replace(/^#/, ''))
-
-  return {
-    error: fragment.get('error') ?? url.searchParams.get('error'),
-    errorCode: fragment.get('error_code') ?? url.searchParams.get('error_code'),
-  }
-}
-
-function readConfirmationFailure(url: URL): ConfirmationFailure | null {
-  const { error, errorCode } = readCallbackParameters(url)
-
-  if (errorCode && EXPIRED_CALLBACK_CODES.has(errorCode)) return 'expired'
-  if (error === 'access_denied') return 'denied'
-  if (error || errorCode) return 'invalid'
-
-  return null
-}
-
-function cleanConfirmationUrl(url: URL) {
-  window.history.replaceState(window.history.state, '', url.pathname)
-}
 
 type ConfirmPageProps = {
   auth: ResolvedAuthSession
@@ -37,13 +11,15 @@ type ConfirmPageProps = {
 
 export function ConfirmPage({ auth, onConfirmed }: ConfirmPageProps) {
   const [callbackFailure] = useState(() =>
-    readConfirmationFailure(new URL(window.location.href)),
+    readAuthCallbackFailure(new URL(window.location.href)),
   )
   const confirmationSucceeded =
-    callbackFailure === null && auth.status === 'authenticated'
+    callbackFailure === null &&
+    auth.status === 'authenticated' &&
+    !auth.isPasswordRecovery
 
   useLayoutEffect(() => {
-    cleanConfirmationUrl(new URL(window.location.href))
+    cleanAuthCallbackUrl(new URL(window.location.href))
   }, [])
 
   useEffect(() => {

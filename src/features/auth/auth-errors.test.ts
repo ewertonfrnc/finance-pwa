@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   AUTH_ERROR_COPY,
   getLoginErrorCopy,
+  getPasswordRecoveryErrorCopy,
+  getPasswordUpdateErrorCopy,
   getRegistrationErrorCopy,
   isExistingAccountError,
 } from './auth-errors'
@@ -39,7 +41,7 @@ describe('registration error copy', () => {
     (code) => {
       expect(
         getRegistrationErrorCopy({ code, message: 'Provider detail' }),
-      ).toBe(AUTH_ERROR_COPY.registrationWeakPassword)
+      ).toBe(AUTH_ERROR_COPY.weakPassword)
     },
   )
 
@@ -48,7 +50,7 @@ describe('registration error copy', () => {
     (code) => {
       expect(
         getRegistrationErrorCopy({ code, message: 'Provider detail' }),
-      ).toBe(AUTH_ERROR_COPY.registrationRateLimit)
+      ).toBe(AUTH_ERROR_COPY.emailRateLimit)
     },
   )
 
@@ -74,5 +76,41 @@ describe('registration error copy', () => {
         message: 'User already registered',
       }),
     ).toBe(false)
+  })
+})
+
+describe('password recovery error copy', () => {
+  it.each(['over_email_send_rate_limit', 'over_request_rate_limit'])(
+    'should ask the visitor to wait for %s',
+    (code) => {
+      expect(
+        getPasswordRecoveryErrorCopy({
+          code,
+          message: 'Provider detail must stay hidden',
+        }),
+      ).toBe(AUTH_ERROR_COPY.emailRateLimit)
+    },
+  )
+
+  it.each(['validation_failed', 'weak_password'])(
+    'should explain the password minimum for %s',
+    (code) => {
+      expect(
+        getPasswordUpdateErrorCopy({
+          code,
+          message: 'Provider detail must stay hidden',
+        }),
+      ).toBe(AUTH_ERROR_COPY.weakPassword)
+    },
+  )
+
+  it('should hide unknown recovery failures', () => {
+    const error = {
+      code: 'unexpected_provider_failure',
+      message: 'Provider detail must stay hidden',
+    }
+
+    expect(getPasswordRecoveryErrorCopy(error)).toBe(AUTH_ERROR_COPY.generic)
+    expect(getPasswordUpdateErrorCopy(error)).toBe(AUTH_ERROR_COPY.generic)
   })
 })

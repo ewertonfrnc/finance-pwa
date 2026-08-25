@@ -4,23 +4,25 @@ const INVALID_LOGIN_CODES = new Set([
   'user_banned',
 ])
 
-const REGISTRATION_RATE_LIMIT_CODES = new Set([
+const EMAIL_RATE_LIMIT_CODES = new Set([
   'over_email_send_rate_limit',
   'over_request_rate_limit',
 ])
 
-const REGISTRATION_VALIDATION_CODES = new Set([
+const PASSWORD_VALIDATION_CODES = new Set([
   'validation_failed',
   'weak_password',
 ])
 
 export const AUTH_ERROR_COPY = {
+  emailRateLimit:
+    'Muitas tentativas em pouco tempo. Aguarde um pouco e tente novamente.',
   generic: 'Não foi possível concluir. Tente novamente.',
   invalidLogin: 'Email ou senha inválidos',
   logout: 'Não foi possível sair. Tente novamente.',
-  registrationRateLimit:
-    'Muitas tentativas em pouco tempo. Aguarde um pouco e tente novamente.',
-  registrationWeakPassword: 'Use uma senha com pelo menos 8 caracteres.',
+  passwordMismatch: 'As senhas não coincidem.',
+  passwordUpdated: 'Senha alterada. Entre com sua nova senha.',
+  weakPassword: 'Use uma senha com pelo menos 8 caracteres.',
 } as const
 
 function readAuthErrorCode(error: unknown) {
@@ -47,12 +49,12 @@ export function getLoginErrorCopy(error: unknown) {
 export function getRegistrationErrorCopy(error: unknown) {
   const code = readAuthErrorCode(error)
 
-  if (code && REGISTRATION_VALIDATION_CODES.has(code)) {
-    return AUTH_ERROR_COPY.registrationWeakPassword
+  if (code && PASSWORD_VALIDATION_CODES.has(code)) {
+    return AUTH_ERROR_COPY.weakPassword
   }
 
-  if (code && REGISTRATION_RATE_LIMIT_CODES.has(code)) {
-    return AUTH_ERROR_COPY.registrationRateLimit
+  if (code && EMAIL_RATE_LIMIT_CODES.has(code)) {
+    return AUTH_ERROR_COPY.emailRateLimit
   }
 
   return AUTH_ERROR_COPY.generic
@@ -60,4 +62,20 @@ export function getRegistrationErrorCopy(error: unknown) {
 
 export function isExistingAccountError(error: unknown) {
   return readAuthErrorCode(error) === 'user_already_exists'
+}
+
+export function getPasswordRecoveryErrorCopy(error: unknown) {
+  const code = readAuthErrorCode(error)
+
+  return code && EMAIL_RATE_LIMIT_CODES.has(code)
+    ? AUTH_ERROR_COPY.emailRateLimit
+    : AUTH_ERROR_COPY.generic
+}
+
+export function getPasswordUpdateErrorCopy(error: unknown) {
+  const code = readAuthErrorCode(error)
+
+  return code && PASSWORD_VALIDATION_CODES.has(code)
+    ? AUTH_ERROR_COPY.weakPassword
+    : AUTH_ERROR_COPY.generic
 }

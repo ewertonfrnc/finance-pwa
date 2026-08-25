@@ -7,6 +7,13 @@ const authMocks = vi.hoisted(() => ({
       data: { subscription: { unsubscribe: () => void } }
     }
   >(),
+  resetPasswordForEmail:
+    vi.fn<
+      (
+        email: string,
+        options: { redirectTo: string },
+      ) => Promise<{ data: object | null; error: unknown }>
+    >(),
   signInWithPassword: vi.fn<
     (input: { email: string; password: string }) => Promise<{
       data: { session?: Session | null }
@@ -23,17 +30,28 @@ const authMocks = vi.hoisted(() => ({
       error: unknown
     }>
   >(),
-  signOut: vi.fn<(input: { scope: 'local' }) => Promise<{ error: unknown }>>(),
+  signOut:
+    vi.fn<
+      (input: { scope: 'global' | 'local' }) => Promise<{ error: unknown }>
+    >(),
   unsubscribe: vi.fn<() => void>(),
+  updateUser: vi.fn<
+    (input: { password: string }) => Promise<{
+      data: { user: unknown }
+      error: unknown
+    }>
+  >(),
 }))
 
 vi.mock('../../lib/supabase/client', () => ({
   supabase: {
     auth: {
       onAuthStateChange: authMocks.onAuthStateChange,
+      resetPasswordForEmail: authMocks.resetPasswordForEmail,
       signInWithPassword: authMocks.signInWithPassword,
       signUp: authMocks.signUp,
       signOut: authMocks.signOut,
+      updateUser: authMocks.updateUser,
     },
   },
 }))
@@ -41,17 +59,22 @@ vi.mock('../../lib/supabase/client', () => ({
 import {
   observeAuthState,
   registerWithEmail,
+  requestPasswordRecovery,
   signInWithEmail,
+  signOutGlobally,
   signOutLocally,
+  updatePassword,
 } from './auth-service'
 
 describe('auth service', () => {
   beforeEach(() => {
     authMocks.onAuthStateChange.mockReset()
+    authMocks.resetPasswordForEmail.mockReset()
     authMocks.signInWithPassword.mockReset()
     authMocks.signUp.mockReset()
     authMocks.signOut.mockReset()
     authMocks.unsubscribe.mockReset()
+    authMocks.updateUser.mockReset()
   })
 
   it('should expose auth events and release the subscription', () => {
@@ -129,11 +152,61 @@ describe('auth service', () => {
     ).rejects.toBe(error)
   })
 
+  it('should request recovery with the callback from the current application origin', async () => {
+    authMocks.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null })
+
+    await requestPasswordRecovery({
+      email: 'user@example.com',
+      redirectTo: 'https://preview.example.com/auth/update-password',
+    })
+
+    expect(authMocks.resetPasswordForEmail).toHaveBeenCalledWith(
+      'user@example.com',
+      { redirectTo: 'https://preview.example.com/auth/update-password' },
+    )
+  })
+
+  it('should surface recovery request failures for safe copy mapping', async () => {
+    const error = {
+      code: 'over_email_send_rate_limit',
+      message: 'Provider detail',
+    }
+    authMocks.resetPasswordForEmail.mockResolvedValue({ data: null, error })
+
+    await expect(
+      requestPasswordRecovery({
+        email: 'user@example.com',
+        redirectTo: 'http://localhost/auth/update-password',
+      }),
+    ).rejects.toBe(error)
+  })
+
+  it('should update the current recovery session password', async () => {
+    authMocks.updateUser.mockResolvedValue({
+      data: { user: { id: 'user-a' } },
+      error: null,
+    })
+
+    await updatePassword('new-password-123')
+
+    expect(authMocks.updateUser).toHaveBeenCalledWith({
+      password: 'new-password-123',
+    })
+  })
+
   it('should limit ordinary logout to the current session', async () => {
     authMocks.signOut.mockResolvedValue({ error: null })
 
     await signOutLocally()
 
     expect(authMocks.signOut).toHaveBeenCalledWith({ scope: 'local' })
+  })
+
+  it('should revoke every refresh token after password replacement', async () => {
+    authMocks.signOut.mockResolvedValue({ error: null })
+
+    await signOutGlobally()
+
+    expect(authMocks.signOut).toHaveBeenCalledWith({ scope: 'global' })
   })
 })

@@ -22,6 +22,7 @@ type AnonymousAuthSession = {
 }
 
 type AuthenticatedAuthSession = {
+  isPasswordRecovery: boolean
   session: Session
   status: 'authenticated'
 }
@@ -49,7 +50,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   })
 
   useEffect(() => {
-    return observeAuthState((_event, session) => {
+    return observeAuthState((event, session) => {
       const nextUserId = session?.user.id ?? null
 
       if (
@@ -60,11 +61,20 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       }
 
       previousUserId.current = nextUserId
-      setState(
-        session
-          ? { session, status: 'authenticated' }
-          : { session: null, status: 'anonymous' },
-      )
+      setState((currentState) => {
+        if (!session) return { session: null, status: 'anonymous' }
+
+        const sameRecoveryUser =
+          currentState.status === 'authenticated' &&
+          currentState.isPasswordRecovery &&
+          currentState.session.user.id === session.user.id
+
+        return {
+          isPasswordRecovery: event === 'PASSWORD_RECOVERY' || sameRecoveryUser,
+          session,
+          status: 'authenticated',
+        }
+      })
     })
   }, [queryClient])
 
