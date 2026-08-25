@@ -148,6 +148,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overscroll-behavior-y: contain;
   background: var(--finance-canvas);
   color: var(--finance-ink);
 }
@@ -167,6 +168,11 @@ button {
 
 .finance-safe-bottom {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.finance-safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 ::selection {

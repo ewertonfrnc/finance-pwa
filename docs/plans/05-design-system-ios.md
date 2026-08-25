@@ -337,7 +337,7 @@ feat: adopt the finance typography scale
 
 ### 3. Set viewport, safe area, and scroll behavior
 
-Status: pending
+Status: complete
 
 Update:
 
@@ -369,11 +369,24 @@ bun run test
 bun run build
 ```
 
-Deferred and explicitly not claimed by this step: the real
-`black-translucent` status bar, the true safe-area insets, and the installed
-standalone presentation can only be observed on a physical iPhone. They belong
-to the device pass in roadmap step 10 and must not be reported as verified
-here.
+Observed locally on 2026-08-25 at 390 by 844: `/`, `/login`, `/offline`, an
+unknown route, and the authenticated `/app` had no horizontal overflow or
+clipped controls. With 47 px of simulated top inset and 34 px of simulated
+bottom inset, the header controls, primary action, and first transaction row
+remained visible. The computed vertical overscroll behavior was `contain`, and
+the viewport preserved zoom support.
+
+Physical iPhone captures supplied on 2026-08-25 show `/app` in Safari and as an
+installed standalone PWA. In both captures, the header clears the status bar
+and no horizontal content or control is clipped. The standalone capture fills
+the display without browser chrome. The Safari capture is scrolled farther down,
+so the eyebrow has moved under the sticky header; this is a scroll-position
+difference, not a safe-area regression.
+
+The static captures do not verify the `black-translucent` style in isolation,
+landscape horizontal insets, pinch zoom, the bottom safe inset with content
+anchored to the bottom, or physical rubber-band behavior. These checks remain in
+the roadmap step 10 device pass.
 
 Commit:
 
