@@ -303,7 +303,8 @@ is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 
-Status: in progress — mutation boundary completed locally on 2026-08-25
+Status: in progress — mutation boundary (`d6a1816`) and monthly transaction
+history delivered locally on 2026-08-25
 
 Branch: `feat/transactions`
 

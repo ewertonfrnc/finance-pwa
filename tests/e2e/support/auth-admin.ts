@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
 import { assertLoopbackUrl } from '../../../scripts/loopback-url'
+import type { Database } from '../../../src/lib/supabase/database.types'
 
-interface LocalAuthAdminOptions {
+export interface LocalAuthAdminOptions {
   apiUrl?: string
   serviceRoleKey?: string
 }
@@ -32,7 +33,7 @@ export function createLocalAuthAdminClient(
       process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY,
     )
 
-  return createClient(apiUrl.origin, serviceRoleKey, {
+  return createClient<Database>(apiUrl.origin, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,

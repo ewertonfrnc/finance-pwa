@@ -1,0 +1,137 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { Transaction } from './transaction-types'
+
+type PageResult = {
+  data: Transaction[] | null
+  error: unknown
+}
+
+const supabaseMocks = vi.hoisted(() => {
+  const pageResults: PageResult[] = []
+  const builder = {
+    abortSignal: vi.fn<(signal: AbortSignal) => Promise<PageResult>>(),
+    gte: vi.fn<(column: string, value: string) => unknown>(),
+    lt: vi.fn<(column: string, value: string) => unknown>(),
+    lte: vi.fn<(column: string, value: string) => unknown>(),
+    order:
+      vi.fn<(column: string, options: { ascending: boolean }) => unknown>(),
+    range: vi.fn<(from: number, to: number) => unknown>(),
+    select: vi.fn<(columns?: string) => unknown>(),
+  }
+
+  builder.select.mockReturnValue(builder)
+  builder.gte.mockReturnValue(builder)
+  builder.lt.mockReturnValue(builder)
+  builder.lte.mockReturnValue(builder)
+  builder.order.mockReturnValue(builder)
+  builder.range.mockReturnValue(builder)
+  builder.abortSignal.mockImplementation(async () => {
+    const result = pageResults.shift()
+
+    if (!result) throw new Error('Missing mocked Data API page.')
+
+    return result
+  })
+
+  return {
+    builder,
+    from: vi.fn<(table: string) => unknown>(() => builder),
+    pageResults,
+  }
+})
+
+vi.mock('../../lib/supabase/client', () => ({
+  supabase: { from: supabaseMocks.from },
+}))
+
+import { readMonthlyTransactions } from './transaction-service'
+
+function transaction(index: number): Transaction {
+  return {
+    amount_cents: index + 1,
+    created_at: `2026-08-25T12:${String(index % 60).padStart(2, '0')}:00Z`,
+    description: `Transaction ${index}`,
+    id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    kind: index % 2 === 0 ? 'income' : 'expense',
+    transaction_date: '2026-08-25',
+    updated_at: '2026-08-25T12:00:00Z',
+    user_id: 'user-a',
+  }
+}
+
+describe('transaction service', () => {
+  beforeEach(() => {
+    supabaseMocks.pageResults.length = 0
+    supabaseMocks.from.mockClear()
+
+    for (const mock of Object.values(supabaseMocks.builder)) mock.mockClear()
+  })
+
+  it('should read every ordered monthly page with the caller signal', async () => {
+    const transactions = Array.from({ length: 201 }, (_, index) =>
+      transaction(index),
+    )
+    supabaseMocks.pageResults.push(
+      { data: transactions.slice(0, 200), error: null },
+      { data: transactions.slice(200), error: null },
+    )
+    const signal = new AbortController().signal
+
+    await expect(
+      readMonthlyTransactions({ month: '2026-08', signal }),
+    ).resolves.toEqual(transactions)
+
+    expect(supabaseMocks.from).toHaveBeenCalledTimes(2)
+    expect(supabaseMocks.from).toHaveBeenCalledWith('transactions')
+    expect(supabaseMocks.builder.gte).toHaveBeenCalledWith(
+      'transaction_date',
+      '2026-08-01',
+    )
+    expect(supabaseMocks.builder.lt).toHaveBeenCalledWith(
+      'transaction_date',
+      '2026-09-01',
+    )
+    expect(supabaseMocks.builder.order.mock.calls).toEqual([
+      ['transaction_date', { ascending: false }],
+      ['created_at', { ascending: false }],
+      ['id', { ascending: false }],
+      ['transaction_date', { ascending: false }],
+      ['created_at', { ascending: false }],
+      ['id', { ascending: false }],
+    ])
+    expect(supabaseMocks.builder.range.mock.calls).toEqual([
+      [0, 199],
+      [200, 399],
+    ])
+    expect(supabaseMocks.builder.abortSignal).toHaveBeenCalledTimes(2)
+    expect(supabaseMocks.builder.abortSignal).toHaveBeenCalledWith(signal)
+  })
+
+  it('should use the supported final date for December 9999', async () => {
+    supabaseMocks.pageResults.push({ data: [], error: null })
+
+    await readMonthlyTransactions({
+      month: '9999-12',
+      signal: new AbortController().signal,
+    })
+
+    expect(supabaseMocks.builder.lte).toHaveBeenCalledWith(
+      'transaction_date',
+      '9999-12-31',
+    )
+    expect(supabaseMocks.builder.lt).not.toHaveBeenCalled()
+  })
+
+  it('should surface a provider failure for safe UI mapping', async () => {
+    const providerError = new Error('Provider detail')
+    supabaseMocks.pageResults.push({ data: null, error: providerError })
+
+    await expect(
+      readMonthlyTransactions({
+        month: '2026-08',
+        signal: new AbortController().signal,
+      }),
+    ).rejects.toBe(providerError)
+  })
+})

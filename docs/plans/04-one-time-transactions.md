@@ -275,7 +275,7 @@ the step; reuse and leave it running when it was already active.
 
 ### 1. Establish the transaction mutation boundary
 
-Status: completed locally on 2026-08-25
+Status: completed on 2026-08-25 in `d6a1816`
 
 Create:
 
@@ -336,15 +336,15 @@ Verification record (2026-08-25):
 - `bun run check`, `bunx tsc --noEmit`, and the local schema lint completed
   without errors.
 
-Commit:
+Delivered commit:
 
 ```text
-feat: add one-time transaction RPCs
+d6a1816 feat: add one-time transaction RPCs
 ```
 
 ### 2. Deliver the monthly transaction history
 
-Status: pending
+Status: done
 
 Create:
 
@@ -418,6 +418,22 @@ Commit:
 ```text
 feat: add monthly transaction history
 ```
+
+Verification record (2026-08-25):
+
+- 24 focused unit tests passed across calendar, money, service, page, and
+  protected-navigation coverage;
+- the real E2E (`auth-login` and `transactions-read`) passed on both the
+  desktop and mobile Chromium projects against local Auth and the local Data
+  API, covering RLS isolation between two accounts, month navigation, empty
+  state, a safe provider error with retry, and the offline-required state;
+- `bun run check`, `bunx tsc --noEmit`, and `bun run build` completed without
+  errors;
+- manual inspection against the local Supabase stack confirmed desktop dark
+  (1280 px) and mobile light (360 px) layouts: grouped-by-date rows, correct
+  BRL formatting, income/expense distinguished by icon and color (not color
+  alone), 44 px interactive targets, no horizontal overflow, and the
+  disabled "Adicionar" action with its next-step explanation.
 
 ### 3. Deliver one-time transaction creation
 

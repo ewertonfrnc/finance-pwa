@@ -15,6 +15,10 @@
   --color-warning: var(--finance-warning);
   --color-warning-ink: var(--finance-warning-ink);
   --color-success: var(--finance-success);
+  --color-income: var(--finance-income);
+  --color-income-soft: var(--finance-income-soft);
+  --color-expense: var(--finance-expense);
+  --color-expense-soft: var(--finance-expense-soft);
   --font-sans: var(--finance-font-sans);
   --font-display: var(--finance-font-display);
 }
@@ -35,6 +39,10 @@
   --finance-warning: #f5cf77;
   --finance-warning-ink: #5a3b00;
   --finance-success: #3f8a63;
+  --finance-income: #2f7451;
+  --finance-income-soft: #dcecdf;
+  --finance-expense: #ad4d38;
+  --finance-expense-soft: #f6ddd6;
   --finance-mark-accent: #c9f277;
   --finance-font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -45,6 +53,7 @@
   --finance-shadow: 0 24px 70px rgb(36 48 42 / 10%);
   --finance-shadow-strong: 0 32px 90px rgb(18 60 53 / 24%);
   --finance-shadow-button: 0 14px 32px rgb(18 60 53 / 18%);
+  --finance-shadow-subtle: 0 10px 30px rgb(36 48 42 / 7%);
   font-family: var(--finance-font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -67,9 +76,14 @@
     --finance-warning: #e1b857;
     --finance-warning-ink: #332300;
     --finance-success: #77c39a;
+    --finance-income: #83d2a7;
+    --finance-income-soft: #1f3b2e;
+    --finance-expense: #ff9f86;
+    --finance-expense-soft: #44271f;
     --finance-shadow: 0 24px 70px rgb(0 0 0 / 24%);
     --finance-shadow-strong: 0 32px 90px rgb(0 0 0 / 38%);
     --finance-shadow-button: 0 14px 32px rgb(0 0 0 / 24%);
+    --finance-shadow-subtle: 0 10px 30px rgb(0 0 0 / 18%);
   }
 }
 
@@ -98,6 +112,14 @@ a {
 
 button {
   cursor: pointer;
+}
+
+.finance-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.finance-safe-bottom {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
 ::selection {
