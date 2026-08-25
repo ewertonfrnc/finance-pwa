@@ -6,7 +6,13 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('../features/auth/auth-service', () => ({
+  signInWithEmail:
+    vi.fn<(input: { email: string; password: string }) => Promise<unknown>>(),
+  signOutLocally: vi.fn<() => Promise<void>>(),
+}))
 
 import type { ResolvedAuthSession } from '../features/auth/auth-session'
 import { routeTree } from '../routeTree.gen'
