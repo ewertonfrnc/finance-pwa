@@ -66,3 +66,23 @@ export async function deleteLocalAuthUser(
 
   if (error) throw error
 }
+
+export async function deleteLocalAuthUserByEmail(
+  email: string,
+  options?: LocalAuthAdminOptions,
+) {
+  const client = createLocalAuthAdminClient(options)
+  const { data, error } = await client.auth.admin.listUsers({ perPage: 1000 })
+
+  if (error) throw error
+
+  const user = data.users.find(
+    (candidate) => candidate.email?.toLowerCase() === email.toLowerCase(),
+  )
+
+  if (!user) return
+
+  const { error: deleteError } = await client.auth.admin.deleteUser(user.id)
+
+  if (deleteError) throw deleteError
+}

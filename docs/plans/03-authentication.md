@@ -233,6 +233,8 @@ Implementation record (2026-08-25):
 
 ### 3. Deliver registration and email confirmation
 
+Status: completed on 2026-08-25
+
 Create:
 
 - `src/features/auth/register-page.tsx` with email, password, password
@@ -277,6 +279,22 @@ Proposed commit:
 ```text
 feat: add account registration and confirmation
 ```
+
+Implementation record (2026-08-25):
+
+- Registration now validates the eight-character minimum and matching
+  passwords before calling Auth. It sends confirmation back to the initiating
+  origin and uses the same completion state when Supabase reports an existing
+  account.
+- The public confirmation route handles successful, expired, malformed, and
+  denied callbacks. It removes query and fragment data before paint, never
+  renders provider details, and replaces a confirmed callback with `/app`.
+- The local E2E created accounts through the form, captured the real GoTrue
+  email in Mailpit, followed the confirmation link, and reached `/app` in both
+  mobile and desktop Chromium. The full browser suite passed with 12 tests.
+- Registration and expired-confirmation screens were inspected at 360 by 800
+  and 1280 by 800 CSS pixels. All temporary users, Playwright artifacts,
+  preview processes, and local Supabase containers were removed.
 
 ### 4. Deliver password recovery and replacement
 

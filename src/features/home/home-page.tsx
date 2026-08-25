@@ -45,11 +45,10 @@ export function HomePage() {
           </p>
           <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
             <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-ink px-6 font-semibold text-canvas shadow-[var(--finance-shadow-button)] transition hover:-translate-y-0.5 hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              search={{ redirect: undefined }}
-              to="/login"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-ink px-6 font-semibold text-canvas shadow-(--finance-shadow-button) transition hover:-translate-y-0.5 hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              to="/register"
             >
-              Entrar na minha conta
+              Criar minha conta
             </Link>
             <a
               className="inline-flex min-h-12 items-center gap-2 px-2 font-semibold text-ink underline decoration-line decoration-2 underline-offset-4 transition hover:decoration-accent-ink focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
@@ -118,7 +117,7 @@ function MonthPreview() {
   return (
     <aside
       aria-label="Prévia da visão mensal"
-      className="relative mx-auto w-full max-w-lg rounded-[2.25rem] border border-white/10 bg-ink p-3 text-canvas shadow-[var(--finance-shadow-strong)]"
+      className="relative mx-auto w-full max-w-lg rounded-[2.25rem] border border-white/10 bg-ink p-3 text-canvas shadow-(--finance-shadow-strong)"
     >
       <div className="rounded-[1.7rem] border border-canvas/10 bg-ink-soft p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">

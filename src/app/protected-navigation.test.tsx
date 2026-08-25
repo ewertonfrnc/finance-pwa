@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('../features/auth/auth-service', () => ({
   signInWithEmail:
     vi.fn<(input: { email: string; password: string }) => Promise<unknown>>(),
+  registerWithEmail: vi.fn<() => Promise<unknown>>(),
   signOutLocally: vi.fn<() => Promise<void>>(),
 }))
 
@@ -67,6 +68,24 @@ describe('protected navigation', () => {
       }),
     ).toBeVisible()
     expect(screen.getByText('user@example.com')).toBeVisible()
+    expect(router.state.location.href).toBe('/app')
+  })
+
+  it('should send an authenticated user away from registration', async () => {
+    const session = {
+      user: { email: 'user@example.com', id: 'user-a' },
+    } as Session
+    const router = createTestRouter('/register', {
+      session,
+      status: 'authenticated',
+    })
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Seu espaço financeiro começa aqui.',
+      }),
+    ).toBeVisible()
+    expect(screen.queryByText('Crie sua conta.')).not.toBeInTheDocument()
     expect(router.state.location.href).toBe('/app')
   })
 })

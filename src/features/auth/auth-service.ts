@@ -26,6 +26,22 @@ export async function signInWithEmail(input: {
   return data.session
 }
 
+export async function registerWithEmail(input: {
+  email: string
+  emailRedirectTo: string
+  password: string
+}) {
+  const { data, error } = await supabase.auth.signUp({
+    email: input.email,
+    password: input.password,
+    options: { emailRedirectTo: input.emailRedirectTo },
+  })
+
+  if (error) throw error
+
+  return data
+}
+
 export async function signOutLocally() {
   const { error } = await supabase.auth.signOut({ scope: 'local' })
 

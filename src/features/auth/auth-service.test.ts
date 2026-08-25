@@ -13,6 +13,16 @@ const authMocks = vi.hoisted(() => ({
       error: unknown
     }>
   >(),
+  signUp: vi.fn<
+    (input: {
+      email: string
+      options: { emailRedirectTo: string }
+      password: string
+    }) => Promise<{
+      data: { session: Session | null; user: null }
+      error: unknown
+    }>
+  >(),
   signOut: vi.fn<(input: { scope: 'local' }) => Promise<{ error: unknown }>>(),
   unsubscribe: vi.fn<() => void>(),
 }))
@@ -22,6 +32,7 @@ vi.mock('../../lib/supabase/client', () => ({
     auth: {
       onAuthStateChange: authMocks.onAuthStateChange,
       signInWithPassword: authMocks.signInWithPassword,
+      signUp: authMocks.signUp,
       signOut: authMocks.signOut,
     },
   },
@@ -29,6 +40,7 @@ vi.mock('../../lib/supabase/client', () => ({
 
 import {
   observeAuthState,
+  registerWithEmail,
   signInWithEmail,
   signOutLocally,
 } from './auth-service'
@@ -37,6 +49,7 @@ describe('auth service', () => {
   beforeEach(() => {
     authMocks.onAuthStateChange.mockReset()
     authMocks.signInWithPassword.mockReset()
+    authMocks.signUp.mockReset()
     authMocks.signOut.mockReset()
     authMocks.unsubscribe.mockReset()
   })
@@ -77,6 +90,42 @@ describe('auth service', () => {
 
     await expect(
       signInWithEmail({ email: 'user@example.com', password: 'wrong-pass' }),
+    ).rejects.toBe(error)
+  })
+
+  it('should register with the callback from the current application origin', async () => {
+    const data = { session: null, user: null }
+    authMocks.signUp.mockResolvedValue({ data, error: null })
+
+    await expect(
+      registerWithEmail({
+        email: 'user@example.com',
+        emailRedirectTo: 'https://preview.example.com/auth/confirm',
+        password: 'password-123',
+      }),
+    ).resolves.toBe(data)
+    expect(authMocks.signUp).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      options: {
+        emailRedirectTo: 'https://preview.example.com/auth/confirm',
+      },
+      password: 'password-123',
+    })
+  })
+
+  it('should surface registration failures for safe copy mapping', async () => {
+    const error = { code: 'weak_password', message: 'Provider detail' }
+    authMocks.signUp.mockResolvedValue({
+      data: { session: null, user: null },
+      error,
+    })
+
+    await expect(
+      registerWithEmail({
+        email: 'user@example.com',
+        emailRedirectTo: 'http://localhost/auth/confirm',
+        password: 'short',
+      }),
     ).rejects.toBe(error)
   })
 
