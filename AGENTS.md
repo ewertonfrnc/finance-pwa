@@ -165,8 +165,14 @@ bunx supabase test db
 
 - [`docs/implementation-plan.md`](docs/implementation-plan.md) is the living
   implementation plan.
-- Mark a step complete in that file in the same pull request that completes the
-  step.
+- Keep detailed plans for multi-commit roadmap steps in `docs/plans/` and link
+  them from the living plan.
+- Retain completed detailed plans as decision and verification records. Mark
+  their final status and move unobserved release-only checks to the later gate
+  that owns them instead of deleting the plan or claiming they passed.
+- Mark a step complete in the same pull request when its runtime checks finish
+  before merge. If a hosted check finishes later, close the status in an
+  immediate documentation follow-up and preserve which checks were observed or
+  deferred.
 - Keep every plan step small enough for one focused, reviewable commit with an
   observable acceptance criterion.
-

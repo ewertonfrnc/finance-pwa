@@ -206,9 +206,13 @@ feat: establish Supabase data foundation
 
 ### 3. Add authentication and protected navigation
 
-Status: in progress
+Status: completed on 2026-08-25
 
-Branch: `feat/authentication`
+Delivery branch: `feat/authentication`
+
+Pull request: #4
+
+Merge commit: `9b2ea93`
 
 Detailed plan: [`docs/plans/03-authentication.md`](plans/03-authentication.md)
 
@@ -244,13 +248,13 @@ bun run build
 bunx supabase test db
 ```
 
-Proposed commit:
+Delivered pull request:
 
 ```text
-feat: add user authentication
+9b2ea93 Merge pull request #4 from ewertonfrnc/feat/authentication
 ```
 
-Progress (2026-08-25):
+Completion record (2026-08-25):
 
 - Delivery step 1 in the detailed plan is complete. Local Auth configuration,
   the documented contract, the credential-safe E2E launcher, loopback-only
@@ -263,18 +267,20 @@ Progress (2026-08-25):
 - Delivery step 4 is complete. Recovery uses an isolated recovery session,
   replaces the password, signs out globally, and verifies the new credential
   through the local Mailpit flow.
-- Delivery step 5 is in progress. Separate hosted Supabase projects and
-  contextual Netlify values are configured. The complete local gate passed
-  with 19 pgTAP checks, 85 Vitest tests, and 18 Playwright cases in mobile and
-  desktop Chromium. Pull request #4 received a distinct Netlify Deploy Preview;
-  a recovery request returned `200` from `finance-pwa-dev` and kept its callback
-  on the preview origin. Hosted confirmation, anonymous RLS denial, and the
-  final Netlify log review remain before closure.
+- Delivery step 5 closed the feature boundary. Separate hosted Supabase
+  projects and contextual Netlify values are configured. The complete local
+  gate passed with 19 pgTAP checks, 85 Vitest tests, and 18 Playwright cases in
+  mobile and desktop Chromium. Pull request #4 received a distinct Netlify
+  Deploy Preview; a recovery request returned `200` from `finance-pwa-dev` and
+  kept its callback on the preview origin.
+- Hosted account confirmation, anonymous RLS denial, the final Netlify log
+  review, and custom SMTP were not observed before merge. They remain explicit
+  pre-beta checks in step 7 and do not block transaction development.
 - Recovery mode now survives a provider remount. The local browser flow
   reloaded the cleaned password-update URL, rejected direct navigation to
   `/app`, replaced the password, and required the new credential.
 
-Delivered branch commits to date:
+Delivered branch commits:
 
 ```text
 4e6dafa test: prepare local authentication verification
@@ -289,6 +295,7 @@ ec72e53 feat: add password recovery
 97b3381 test: verify password recovery locally
 9271388 docs: record password recovery completion
 f19d588 feat: enhance authentication documentation and tests for recovery flow
+170d92c feat: persist password recovery across reloads
 ```
 
 Custom SMTP remains an external beta prerequisite. The hosted default mailer
@@ -444,7 +451,11 @@ Complete:
 
 - re-audit production and preview environment separation;
 - Netlify security and cache headers, including a restrictive CSP;
-- re-run the production Auth confirmation and password-reset flows;
+- configure custom SMTP and run the hosted confirmation and password-reset
+  flows;
+- verify anonymous RLS denial against the hosted non-production project;
+- review the final Netlify build and runtime logs for credential or payload
+  leaks;
 - RLS and RPC permission audit;
 - database backup procedure and a restore rehearsal using non-production data;
 - error monitoring without financial payloads;
@@ -461,6 +472,9 @@ Acceptance criteria:
 - Installed users receive a controlled update after a new deployment.
 - Account deletion removes or schedules removal of user-owned data according to
   the documented behavior.
+- Hosted confirmation and password recovery return to their own approved
+  origins and deliver through the configured SMTP provider.
+- Anonymous hosted requests cannot read user-owned financial rows.
 - The production commit is traceable to `main` and all required checks passed.
 
 Validation:
@@ -498,6 +512,9 @@ Invite external users only when all conditions below are observed:
 - [ ] RLS denial tests pass for every user-owned table.
 - [ ] Critical user paths pass on Android and iPhone.
 - [ ] Password reset and account deletion work.
+- [ ] Hosted confirmation and recovery work through custom SMTP.
+- [ ] Anonymous hosted requests fail against every user-owned table.
+- [ ] Netlify logs contain no credentials or financial payloads.
 - [ ] A backup exists and a restore has been rehearsed outside production.
 - [ ] The PWA update flow does not discard an in-progress form.
 - [ ] The current production deployment maps to a commit on `main`.
