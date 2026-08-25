@@ -1,8 +1,8 @@
 # Finance PWA implementation plan
 
-Status: proposed
+Status: in progress
 
-Last updated: 2026-08-24
+Last updated: 2026-08-25
 
 ## Outcome
 
@@ -78,9 +78,9 @@ has reached `main`.
 
 ### 1. Bootstrap the installable application
 
-Status: in progress — implementation complete, external verification pending
+Status: completed — accepted on 2026-08-25
 
-Branch: `chore/bootstrap-pwa`
+Delivery branches: `main`, `fix/pwa-icons`, and `feat/trajeto-brand-icon`
 
 Create:
 
@@ -105,7 +105,8 @@ Acceptance criteria:
 - Direct navigation to a client route returns the SPA rather than a Netlify 404.
 - The Netlify production site builds from `main` and a pull request receives a
   distinct Deploy Preview URL.
-- Chrome on Android and Safari on iPhone can add the site to the home screen.
+- Helium and Safari on a physical iPhone can install the site. A physical
+  Android check is deferred to the pre-beta device pass.
 
 Validation:
 
@@ -117,13 +118,15 @@ bun run test:e2e
 bun run build
 ```
 
-Proposed commit:
+Delivered commits and pull requests:
 
 ```text
-chore: bootstrap installable finance PWA
+9cc4137 chore: bootstrap installable finance PWA
+fd4edd2 Merge pull request #1 from ewertonfrnc/fix/pwa-icons
+c3a6710 Merge pull request #2 from ewertonfrnc/feat/trajeto-brand-icon
 ```
 
-Implementation record (2026-08-24):
+Implementation record (2026-08-25):
 
 - The application shell, PWA lifecycle, responsive themes, offline route,
   Netlify configuration, CI, tests, and architecture document are implemented.
@@ -133,14 +136,18 @@ Implementation record (2026-08-24):
 - Local production verification covers the 360 px and desktop layouts,
   manifest, icons, service-worker registration, explicit update prompt, and
   direct client-route navigation.
-- Completion still requires observing a production build from `main`, a
-  distinct Netlify Deploy Preview, and installation/update behavior on a
-  physical Android phone and iPhone. No site, deploy, branch, or commit was
-  created as part of the local bootstrap.
+- The Netlify production site builds from `main`. Installation works in Helium
+  and Safari on a physical iPhone; the iPhone also opens the app shell offline
+  and shows the online-only financial-data boundary.
+- The final symbol direction is `Trajeto`. Its favicon, in-app mark, Apple touch
+  icon, standard PWA icons, and maskable icon use the same one-color symbol.
+- The user accepted the bootstrap as complete on 2026-08-25 after confirming
+  the Trajeto build in Helium and Safari. A distinct Netlify Deploy Preview and
+  a physical Android install remain pre-beta checks and do not block step 2.
 
 ### 2. Establish the Supabase data boundary
 
-Status: pending
+Status: completed on 2026-08-25
 
 Branch: `feat/database-foundation`
 
@@ -177,7 +184,21 @@ bunx tsc --noEmit
 bun run build
 ```
 
-Proposed commit:
+Implementation record (2026-08-25):
+
+- The local Supabase configuration, deterministic seed, schema migration,
+  grants, RLS policies, idempotent starting-position RPC, pgTAP tests, typed
+  browser client, generated types, CI database gate, and finance rules are
+  implemented.
+- A real local Data API smoke created an authenticated user and starting
+  position. A matching retry returned the same row, a conflicting retry
+  returned `23505`, the owner saw one row, and anonymous access returned 401.
+- `20260825010000_database_foundation.sql` is applied to the linked
+  `finance-pwa-dev` project. A second dry-run reported no pending migrations,
+  the remote schema lint passed, generated `public` types matched the local
+  schema, and anonymous table and RPC requests returned 401.
+
+Commit:
 
 ```text
 feat: establish Supabase data foundation
