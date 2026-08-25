@@ -47,18 +47,14 @@ test('should create an account, confirm it from Mailpit, and open the app', asyn
   const message = await findMailpitMessageByRecipient(email)
   await page.goto(readMailpitMessageLink(message))
 
-  await expect(page).toHaveURL('/app')
-  await expect(
-    page.getByRole('heading', {
-      name: 'Seu espaço financeiro começa aqui.',
-    }),
-  ).toBeVisible()
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page).toHaveURL(/\/app\?month=\d{4}-\d{2}$/)
+  await expect(page.getByRole('heading', { name: 'Lançamentos' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
 
   const finalUrl = new URL(page.url())
   expect(finalUrl.origin).toBe('http://127.0.0.1:4173')
   expect(finalUrl.hash).toBe('')
-  expect(finalUrl.search).toBe('')
+  expect(finalUrl.search).toMatch(/^\?month=\d{4}-\d{2}$/)
 })
 
 test('should remove an expired callback error before showing a retry path', async ({

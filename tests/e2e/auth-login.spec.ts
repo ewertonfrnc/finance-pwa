@@ -75,14 +75,14 @@ test('should protect the app, restore login, reject external redirects, and log 
 
   await expect(page).toHaveURL(/\/app\?month=\d{4}-\d{2}$/)
   await expect(page.getByRole('heading', { name: 'Lançamentos' })).toBeVisible()
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
 
   const authenticatedAppUrl = page.url()
 
   await page.reload()
 
   await expect(page).toHaveURL(authenticatedAppUrl)
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
   expect(
     await page.evaluate(() =>
       Boolean(
@@ -95,7 +95,7 @@ test('should protect the app, restore login, reject external redirects, and log 
   await page.goto('/login')
 
   await expect(page).toHaveURL(authenticatedAppUrl)
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Sair' }).click()
 
@@ -105,7 +105,7 @@ test('should protect the app, restore login, reject external redirects, and log 
   await expect(
     page.getByRole('heading', { name: 'Entre na sua conta.' }),
   ).toBeVisible()
-  await expect(page.getByText(email)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Sair' })).toHaveCount(0)
 
   await page.goBack()
 

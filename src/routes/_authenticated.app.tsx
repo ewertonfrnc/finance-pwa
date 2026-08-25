@@ -30,7 +30,6 @@ function AuthenticatedAppRoute() {
 
   return (
     <AuthenticatedAppPage
-      email={session.user.email ?? 'Email não disponível'}
       month={selectedMonth}
       onMonthChange={(month) =>
         void navigate({ search: { month }, to: '/app' })

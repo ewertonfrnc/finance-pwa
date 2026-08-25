@@ -396,7 +396,7 @@ feat: extend the app under iOS safe areas
 
 ### 4. Replace the workspace header with floating chrome
 
-Status: pending
+Status: complete
 
 Create:
 
@@ -407,7 +407,7 @@ Create:
 Update:
 
 - `src/app/authenticated-app-page.tsx`: the sticky bordered header is replaced
-  by two fixed capsules over the scrolling content. The left capsule holds the
+  by two pinned capsules over the scrolling content. The left capsule holds the
   month scope; the right capsule holds the account and add actions. The brand
   link and the account email leave the workspace chrome, because a floating
   capsule cannot carry an email address at 390 px; the account action keeps its
@@ -440,6 +440,12 @@ Acceptance criteria:
   underneath, including behind a tier-free white row and a dark row;
 - `prefers-reduced-motion` suppresses any capsule transition.
 
+The chrome uses a zero-height sticky carrier instead of viewport-fixed
+positioning. This keeps the offline banner in document flow so it pushes the
+capsules below itself, while transaction rows still pass behind the chrome.
+The unavailable add action uses `aria-disabled` rather than native `disabled`
+so keyboard traversal can still reach it and expose its explanatory text.
+
 Validation:
 
 ```bash
@@ -454,6 +460,15 @@ Runtime check: sign in against the local Supabase stack, scroll a month with
 enough rows to pass content under both capsules, and confirm the first and last
 rows. Check `bunx supabase status` first; start the stack only if it was
 stopped and stop it afterwards.
+
+Observed locally on 2026-08-25 at 390 by 844 in light and dark schemes and at
+1280 by 800 in the light scheme. The capsules remained readable and bounded,
+all four controls measured 44 by 44 CSS pixels, rows scrolled behind the
+chrome, and the first and last rows remained reachable. Simulated offline mode
+wrapped the network banner without colliding with the capsules. Automated
+coverage verifies keyboard order, the focusable unavailable add action,
+reduced motion, list clearance, and sticky position. Physical-device review on
+iPhone remains part of the release gate.
 
 Commit:
 

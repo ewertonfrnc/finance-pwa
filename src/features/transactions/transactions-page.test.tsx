@@ -115,7 +115,6 @@ describe('TransactionsPage', () => {
         name: 'Nenhum lançamento neste mês.',
       }),
     ).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Adicionar' })).toBeDisabled()
   })
 
   it('should hide provider details and retry a failed read', async () => {

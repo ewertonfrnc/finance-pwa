@@ -80,7 +80,7 @@ describe('protected navigation', () => {
     expect(
       await screen.findByRole('heading', { name: 'Lançamentos' }),
     ).toBeVisible()
-    expect(screen.getByText('user@example.com')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Sair' })).toBeVisible()
     expect(router.state.location.href).toBe(
       `/app?month=${getLocalCurrentMonth()}`,
     )

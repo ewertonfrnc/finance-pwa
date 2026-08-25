@@ -22,22 +22,24 @@ describe('AuthenticatedAppPage', () => {
     appMocks.signOutLocally.mockReset()
   })
 
-  it('should compose month navigation, account context, and logout', async () => {
+  it('should compose month navigation, workspace actions, and logout', async () => {
     const onMonthChange = vi.fn<(month: string) => void>()
     appMocks.signOutLocally.mockResolvedValue(undefined)
     render(
       <AuthenticatedAppPage
-        email="user@example.com"
         month="2026-08"
         onMonthChange={onMonthChange}
         userId="user-a"
       />,
     )
 
-    expect(screen.getByText('user@example.com')).toBeVisible()
     expect(
       screen.getByRole('heading', { name: 'Agosto de 2026' }),
     ).toBeVisible()
+    const addButton = screen.getByRole('button', { name: 'Adicionar' })
+    expect(addButton).toHaveAttribute('aria-disabled', 'true')
+    addButton.focus()
+    expect(addButton).toHaveFocus()
 
     fireEvent.click(screen.getByRole('button', { name: 'Mês anterior' }))
     expect(onMonthChange).toHaveBeenCalledWith('2026-07')
@@ -55,7 +57,6 @@ describe('AuthenticatedAppPage', () => {
     )
     render(
       <AuthenticatedAppPage
-        email="user@example.com"
         month="2026-08"
         onMonthChange={() => undefined}
         userId="user-a"

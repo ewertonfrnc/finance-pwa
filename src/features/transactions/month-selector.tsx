@@ -14,7 +14,7 @@ export function MonthSelector({ month, onMonthChange }: MonthSelectorProps) {
   const nextMonth = shiftTransactionMonth(month, 1)
 
   return (
-    <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-1">
+    <div className="flex min-w-0 items-center">
       <button
         aria-label="Mês anterior"
         className="grid size-11 place-items-center rounded-full text-ink transition hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-35"
@@ -27,7 +27,7 @@ export function MonthSelector({ month, onMonthChange }: MonthSelectorProps) {
         <ChevronIcon direction="left" />
       </button>
 
-      <h1 className="truncate text-center text-lg font-semibold tracking-tight text-ink sm:text-xl">
+      <h1 className="min-w-0 truncate px-1 text-center text-sm font-semibold tracking-tight text-ink sm:px-2 sm:text-base">
         {formatTransactionMonth(month)}
       </h1>
 

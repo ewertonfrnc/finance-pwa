@@ -20,34 +20,19 @@ export function TransactionsPage({ month, userId }: TransactionsPageProps) {
   return (
     <section
       aria-labelledby="transaction-history-title"
-      className="mx-auto w-full max-w-3xl px-4 pt-6 sm:px-6 sm:pt-8"
+      className="mx-auto w-full max-w-3xl px-4 pt-[calc(env(safe-area-inset-top)+5.5rem)] pb-[calc(env(safe-area-inset-bottom)+5.5rem)] sm:px-6"
       id="transaction-history"
     >
-      <div className="flex items-end justify-between gap-4 px-1">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-accent-ink">
-            Histórico mensal
-          </p>
-          <h2
-            className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl"
-            id="transaction-history-title"
-          >
-            Lançamentos
-          </h2>
-        </div>
-
-        <button
-          aria-describedby="transaction-create-availability"
-          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-canvas opacity-50"
-          disabled
-          type="button"
+      <div className="px-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-accent-ink">
+          Histórico mensal
+        </p>
+        <h2
+          className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl"
+          id="transaction-history-title"
         >
-          <PlusIcon />
-          Adicionar
-        </button>
-        <span className="sr-only" id="transaction-create-availability">
-          O cadastro de lançamentos estará disponível na próxima etapa.
-        </span>
+          Lançamentos
+        </h2>
       </div>
 
       <div className="relative mt-5">
@@ -152,19 +137,6 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
         Tentar novamente
       </button>
     </section>
-  )
-}
-
-function PlusIcon() {
-  return (
-    <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-      <path
-        d="M12 5v14M5 12h14"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
   )
 }
 
