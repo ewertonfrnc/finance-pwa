@@ -31,6 +31,13 @@ test('should create an account, confirm it from Mailpit, and open the app', asyn
     page.getByRole('heading', { name: 'Crie sua conta.' }),
   ).toBeVisible()
 
+  await page.evaluate(() => navigator.serviceWorker.ready)
+  const offlineReadyAction = page.getByRole('button', { name: 'Entendi' })
+  await offlineReadyAction
+    .waitFor({ state: 'visible', timeout: 2_000 })
+    .catch(() => undefined)
+  if (await offlineReadyAction.isVisible()) await offlineReadyAction.click()
+
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Senha', { exact: true }).fill(password)
   await page.getByLabel('Confirme a senha').fill(password)

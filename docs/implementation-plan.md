@@ -2,7 +2,7 @@
 
 Status: in progress
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 ## Outcome
 
@@ -315,8 +315,8 @@ is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 
-Status: in progress — mutation boundary (`d6a1816`) and monthly transaction
-history delivered locally on 2026-08-25
+Status: in progress — steps 1 and 2 are delivered locally; transaction
+creation is next
 
 Branch: `feat/transactions`
 
@@ -384,9 +384,9 @@ Deploying or creating real financial data requires explicit user authorization.
 
 ### 5. Adopt the design system and the iOS shell
 
-Status: pending
+Status: completed on 2026-08-26
 
-Branch: `chore/design-system`
+Delivery branch: `feat/transactions`
 
 Detailed plan:
 [`docs/plans/05-design-system-ios.md`](plans/05-design-system-ios.md)
@@ -410,7 +410,9 @@ Acceptance criteria:
   light and dark, with no dark text on the teal accent fill.
 - Monetary amounts render in the monospace face and align on the decimal
   separator; every other string renders in the platform font.
-- No source file outside `src/styles/index.css` contains a color literal.
+- No component or TypeScript source outside `src/styles/index.css` contains a
+  color literal. `index.html` duplicates the light and dark canvas values for
+  `theme-color` metadata.
 - The month control and the account actions float over the scrolling list, and
   neither the first nor the last row is ever covered.
 - Every control keeps its accessible name, a 44 by 44 CSS pixel target, and a
@@ -422,8 +424,27 @@ Validation:
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e
+bun run test:e2e:local
 bun run build
+```
+
+Implementation record, 2026-08-26:
+
+- the legacy color roles, system UI typography, subsetted monetary font, iOS
+  safe areas, scroll behavior, and floating workspace chrome are implemented;
+- the production route matrix covered the five existing routes at 390 by 844
+  and 1280 by 800 in light and dark without horizontal overflow;
+- authenticated runtime checks used local Supabase Auth and Data API fixtures;
+- physical checks specific to the new floating capsules and the remaining
+  iOS and Android cases stay assigned to the step 10 device pass.
+
+Delivered commits:
+
+```text
+23b76b9 feat: adopt the finance color system
+b87af58 feat: adopt the finance typography scale
+a85ce0c feat: extend the app under iOS safe areas
+4b1a3a2 feat: float the workspace chrome over the ledger
 ```
 
 Proposed commit:

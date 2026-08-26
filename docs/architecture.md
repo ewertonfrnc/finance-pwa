@@ -106,6 +106,30 @@ Tailwind CSS v4 runs through its Vite plugin. Semantic CSS custom properties in
 `src/styles/index.css` define the light and dark palettes, while components use
 those tokens instead of embedding theme colors.
 
+## Styling boundary
+
+`src/styles/index.css` owns application color literals. Its `--finance-*`
+custom properties map the shipped legacy palette to semantic roles and expose
+those roles to Tailwind through `@theme inline`. Components consume classes
+such as `bg-panel`, `text-ink`, and `text-expense-ink`; they do not repeat
+palette values. Derived states use `color-mix()` from existing tokens instead
+of adding component-specific colors. `index.html` duplicates the light and
+dark canvas values only for `theme-color` metadata, which cannot consume CSS
+custom properties.
+
+The application UI uses the platform system font. Monetary values alone use a
+4,660-byte JetBrains Mono subset containing the currency punctuation, signs,
+and digits that the product renders. Vite fingerprints the font because it
+lives under `src/assets/`, and `index.html` preloads that same generated asset.
+
+The authenticated workspace uses two small translucent capsules in a
+zero-height sticky carrier. The month scope stays on the left and account and
+add actions stay on the right while transaction rows scroll behind them. The
+carrier remains in document flow so the network banner pushes the controls
+down instead of colliding with them. The page reserves top and bottom space for
+the capsules plus the respective safe-area insets, and `.finance-safe-x`
+protects horizontal controls in an inset viewport.
+
 ## Authentication boundary
 
 `src/features/auth/auth-service.ts` is the only feature boundary that calls

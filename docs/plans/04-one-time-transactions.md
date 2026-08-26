@@ -2,7 +2,9 @@
 
 Status: in implementation
 
-Last reviewed: 2026-08-25
+Last reviewed: 2026-08-26
+
+Next step: 3. Deliver one-time transaction creation
 
 Revised: 2026-08-25, after the design system decisions in
 [`05-design-system-ios.md`](05-design-system-ios.md)
@@ -474,8 +476,8 @@ Update:
 - `src/app/providers.tsx` to provide the unsaved-change boundary;
 - `src/app/pwa-update-prompt.tsx`, `pwa-update-dialog.tsx`, and their tests so
   an update cannot reload a dirty form;
-- the monthly page add action to preserve its selected month when opening the
-  form.
+- `src/app/authenticated-app-page.tsx` to turn the disabled floating add action
+  into a link that preserves the selected month when opening the form.
 
 Acceptance criteria:
 

@@ -1,14 +1,14 @@
 # Design system and iOS shell implementation plan
 
-Status: planned
+Status: complete
 
-Last reviewed: 2026-08-25
+Last reviewed: 2026-08-26
 
 Roadmap step: 5
 
 Planning branch: `chore/plan-design-system`
 
-Delivery branch: `chore/design-system`
+Delivery branch: `feat/transactions`
 
 ## Outcome
 
@@ -108,20 +108,20 @@ Two exceptions require call sites to change:
 
 ### Measured contrast
 
-Ratios below are computed from the hex values against the light surface they
-sit on. Re-verify each with a contrast checker during implementation; do not
-treat this table as observed.
+The ratios below were recalculated on 2026-08-25 with the WCAG relative
+luminance formula. The accent ink row uses the browser-resolved result of the
+delivered `color-mix()`, not the approximate hex from the original plan.
 
-| Pair                                       | Ratio  | Verdict                                              |
-| ------------------------------------------ | ------ | ---------------------------------------------------- |
-| Current `#c9f277` fill on `#f3eee4` canvas | 1.10:1 | Fill is invisible; cannot carry state                |
-| `#328f97` accent on `#ffffff`              | 3.81:1 | Graphical objects only, fails small text             |
-| `#2c7f86` accent-ink on `#ffffff`          | 4.68:1 | Safe for small text                                  |
-| `#123c35` ink on `#328f97` fill            | 3.20:1 | Fails; this pair exists today at `home-page.tsx:132` |
-| `#129868` income dot on `#ffffff`          | 3.67:1 | Chip fill only, fails as numerals                    |
-| `#0b593f` income ink on `#ffffff`          | 8.35:1 | Safe for numerals                                    |
-| `#bf5317` expense dot on `#ffffff`         | 4.70:1 | Safe, but reserved for the chip                      |
-| `#79320d` expense ink on `#ffffff`         | —      | Verify; expected well above 4.5:1                    |
+| Pair                                       | Ratio  | Verdict                                  |
+| ------------------------------------------ | ------ | ---------------------------------------- |
+| Retired `#c9f277` fill on `#f3eee4` canvas | 1.10:1 | Fill is invisible; cannot carry state    |
+| `#328f97` accent on `#ffffff`              | 3.81:1 | Graphical objects only, fails small text |
+| Resolved accent-ink on `#ffffff`           | 4.58:1 | Safe for small text                      |
+| Retired `#123c35` ink on `#328f97` fill    | 3.20:1 | Fails; replaced by accent-contrast       |
+| `#129868` income dot on `#ffffff`          | 3.67:1 | Chip fill only, fails as numerals        |
+| `#0b593f` income ink on `#ffffff`          | 8.35:1 | Safe for numerals                        |
+| `#bf5317` expense dot on `#ffffff`         | 4.70:1 | Safe, but reserved for the chip          |
+| `#79320d` expense ink on `#ffffff`         | 9.23:1 | Safe for numerals                        |
 
 ### Expense orange and danger red are different colors
 
@@ -204,7 +204,7 @@ passes.
 
 ### 1. Replace the color token layer
 
-Status: implemented; full route matrix pending
+Status: completed on 2026-08-25 in `23b76b9`
 
 Update:
 
@@ -234,8 +234,12 @@ Acceptance criteria:
   fill;
 - monetary amounts in the transaction list use the ink-level color and remain
   distinguishable between income and expense without relying on the sign alone;
-- `git grep -nE '#[0-9a-fA-F]{3,8}' -- src ':!src/styles/index.css' ':!src/lib/supabase/database.types.ts'` returns nothing, which is true before this
-  step and must remain true after it;
+- a color-literal audit finds no colors in components or TypeScript source
+  outside `src/styles/index.css` and generated database types. `index.html`
+  duplicates the two canvas values for `theme-color` metadata, which cannot
+  consume CSS custom properties. The broad hex grep also matches two Auth test
+  URL fragments beginning with `#access_token`; those inspected matches are
+  not CSS colors;
 - no test changes are required, because no accessible name or structure moves.
 
 Validation:
@@ -250,6 +254,12 @@ bun run build
 Runtime check: serve the production build and inspect the five routes above at
 both widths in both schemes. Stop the server afterwards.
 
+Observed locally on 2026-08-25 in the production build. `/`, `/login`,
+`/offline`, an unknown route, and authenticated `/app` rendered at 390 by 844
+and 1280 by 800 in both schemes without horizontal overflow, clipped content,
+or dark text on a teal fill. The authenticated route used the real local Auth
+and Data API with two transaction fixtures.
+
 Commit:
 
 ```text
@@ -258,7 +268,7 @@ feat: adopt the finance color system
 
 ### 2. Replace the typography layer
 
-Status: complete
+Status: completed on 2026-08-25 in `b87af58`
 
 Create:
 
@@ -337,7 +347,7 @@ feat: adopt the finance typography scale
 
 ### 3. Set viewport, safe area, and scroll behavior
 
-Status: complete
+Status: completed on 2026-08-25 in `a85ce0c`
 
 Update:
 
@@ -396,7 +406,7 @@ feat: extend the app under iOS safe areas
 
 ### 4. Replace the workspace header with floating chrome
 
-Status: complete
+Status: completed on 2026-08-25 in `4b1a3a2`
 
 Create:
 
@@ -478,7 +488,7 @@ feat: float the workspace chrome over the ledger
 
 ### 5. Close the design system step
 
-Status: pending
+Status: complete
 
 Update:
 
@@ -503,8 +513,31 @@ Validation:
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e
+bun run test:e2e:local
 bun run build
+```
+
+Verification record, 2026-08-26:
+
+- the production route matrix covered all five routes at 390 by 844 and 1280
+  by 800 in light and dark, with no horizontal overflow;
+- `/app` resolved ordinary text to the system UI stack and amounts to the
+  fingerprinted 4,660-byte JetBrains Mono subset;
+- the month controls, logout, and add action each measured 44 by 44 CSS pixels;
+- the full unit suite, local Playwright suite, static checks, type check, and
+  production build passed;
+- physical iPhone captures verify the safe-area shell before the floating
+  chrome change. The floating capsules, landscape insets, pinch zoom, bottom
+  inset with bottom-anchored content, physical rubber-band behavior, and
+  Android installation remain in the roadmap step 10 device pass.
+
+Delivered commits:
+
+```text
+23b76b9 feat: adopt the finance color system
+b87af58 feat: adopt the finance typography scale
+a85ce0c feat: extend the app under iOS safe areas
+4b1a3a2 feat: float the workspace chrome over the ledger
 ```
 
 Commit:
