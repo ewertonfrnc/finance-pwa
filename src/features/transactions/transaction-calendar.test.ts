@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest'
 import type { Transaction } from './transaction-types'
 import {
   formatTransactionDate,
+  formatTransactionDateFootnote,
   formatTransactionMonth,
   getDefaultTransactionDate,
   getLocalCurrentMonth,
   getMonthBounds,
+  getTransactionMonth,
   groupTransactionsByDate,
   isTransactionMonth,
   shiftTransactionMonth,
@@ -85,5 +87,52 @@ describe('transaction calendar', () => {
     expect(formatTransactionDate('2026-08-25')).toBe(
       'Terça-feira, 25 de agosto',
     )
+  })
+
+  it('should derive the calendar month of a date-only value', () => {
+    expect(getTransactionMonth('2026-08-25')).toBe('2026-08')
+    expect(() => getTransactionMonth('2026-13-01')).toThrow(
+      'Invalid transaction date: 2026-13-01',
+    )
+  })
+
+  describe('formatTransactionDateFootnote', () => {
+    const today = new Date(2026, 7, 26, 10)
+
+    it('should echo today with its weekday', () => {
+      expect(formatTransactionDateFootnote('2026-08-26', today)).toBe(
+        'Hoje · quarta-feira',
+      )
+    })
+
+    it('should read yesterday as a relative day', () => {
+      expect(formatTransactionDateFootnote('2026-08-25', today)).toBe(
+        'Terça-feira, 25 de agosto · ontem',
+      )
+    })
+
+    it('should read tomorrow as a relative day', () => {
+      expect(formatTransactionDateFootnote('2026-08-27', today)).toBe(
+        'Quinta-feira, 27 de agosto · amanhã',
+      )
+    })
+
+    it('should read a few days ahead in days', () => {
+      expect(formatTransactionDateFootnote('2026-08-31', today)).toBe(
+        'Segunda-feira, 31 de agosto · em 5 dias',
+      )
+    })
+
+    it('should read a past month in calendar months', () => {
+      expect(formatTransactionDateFootnote('2026-03-26', today)).toBe(
+        'Quinta-feira, 26 de março · há 5 meses',
+      )
+    })
+
+    it('should read a future month in calendar months', () => {
+      expect(formatTransactionDateFootnote('2027-01-26', today)).toBe(
+        'Terça-feira, 26 de janeiro · em 5 meses',
+      )
+    })
   })
 })

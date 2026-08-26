@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { GlassCapsule } from '../components/glass-capsule'
@@ -45,29 +46,28 @@ export function AuthenticatedAppPage({
               <MonthSelector month={month} onMonthChange={onMonthChange} />
             </GlassCapsule>
 
-            <GlassCapsule className="pointer-events-auto flex shrink-0 items-center">
-              <button
-                aria-label={isPending ? 'Saindo...' : 'Sair'}
-                className="grid size-11 place-items-center rounded-full text-ink transition hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-50"
-                disabled={isPending}
-                onClick={handleLogout}
-                type="button"
-              >
-                <LogoutIcon />
-              </button>
-              <button
-                aria-describedby="transaction-create-availability"
-                aria-disabled="true"
+            <div className="flex shrink-0 items-center gap-2">
+              <GlassCapsule className="pointer-events-auto">
+                <button
+                  aria-label={isPending ? 'Saindo...' : 'Sair'}
+                  className="grid size-11 place-items-center rounded-full text-muted transition hover:bg-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-50"
+                  disabled={isPending}
+                  onClick={handleLogout}
+                  type="button"
+                >
+                  <LogoutIcon />
+                </button>
+              </GlassCapsule>
+
+              <Link
                 aria-label="Adicionar"
-                className="grid size-11 place-items-center rounded-full text-ink opacity-50 transition hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                type="button"
+                className="pointer-events-auto grid size-11 place-items-center rounded-full bg-ink text-canvas shadow-(--finance-shadow-subtle) transition hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                search={{ month }}
+                to="/app/transactions/new"
               >
                 <PlusIcon />
-              </button>
-              <span className="sr-only" id="transaction-create-availability">
-                O cadastro de lançamentos estará disponível na próxima etapa.
-              </span>
-            </GlassCapsule>
+              </Link>
+            </div>
           </div>
 
           {errorCopy ? (

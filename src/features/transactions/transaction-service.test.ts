@@ -38,14 +38,23 @@ const supabaseMocks = vi.hoisted(() => {
     builder,
     from: vi.fn<(table: string) => unknown>(() => builder),
     pageResults,
+    rpc: vi.fn<
+      (
+        fn: string,
+        args: unknown,
+      ) => Promise<{ data: Transaction | null; error: unknown }>
+    >(),
   }
 })
 
 vi.mock('../../lib/supabase/client', () => ({
-  supabase: { from: supabaseMocks.from },
+  supabase: { from: supabaseMocks.from, rpc: supabaseMocks.rpc },
 }))
 
-import { readMonthlyTransactions } from './transaction-service'
+import {
+  createTransaction,
+  readMonthlyTransactions,
+} from './transaction-service'
 
 function transaction(index: number): Transaction {
   return {
@@ -64,6 +73,7 @@ describe('transaction service', () => {
   beforeEach(() => {
     supabaseMocks.pageResults.length = 0
     supabaseMocks.from.mockClear()
+    supabaseMocks.rpc.mockClear()
 
     for (const mock of Object.values(supabaseMocks.builder)) mock.mockClear()
   })
@@ -131,6 +141,67 @@ describe('transaction service', () => {
       readMonthlyTransactions({
         month: '2026-08',
         signal: new AbortController().signal,
+      }),
+    ).rejects.toBe(providerError)
+  })
+})
+
+describe('createTransaction', () => {
+  beforeEach(() => {
+    supabaseMocks.rpc.mockClear()
+  })
+
+  it('should call the create_transaction RPC with the typed arguments', async () => {
+    const persisted = transaction(0)
+    supabaseMocks.rpc.mockResolvedValue({ data: persisted, error: null })
+
+    await expect(
+      createTransaction({
+        amountCents: 5000,
+        description: 'Mercado',
+        id: persisted.id,
+        kind: 'expense',
+        transactionDate: '2026-08-25',
+      }),
+    ).resolves.toEqual(persisted)
+
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith('create_transaction', {
+      p_amount_cents: 5000,
+      p_description: 'Mercado',
+      p_id: persisted.id,
+      p_kind: 'expense',
+      p_transaction_date: '2026-08-25',
+    })
+  })
+
+  it('should send an empty description instead of null', async () => {
+    supabaseMocks.rpc.mockResolvedValue({ data: transaction(0), error: null })
+
+    await createTransaction({
+      amountCents: 5000,
+      description: null,
+      id: '00000000-0000-4000-8000-000000000000',
+      kind: 'income',
+      transactionDate: '2026-08-25',
+    })
+
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith(
+      'create_transaction',
+      expect.objectContaining({ p_description: '' }),
+    )
+  })
+
+  it('should surface a provider failure for safe UI mapping', async () => {
+    const providerError = { code: '23505', message: 'transaction_id_conflict' }
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: providerError })
+
+    await expect(
+      createTransaction({
+        amountCents: 5000,
+        description: null,
+        id: '00000000-0000-4000-8000-000000000000',
+        kind: 'income',
+        transactionDate: '2026-08-25',
       }),
     ).rejects.toBe(providerError)
   })

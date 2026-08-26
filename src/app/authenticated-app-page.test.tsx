@@ -1,3 +1,10 @@
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -17,6 +24,35 @@ vi.mock('../features/transactions/transactions-page', () => ({
 
 import { AuthenticatedAppPage } from './authenticated-app-page'
 
+async function renderPage(
+  onMonthChange: (month: string) => void = () => undefined,
+) {
+  const rootRoute = createRootRoute()
+  const appRoute = createRoute({
+    component: () => (
+      <AuthenticatedAppPage
+        month="2026-08"
+        onMonthChange={onMonthChange}
+        userId="user-a"
+      />
+    ),
+    getParentRoute: () => rootRoute,
+    path: '/app',
+  })
+  const transactionCreateRoute = createRoute({
+    component: () => <h1>Novo lançamento</h1>,
+    getParentRoute: () => rootRoute,
+    path: '/app/transactions/new',
+  })
+  const router = createRouter({
+    history: createMemoryHistory({ initialEntries: ['/app'] }),
+    routeTree: rootRoute.addChildren([appRoute, transactionCreateRoute]),
+  })
+
+  render(<RouterProvider router={router} />)
+  await screen.findByRole('heading', { name: 'Agosto de 2026' })
+}
+
 describe('AuthenticatedAppPage', () => {
   beforeEach(() => {
     appMocks.signOutLocally.mockReset()
@@ -25,19 +61,16 @@ describe('AuthenticatedAppPage', () => {
   it('should compose month navigation, workspace actions, and logout', async () => {
     const onMonthChange = vi.fn<(month: string) => void>()
     appMocks.signOutLocally.mockResolvedValue(undefined)
-    render(
-      <AuthenticatedAppPage
-        month="2026-08"
-        onMonthChange={onMonthChange}
-        userId="user-a"
-      />,
-    )
+    await renderPage(onMonthChange)
 
     expect(
       screen.getByRole('heading', { name: 'Agosto de 2026' }),
     ).toBeVisible()
-    const addButton = screen.getByRole('button', { name: 'Adicionar' })
-    expect(addButton).toHaveAttribute('aria-disabled', 'true')
+    const addButton = screen.getByRole('link', { name: 'Adicionar' })
+    expect(addButton).toHaveAttribute(
+      'href',
+      '/app/transactions/new?month=2026-08',
+    )
     addButton.focus()
     expect(addButton).toHaveFocus()
 
@@ -55,13 +88,7 @@ describe('AuthenticatedAppPage', () => {
     appMocks.signOutLocally.mockRejectedValue(
       new Error('Provider detail must stay hidden'),
     )
-    render(
-      <AuthenticatedAppPage
-        month="2026-08"
-        onMonthChange={() => undefined}
-        userId="user-a"
-      />,
-    )
+    await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
 

@@ -171,6 +171,74 @@ export function formatTransactionDate(value: string) {
   )
 }
 
+export function getTransactionMonth(date: string): TransactionMonth {
+  const parts = readDateParts(date)
+
+  if (!parts) throw new Error(`Invalid transaction date: ${date}`)
+
+  return `${pad(parts.year, 4)}-${pad(parts.month)}`
+}
+
+const weekdayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' })
+const relativeTimeFormatter = new Intl.RelativeTimeFormat('pt-BR', {
+  numeric: 'auto',
+})
+
+function monthDifference(
+  from: { month: number; year: number },
+  to: { month: number; year: number },
+) {
+  return to.year * 12 + to.month - (from.year * 12 + from.month)
+}
+
+export function formatTransactionDateFootnote(
+  date: string,
+  today = new Date(),
+) {
+  const parts = readDateParts(date)
+
+  if (!parts) throw new Error(`Invalid transaction date: ${date}`)
+
+  const todayParts = {
+    day: today.getDate(),
+    month: today.getMonth() + 1,
+    year: today.getFullYear(),
+  }
+
+  if (
+    parts.day === todayParts.day &&
+    parts.month === todayParts.month &&
+    parts.year === todayParts.year
+  ) {
+    const weekday = weekdayFormatter.format(
+      createLocalDate(parts.year, parts.month, parts.day),
+    )
+    return `Hoje · ${weekday}`
+  }
+
+  // Compare local noon instants so the day count never shifts across a DST
+  // transition between the two dates.
+  const dayDifference = Math.round(
+    (createLocalDate(parts.year, parts.month, parts.day).getTime() -
+      createLocalDate(
+        todayParts.year,
+        todayParts.month,
+        todayParts.day,
+      ).getTime()) /
+      86_400_000,
+  )
+
+  const relative =
+    Math.abs(dayDifference) <= 29
+      ? relativeTimeFormatter.format(dayDifference, 'day')
+      : relativeTimeFormatter.format(
+          monthDifference(todayParts, parts),
+          'month',
+        )
+
+  return `${formatTransactionDate(date)} · ${relative}`
+}
+
 function daysInMonth(year: number, month: number) {
   if (month === 2) {
     const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)

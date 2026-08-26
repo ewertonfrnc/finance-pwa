@@ -18,6 +18,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
+import { Route as AuthenticatedAppTransactionsNewRouteImport } from './routes/_authenticated.app_.transactions.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +64,12 @@ const AuthUpdatePasswordRoute = AuthUpdatePasswordRouteImport.update({
   path: '/auth/update-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppTransactionsNewRoute =
+  AuthenticatedAppTransactionsNewRouteImport.update({
+    id: '/app_/transactions/new',
+    path: '/app/transactions/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/app/transactions/new': typeof AuthenticatedAppTransactionsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +91,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/app/transactions/new': typeof AuthenticatedAppTransactionsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +104,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/_authenticated/app_/transactions/new': typeof AuthenticatedAppTransactionsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth/confirm'
     | '/auth/update-password'
+    | '/app/transactions/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth/confirm'
     | '/auth/update-password'
+    | '/app/transactions/new'
   id:
     | '__root__'
     | '/'
@@ -128,6 +140,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/auth/confirm'
     | '/auth/update-password'
+    | '/_authenticated/app_/transactions/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,15 +219,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthUpdatePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app_/transactions/new': {
+      id: '/_authenticated/app_/transactions/new'
+      path: '/app/transactions/new'
+      fullPath: '/app/transactions/new'
+      preLoaderRoute: typeof AuthenticatedAppTransactionsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedAppTransactionsNewRoute: typeof AuthenticatedAppTransactionsNewRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedAppTransactionsNewRoute: AuthenticatedAppTransactionsNewRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

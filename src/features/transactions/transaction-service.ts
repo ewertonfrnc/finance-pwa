@@ -1,6 +1,10 @@
 import { supabase } from '../../lib/supabase/client'
 import { getMonthBounds } from './transaction-calendar'
-import type { Transaction, TransactionMonth } from './transaction-types'
+import type {
+  Transaction,
+  TransactionKind,
+  TransactionMonth,
+} from './transaction-types'
 
 const monthlyPageSize = 200
 
@@ -39,4 +43,30 @@ export async function readMonthlyTransactions({
 
     if (data.length < monthlyPageSize) return transactions
   }
+}
+
+export type CreateTransactionInput = {
+  amountCents: number
+  description: string | null
+  id: string
+  kind: TransactionKind
+  transactionDate: string
+}
+
+export async function createTransaction(
+  input: CreateTransactionInput,
+): Promise<Transaction> {
+  const { data, error } = await supabase.rpc('create_transaction', {
+    p_amount_cents: input.amountCents,
+    // The RPC normalizes with nullif(btrim(...), ''), so an empty string is
+    // equivalent to no description.
+    p_description: input.description ?? '',
+    p_id: input.id,
+    p_kind: input.kind,
+    p_transaction_date: input.transactionDate,
+  })
+
+  if (error) throw error
+
+  return data
 }

@@ -85,7 +85,7 @@ function EmptyState() {
         aconteceram.
       </p>
       <p className="mt-5 text-sm font-medium text-muted">
-        O cadastro será liberado na próxima etapa.
+        Use Adicionar para registrar a primeira entrada ou saída.
       </p>
     </section>
   )

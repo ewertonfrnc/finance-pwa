@@ -159,7 +159,7 @@ test('should read only the signed-in user monthly history across states', async 
   })
   const nextMonthButton = page.getByRole('button', { name: 'Próximo mês' })
   const logoutButton = page.getByRole('button', { name: 'Sair' })
-  const addButton = page.getByRole('button', { name: 'Adicionar' })
+  const addButton = page.getByRole('link', { name: 'Adicionar' })
 
   await page.evaluate(() => {
     if (document.activeElement instanceof HTMLElement) {
@@ -174,7 +174,10 @@ test('should read only the signed-in user monthly history across states', async 
   await expect(logoutButton).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(addButton).toBeFocused()
-  await expect(addButton).toHaveAttribute('aria-disabled', 'true')
+  await expect(addButton).toHaveAttribute(
+    'href',
+    '/app/transactions/new?month=2026-08',
+  )
 
   const chromeBounds = await previousMonthButton.boundingBox()
   const firstRowBounds = await page.getByText('Salário de agosto').boundingBox()
