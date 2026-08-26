@@ -551,6 +551,24 @@ Verification record, 2026-08-26:
   inset with bottom-anchored content, physical rubber-band behavior, and
   Android installation remain in the roadmap step 10 device pass.
 
+Follow-up, 2026-08-26. The token sweep missed two places, found while reviewing
+the installed app:
+
+- the manifest in `vite.config.ts` still carried `#f3eee4` and `#123c35`, the
+  retired canvas and ink. Both now read `#ffffff`, matching the light canvas and
+  the light `theme-color` meta. A manifest holds one value and cannot express a
+  `prefers-color-scheme` pair, so a dark-scheme launch shows a light screen
+  until the document loads and the meta takes over. Startup images per device
+  size are the only alternative and do not pay for themselves yet;
+- the PWA icon PNGs still carry the retired palette: `#123c35` tile with
+  `#c9f277` art in `pwa-192x192-v3.png`, `pwa-512x512-v3.png`, the maskable
+  variant, and `apple-touch-icon-v3.png`. The in-app `brand-mark.tsx` renders an
+  ink tile with `--finance-mark-accent`, so the installed symbol and the
+  in-product symbol are from different color systems. Regenerating them needs a
+  `-v4` cache-bust across the manifest and `index.html` plus a reinstall on a
+  device to prove the new icon replaced the cached one, so it earns its own
+  step rather than riding along here.
+
 Delivered commits:
 
 ```text
