@@ -151,7 +151,12 @@ export function TransactionForm({
   const dateFootnote = readDateFootnote(date)
 
   return (
-    <form className="min-h-svh bg-subtle" noValidate onSubmit={handleSubmit}>
+    <form
+      className="min-h-svh bg-subtle"
+      data-page-canvas="subtle"
+      noValidate
+      onSubmit={handleSubmit}
+    >
       <header className="finance-safe-top finance-safe-x sticky top-0 z-40 border-b border-line bg-subtle">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 px-4 py-2 sm:px-6">
           <button

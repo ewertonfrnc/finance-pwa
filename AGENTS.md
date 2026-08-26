@@ -33,6 +33,11 @@ effect of future and recurring transactions before spending.
   the same declaration. Write `tracking-tight`, not `tracking-[-0.025em]`, and
   `shadow-(--finance-shadow)`, not `shadow-[var(--finance-shadow)]`. Reserve
   bracket syntax for values the scale genuinely does not express.
+- Only the root element's background reaches the document canvas. A full-screen
+  surface must not paint its own page background: installed on iOS, `100svh`
+  falls short of the screen by the top safe-area inset, so the uncovered strip
+  above the home indicator exposes the canvas. Declare `data-page-canvas` and
+  let the `html:has(...)` rule in `src/styles/index.css` follow it.
 - Add Zustand only after a concrete shared client-state requirement appears.
   Do not use it for Supabase data or duplicate TanStack Query caches.
 - Organize code by feature. Keep route files thin and place business-facing UI,

@@ -149,8 +149,19 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overscroll-behavior-y: contain;
-  background: var(--finance-canvas);
   color: var(--finance-ink);
+}
+
+/*
+ * Installed on iOS, `100svh` measures the screen minus the top safe-area inset
+ * while `viewport-fit=cover` lays content out from the physical top, so a
+ * full-screen element stops short of the home indicator. Only the root
+ * element's background propagates to the document canvas, which always covers
+ * the whole screen and the overscroll bounce, so a page that needs a backdrop
+ * other than the canvas declares it here instead of painting it on itself.
+ */
+html:has([data-page-canvas='subtle']) {
+  background: var(--finance-subtle);
 }
 
 button,

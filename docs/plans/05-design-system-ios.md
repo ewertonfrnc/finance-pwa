@@ -398,6 +398,26 @@ landscape horizontal insets, pinch zoom, the bottom safe inset with content
 anchored to the bottom, or physical rubber-band behavior. These checks remain in
 the roadmap step 10 device pass.
 
+Correction observed on 2026-08-26, from the installed iPhone PWA. The deferred
+bottom-inset check failed on the first surface that exercised it. Standalone iOS
+measures `100svh` as the screen height minus the top safe-area inset while
+`viewport-fit=cover` lays content out from the physical top, so a `min-h-svh`
+element that paints its own background stops short of the home indicator by
+exactly that inset and leaves the document canvas showing. The strip measured
+about 61 pt against a top inset of about 61 pt.
+
+The shell now settles this instead of each page: `body` no longer repeats a
+background, because only the root element's background propagates to the
+document canvas, and the canvas is the one surface that covers the full screen
+and the overscroll bounce. A page needing a backdrop other than
+`--finance-canvas` declares `data-page-canvas`, and
+`html:has([data-page-canvas='subtle'])` follows it. Viewport units were not
+widened to `lvh` or `dvh`: neither covers the overscroll bounce, and `lvh` would
+overshoot the visible area in a Safari tab.
+
+The device confirmed the strip is gone. Rubber-band behavior, landscape insets,
+and pinch zoom stay deferred to the roadmap step 10 pass.
+
 Commit:
 
 ```text
