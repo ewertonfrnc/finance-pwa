@@ -28,6 +28,7 @@ import type { ResolvedAuthSession } from '../features/auth/auth-session'
 import { getLocalCurrentMonth } from '../features/transactions/transaction-calendar'
 import { routeTree } from '../routeTree.gen'
 import type { RouterContext } from './router-context'
+import { UnsavedChangesProvider } from './unsaved-changes'
 
 function createTestRouter(path: string, auth: ResolvedAuthSession) {
   const context: RouterContext = {
@@ -44,7 +45,9 @@ function createTestRouter(path: string, auth: ResolvedAuthSession) {
 
   render(
     <QueryClientProvider client={context.queryClient}>
-      <RouterProvider context={context} router={router} />
+      <UnsavedChangesProvider>
+        <RouterProvider context={context} router={router} />
+      </UnsavedChangesProvider>
     </QueryClientProvider>,
   )
 

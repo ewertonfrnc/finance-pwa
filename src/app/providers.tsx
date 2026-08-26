@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 
 import { AuthSessionProvider } from '../features/auth/auth-session'
 import { queryClient } from './query-client'
+import { UnsavedChangesProvider } from './unsaved-changes'
 
 type AppProvidersProps = {
   children: ReactNode
@@ -11,7 +12,9 @@ type AppProvidersProps = {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthSessionProvider>{children}</AuthSessionProvider>
+      <AuthSessionProvider>
+        <UnsavedChangesProvider>{children}</UnsavedChangesProvider>
+      </AuthSessionProvider>
     </QueryClientProvider>
   )
 }
