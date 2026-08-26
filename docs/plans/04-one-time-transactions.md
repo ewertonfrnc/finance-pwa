@@ -9,6 +9,9 @@ Next step: 3. Deliver one-time transaction creation
 Revised: 2026-08-25, after the design system decisions in
 [`05-design-system-ios.md`](05-design-system-ios.md)
 
+Revised: 2026-08-26, after the route nesting, submission identity, and form
+surface decisions recorded below
+
 Roadmap step: 4
 
 Planning branch: `chore/plan-transactions`
@@ -105,11 +108,28 @@ Exclude:
 | `delete_transaction` | `p_id uuid`, `p_expected_updated_at timestamptz`                                                                                                      | Deleted `transactions` row | Locks and version-checks the caller-owned row before deletion; missing and foreign IDs have the same result.                                     |
 
 `create_transaction` uses a browser-generated UUID instead of adding an
-idempotency table or column. The form retains the same UUID when retrying the
-same submitted payload after an ambiguous failure and creates a new UUID after
-the payload changes. Mutations have no automatic retry. This prevents the
-common duplicate caused by a committed request whose response was lost without
-adding a second persistence concept to the first beta.
+idempotency table or column. Mutations have no automatic retry. This prevents
+the common duplicate caused by a committed request whose response was lost
+without adding a second persistence concept to the first beta.
+
+The form decides that UUID by comparing submissions, not by counting them. It
+keeps the last submitted normalized payload — kind, `amount_cents`, the
+description after `nullif(btrim(...), '')`, and `transaction_date`, serialized
+with a fixed key order — next to the UUID that carried it. A submit whose
+payload equals that snapshot reuses its UUID. Any difference, and the absence
+of a previous submission, mints a new one. A successful create clears the
+snapshot.
+
+Three simpler rules were rejected for named failures. One UUID per mounted
+form, renewed only after success, is correct for a plain retry but sends the
+same ID with corrected content once the user fixes a rejected amount; the
+server answers `transaction_id_conflict` and the form has no recovery short of
+a reload. A UUID derived from a hash of the payload needs no state but denies a
+legitimate duplicate: two identical R$ 12,00 coffees on the same day with no
+description would collide. A fresh UUID per submit restores exactly the
+duplicate this contract exists to prevent. Snapshot comparison also settles the
+edit-and-revert case: a payload returned to its submitted value reuses the same
+UUID and stays idempotent.
 
 `update_transaction` and `delete_transaction` use the row's exact
 `updated_at` as an optimistic concurrency token. Each function selects the
@@ -193,10 +213,32 @@ confirmation open with the user's input intact.
 | `/app/transactions/new?month=YYYY-MM`   | Authenticated | Creates a one-time transaction in a full-page form.                       |
 | `/app/transactions/$transactionId/edit` | Authenticated | Loads an owned row, edits with version protection, and exposes delete.    |
 
+The form routes keep the URL under `/app` without inheriting its layout. Both
+carry the TanStack Router non-nesting suffix, so the create route file is
+`src/routes/_authenticated.app_.transactions.new.tsx`. They still inherit
+`_authenticated`, so the session guard is unchanged, and they deliberately do
+not inherit `_authenticated.app`, whose `beforeLoad` redirects to `/app` when
+`month` is absent and would push a user straight out of the form. Each form
+route validates its own optional `month` and falls back to the device-local
+current month in place instead of redirecting.
+
+Do not turn `/app` into a layout route with an `<Outlet />`. The form is a
+sheet with its own chrome, so a shared layout would have to hide the month and
+action capsules depending on which child rendered, which makes the workspace
+route aware of its children.
+
 The create route defaults to `expense`, zero centavos, and a date in the
 selected month. For the current month it uses today. For another month it uses
-the current day number clamped to that month's last day. The selected date is
-always visible before submission.
+the current day number clamped to that month's last day.
+
+The selected date is always visible before submission, and visible means
+readable. A footnote below the field echoes the date in words and its distance
+from today: `Hoje · quarta-feira`, or `Quarta-feira, 26 de março · há 5 meses`.
+`formatTransactionDate` already produces the weekday and day, so the distance
+is the only new calculation. This is what makes future dating legible, which is
+the differentiator of the product, and it is also the only thing that exposes
+the clamped default. Without it, opening the form from a month the user was
+merely browsing records a past date with no signal at all.
 
 Use a digit-driven money input like the existing mobile app: `inputMode="numeric"`
 stores a decimal digit string representing centavos and displays it with
@@ -205,10 +247,21 @@ centavo digits. Parsing uses string or `BigInt` comparison and converts to
 `number` only after the value is known to fit the documented safe integer
 range. Never divide by 100 in floating point to interpret or format the amount.
 
+The legacy quick-amount chips do not come to this product. The value control is
+the digit input and nothing else.
+
 The description is optional to match the database contract, visibly labelled
 as optional, and limited to 120 characters. An empty or whitespace-only value
-becomes `null`. The native `input[type='date']` owns date entry; the application
-validates its exact `YYYY-MM-DD` value without timezone conversion.
+becomes `null`. It sits directly below the value with a placeholder that
+invites an answer rather than a neutral label, because the history already
+falls back to `Saída sem descrição` and a month of unnamed rows stops answering
+what the screen exists to answer. The legacy application made the field
+mandatory; this one does not, since that contradicts the shipped schema and
+blocks fast one-handed entry. If real use produces mostly unnamed rows, that is
+the evidence that reopens the decision.
+
+The native `input[type='date']` owns date entry; the application validates its
+exact `YYYY-MM-DD` value without timezone conversion.
 
 Form state stays local. Do not add Zustand, React Hook Form, Zod, a component
 library, or an icon dependency. Small feature-owned SVGs are sufficient for
@@ -265,6 +318,72 @@ Two contract corrections that this branch owns:
   `description_too_long` failure at the server boundary;
 - monetary text uses the ink-level category token. The dot-level color that
   marks a chip does not carry enough contrast to be numerals.
+
+### Form surface
+
+Reviewed on 2026-08-26 against the delivered `/app` workspace and against
+`legacy/finance-app/src/components/transactions/TransactionForm.tsx`. What
+follows binds the form steps.
+
+**The confirm action stays in the top chrome, for a corrected reason.** The
+earlier justification was that an iOS keyboard pushes a bottom action off
+screen. That premise is weak on its own: the legacy application keeps its
+primary action in a footer outside the scroll view and lifts it with
+`KeyboardAvoidingView`, and the button is never occluded. The reason that holds
+is consistency with the sheet vocabulary adopted in
+[`05-design-system-ios.md`](05-design-system-ios.md), where a pushed screen
+confirms at the top right. Whether a bottom bar survives the keyboard in a
+standalone PWA is a measurement, not an assumption, and it belongs to the
+roadmap step 10 device pass, which also needs the answer for the ledger.
+
+Moving the primary action out of the thumb zone has a cost, and these four
+requirements pay it:
+
+- the confirm carries the word `Lançar`, never a bare checkmark. The design
+  system already took this rule from Calendar: a pill carries a word rather
+  than an unlabeled icon;
+- the confirm stays enabled while the form is editable. It is disabled only
+  while a mutation is pending or while offline, and in both cases a footnote
+  next to it says why. A control disabled because the value is still
+  `R$ 0,00` explains nothing, sits far from the field that caused it, and is
+  the most common dead end in this kind of form;
+- a rejected submit publishes the field error and moves focus to the first
+  invalid field. Client validation still keeps invalid payloads away from the
+  service, which is what the acceptance criterion requires; it does not require
+  a disabled button;
+- the value is the visual hero of the sheet body, in large numerals using the
+  monospace subset shipped in roadmap step 5. The top chrome cannot echo the
+  amount the way a full-width `Lançar R$ 50,00` bar could, so the number itself
+  has to be unmistakable directly above the numeric keyboard.
+
+**One footnote pattern serves three needs.** The date echo, the offline or
+pending explanation next to the confirm, and a one-line note under the type
+field describing what that type does to the balance are the same element: small
+text below a card, associated with its control through `aria-describedby`. The
+type note is carried over from the legacy `TYPE_MICROCOPY`, and it earns its
+place again in roadmap step 6, when four types make `diário` and `economia`
+ambiguous. This footnote is the piece worth factoring inside the transactions
+feature.
+
+**The sheet chrome is not a shared component.** It lives inside
+`transaction-form.tsx`, which the plan already defines as the surface both
+create and edit consume, so it has one implementation and two call sites
+without a new file under `src/components/`. The precedent is
+`src/components/glass-capsule.tsx`, extracted because it had two call sites in
+its own commit rather than in anticipation of a third. The delete action that
+roadmap step 4 adds to the edit chrome is a prop, not a second component. The
+inset grouped card is already expressed in `transaction-list.tsx`; repeating
+those classes in a field group is acceptable until a third surface needs them.
+
+**The account and add actions must stop being adjacent twins.** In the
+delivered `authenticated-app-page.tsx` both are 44 px icon-only siblings inside
+one capsule with no separation. Once add is enabled it becomes the most
+frequent action in the product, sitting flush against the one that ends the
+session, in the corner a thumb reaches worst. Separate them with distinct
+capsules or a divider, and give add the primary treatment against a quieter
+account control. Moving logout into an account menu marked with `⌄` is the
+eventual destination the design system already implies, and it is not required
+by this step.
 
 ## Delivery steps
 
@@ -453,22 +572,25 @@ Delivered commits:
 
 ### 3. Deliver one-time transaction creation
 
-Status: pending
+Status: completed on 2026-08-26
 
 Create:
 
 - `src/features/transactions/transaction-errors.ts` for safe Portuguese copy
   keyed by PostgreSQL code and stable RPC message;
 - `src/features/transactions/transaction-form-schema.ts` and unit tests for
-  kind, exact centavos, optional description, and date validation;
+  kind, exact centavos, optional description, and date validation, plus the
+  normalized payload serializer the submission snapshot compares;
 - `src/features/transactions/transaction-mutations.ts` for RPC create and
   focused month invalidation;
 - `src/features/transactions/transaction-form.tsx` and component tests for the
-  shared create/edit fields, accessible errors, pending state, and dirty state;
+  shared create/edit fields, the sheet chrome, the footnote helper, accessible
+  errors, pending state, and dirty state;
 - `src/features/transactions/create-transaction-page.tsx` and focused tests;
 - `src/app/unsaved-changes.tsx` for the form/PWA update boundary;
-- `src/routes/_authenticated.app.transactions.new.tsx` for
-  `/app/transactions/new`;
+- `src/routes/_authenticated.app_.transactions.new.tsx` for
+  `/app/transactions/new`, non-nested so it does not inherit the workspace
+  layout or its missing-month redirect;
 - `tests/e2e/transactions-create.spec.ts` for the real form-to-RPC path.
 
 Update:
@@ -476,22 +598,34 @@ Update:
 - `src/app/providers.tsx` to provide the unsaved-change boundary;
 - `src/app/pwa-update-prompt.tsx`, `pwa-update-dialog.tsx`, and their tests so
   an update cannot reload a dirty form;
-- `src/app/authenticated-app-page.tsx` to turn the disabled floating add action
-  into a link that preserves the selected month when opening the form.
+- `src/app/authenticated-app-page.tsx` and its test to turn the disabled
+  floating add action into a link that preserves the selected month, and to
+  stop the account and add actions from being adjacent identical targets;
+- `src/features/transactions/transaction-calendar.ts` and its test with the
+  distance-from-today wording the date footnote echoes.
 
 Acceptance criteria:
 
 - opening create from August initializes a visible, valid August date; the
   current month uses today and another month clamps today's day number;
+- the date footnote reads `Hoje` for today and states weekday and distance
+  otherwise, so a clamped default from a browsed month is visible before
+  submitting;
 - the value control starts at `R$ 0,00`, accepts digit input as centavos, and
   submits exactly `5000` for the visible `R$ 50,00`;
 - type, value, optional description, and calendar date have programmatic labels
   and visible error copy;
+- the confirm action carries the word `Lançar`, stays enabled while the form is
+  editable, and a rejected submit publishes the field error and moves focus to
+  the first invalid field rather than leaving a silently disabled control;
+- the account and add actions are no longer adjacent identical targets in one
+  capsule, and the add action reads as the primary one;
 - invalid, zero, or oversized amounts and invalid dates do not call the service;
 - while offline, the draft remains editable but submit is unavailable with a
   clear explanation;
 - one submit disables duplicate interaction; retrying an unchanged ambiguous
-  submission reuses its UUID, while changing the payload creates a new UUID;
+  submission reuses its UUID, changing the payload creates a new UUID, and a
+  payload edited back to the submitted value reuses the original UUID;
 - a successful create waits for the affected month to refetch, returns to that
   month, and the persisted row survives a browser reload;
 - provider errors keep every field intact and never expose raw backend text;
@@ -516,6 +650,30 @@ Commit:
 feat: add one-time transaction creation
 ```
 
+Verification record, 2026-08-26:
+
+- the full unit suite passed with 25 files and 175 tests, the local Playwright
+  `transactions-create` spec passed on desktop and mobile Chromium, and the
+  static checks, type check, and production build passed;
+- the installed iPhone PWA showed a white strip above the home indicator on
+  this form. Standalone iOS measures `100svh` as the screen minus the top
+  safe-area inset while `viewport-fit=cover` lays content out from the physical
+  top, so the only full-screen element that paints its own backdrop stopped
+  short by exactly that inset. The backdrop moved to the document canvas
+  through `html:has([data-page-canvas='subtle'])`, and the device confirmed the
+  strip is gone. `docs/plans/05-design-system-ios.md` step 3 owns the shell
+  side of that record;
+- with the numeric keyboard open on the device, the sheet chrome and its
+  `Lançar` action stayed visible above the keyboard accessory bar. That
+  observes the top-chrome decision under a real keyboard. Whether a
+  bottom-anchored action survives the same keyboard is still the roadmap step
+  10 measurement this plan's "Form surface" section defers;
+- the native iOS date picker opened as a popover over the form body without
+  being clipped by the field card.
+
+Not observed here: Android installation, landscape insets, and the offline
+submit state on a physical device. They stay in the roadmap step 10 pass.
+
 ### 4. Deliver conflict-safe transaction editing
 
 Status: pending
@@ -524,7 +682,7 @@ Create:
 
 - `src/features/transactions/edit-transaction-page.tsx` and focused tests for
   loading, not-found, failure, conflict, and success states;
-- `src/routes/_authenticated.app.transactions.$transactionId.edit.tsx` for
+- `src/routes/_authenticated.app_.transactions.$transactionId.edit.tsx` for
   `/app/transactions/$transactionId/edit`;
 - `tests/e2e/transactions-edit.spec.ts` for persisted editing, cross-month
   movement, and stale-version protection.
@@ -540,6 +698,20 @@ Update:
 - transaction rows so their accessible link opens the edit route;
 - the shared form so edit mode initializes from the server row and clears dirty
   state after successful save or explicit discard.
+
+Delivered by step 3, so this step consumes it instead of rebuilding it:
+
+- `transaction-form.tsx` already takes `initialValues`, `title`,
+  `confirmLabel`, `errorCopy`, `isPending`, `isSaved`, `onCancel`, and
+  `onSubmit`. Edit mode is a second call site, not a form rewrite;
+- the discard confirmation, the browser-unload guard, and the deferred
+  service-worker update reach the form through `useUnsavedChangesGuard` from
+  `src/app/unsaved-changes.tsx`, so edit inherits all three;
+- the form carries `data-page-canvas="subtle"`, so the edit route inherits the
+  corrected iOS backdrop without any route-level work;
+- the idempotent submission snapshot lives in `create-transaction-page.tsx` and
+  does not move into the form. Edit does not reuse it, because
+  `p_expected_updated_at` is what makes an edit retry safe.
 
 Acceptance criteria:
 
