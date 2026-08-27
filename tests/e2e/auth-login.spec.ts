@@ -38,7 +38,7 @@ test('should protect the app, restore login, reject external redirects, and log 
         verificationWindow.loginContentRendered = true
       }
 
-      if (visibleText?.includes('Seu espaço financeiro começa aqui.')) {
+      if (visibleText?.includes('Histórico mensal')) {
         verificationWindow.privateContentRendered = true
       }
     }).observe(document.documentElement, { childList: true, subtree: true })
@@ -73,18 +73,16 @@ test('should protect the app, restore login, reject external redirects, and log 
   await page.getByLabel('Senha').fill(password)
   await page.getByRole('button', { name: 'Entrar' }).click()
 
-  await expect(page).toHaveURL('/app')
-  await expect(
-    page.getByRole('heading', {
-      name: 'Seu espaço financeiro começa aqui.',
-    }),
-  ).toBeVisible()
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page).toHaveURL(/\/app\?month=\d{4}-\d{2}$/)
+  await expect(page.getByRole('heading', { name: 'Lançamentos' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+
+  const authenticatedAppUrl = page.url()
 
   await page.reload()
 
-  await expect(page).toHaveURL('/app')
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page).toHaveURL(authenticatedAppUrl)
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
   expect(
     await page.evaluate(() =>
       Boolean(
@@ -96,23 +94,23 @@ test('should protect the app, restore login, reject external redirects, and log 
 
   await page.goto('/login')
 
-  await expect(page).toHaveURL('/app')
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page).toHaveURL(authenticatedAppUrl)
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Sair' }).click()
 
-  await expect(page).toHaveURL('/login?redirect=%2Fapp')
+  await expect(page).toHaveURL(
+    `/login?redirect=${encodeURIComponent(new URL(authenticatedAppUrl).pathname + new URL(authenticatedAppUrl).search)}`,
+  )
   await expect(
     page.getByRole('heading', { name: 'Entre na sua conta.' }),
   ).toBeVisible()
-  await expect(page.getByText(email)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Sair' })).toHaveCount(0)
 
   await page.goBack()
 
-  await expect(
-    page.getByRole('heading', {
-      name: 'Seu espaço financeiro começa aqui.',
-    }),
-  ).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Lançamentos' })).toHaveCount(
+    0,
+  )
   await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:4173\//)
 })

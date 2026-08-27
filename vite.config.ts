@@ -27,8 +27,8 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'any',
-        background_color: '#f3eee4',
-        theme_color: '#123c35',
+        background_color: '#ffffff',
+        theme_color: '#ffffff',
         categories: ['finance'],
         icons: [
           {
@@ -53,7 +53,7 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest}'],
         navigateFallback: '/index.html',
         runtimeCaching: [],
       },

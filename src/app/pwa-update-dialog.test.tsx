@@ -10,6 +10,7 @@ describe('PwaUpdateDialog', () => {
 
     render(
       <PwaUpdateDialog
+        hasUnsavedChanges={false}
         kind="update"
         onAccept={onAccept}
         onDismiss={onDismiss}
@@ -33,6 +34,7 @@ describe('PwaUpdateDialog', () => {
 
     render(
       <PwaUpdateDialog
+        hasUnsavedChanges={false}
         kind="update"
         onAccept={onAccept}
         onDismiss={onDismiss}
@@ -43,5 +45,51 @@ describe('PwaUpdateDialog', () => {
 
     expect(onDismiss).toHaveBeenCalledOnce()
     expect(onAccept).not.toHaveBeenCalled()
+  })
+
+  it('should never offer a path that reloads over an unsaved draft', () => {
+    const onAccept = vi.fn<() => void>()
+    const onDismiss = vi.fn<() => void>()
+
+    render(
+      <PwaUpdateDialog
+        hasUnsavedChanges
+        kind="update"
+        onAccept={onAccept}
+        onDismiss={onDismiss}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        'Salve ou descarte o rascunho do lançamento antes de atualizar.',
+      ),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: 'Atualizar agora' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Depois' }))
+
+    expect(onDismiss).toHaveBeenCalledOnce()
+    expect(onAccept).not.toHaveBeenCalled()
+  })
+
+  it('should keep the offline-ready dialog unaffected by unsaved changes', () => {
+    const onAccept = vi.fn<() => void>()
+    const onDismiss = vi.fn<() => void>()
+
+    render(
+      <PwaUpdateDialog
+        hasUnsavedChanges={false}
+        kind="offline-ready"
+        onAccept={onAccept}
+        onDismiss={onDismiss}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Entendi' }))
+
+    expect(onAccept).toHaveBeenCalledOnce()
   })
 })

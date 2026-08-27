@@ -1,15 +1,20 @@
 type PwaUpdateDialogProps = {
+  hasUnsavedChanges: boolean
   kind: 'offline-ready' | 'update'
   onAccept: () => void
   onDismiss: () => void
 }
 
 export function PwaUpdateDialog({
+  hasUnsavedChanges,
   kind,
   onAccept,
   onDismiss,
 }: PwaUpdateDialogProps) {
   const isUpdate = kind === 'update'
+  // A waiting update must never reload over an unsaved transaction draft, so
+  // the accept action disappears and only "Depois" remains.
+  const blocksUpdate = isUpdate && hasUnsavedChanges
   const titleId = `pwa-${kind}-title`
   const descriptionId = `pwa-${kind}-description`
 
@@ -18,7 +23,7 @@ export function PwaUpdateDialog({
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-live="polite"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-3xl border border-line bg-panel p-5 text-left shadow-[var(--finance-shadow-strong)] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:mx-0"
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-3xl border border-line bg-panel p-5 text-left shadow-(--finance-shadow-strong) sm:inset-x-auto sm:right-6 sm:bottom-6 sm:mx-0"
       open
     >
       <div className="flex items-start gap-3">
@@ -30,18 +35,17 @@ export function PwaUpdateDialog({
         </span>
 
         <div>
-          <h2
-            className="font-display text-lg font-semibold text-ink"
-            id={titleId}
-          >
+          <h2 className="text-lg font-semibold text-ink" id={titleId}>
             {isUpdate
               ? 'Nova versão disponível'
               : 'App pronto para abrir offline'}
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted" id={descriptionId}>
-            {isUpdate
-              ? 'Atualize quando terminar o que está fazendo. A página só recarrega com a sua confirmação.'
-              : 'A estrutura do app pode abrir sem conexão. Dados financeiros continuam dependendo de internet.'}
+            {blocksUpdate
+              ? 'Salve ou descarte o rascunho do lançamento antes de atualizar.'
+              : isUpdate
+                ? 'Atualize quando terminar o que está fazendo. A página só recarrega com a sua confirmação.'
+                : 'A estrutura do app pode abrir sem conexão. Dados financeiros continuam dependendo de internet.'}
           </p>
         </div>
       </div>
@@ -56,13 +60,15 @@ export function PwaUpdateDialog({
             Depois
           </button>
         ) : null}
-        <button
-          className="min-h-11 rounded-full bg-ink px-5 text-sm font-semibold text-canvas transition hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          onClick={onAccept}
-          type="button"
-        >
-          {isUpdate ? 'Atualizar agora' : 'Entendi'}
-        </button>
+        {blocksUpdate ? null : (
+          <button
+            className="min-h-11 rounded-full bg-ink px-5 text-sm font-semibold text-canvas transition hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            onClick={onAccept}
+            type="button"
+          >
+            {isUpdate ? 'Atualizar agora' : 'Entendi'}
+          </button>
+        )}
       </div>
     </dialog>
   )

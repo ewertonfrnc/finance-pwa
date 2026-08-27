@@ -126,7 +126,7 @@ export function LoginPage({ notice, onSignedIn, redirect }: LoginPageProps) {
         ) : null}
 
         <button
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-6 font-semibold text-canvas shadow-[var(--finance-shadow-button)] transition hover:-translate-y-0.5 hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-65 disabled:hover:translate-y-0"
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-6 font-semibold text-canvas shadow-(--finance-shadow-button) transition hover:-translate-y-0.5 hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-65 disabled:hover:translate-y-0"
           disabled={isPending}
           type="submit"
         >

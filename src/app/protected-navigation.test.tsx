@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   createMemoryHistory,
   createRouter,
@@ -18,14 +18,24 @@ vi.mock('../features/auth/auth-service', () => ({
   updatePassword: vi.fn<() => Promise<void>>(),
 }))
 
+vi.mock('../features/transactions/transaction-service', () => ({
+  readMonthlyTransactions: vi.fn<() => Promise<never[]>>(() =>
+    Promise.resolve([]),
+  ),
+}))
+
 import type { ResolvedAuthSession } from '../features/auth/auth-session'
+import { getLocalCurrentMonth } from '../features/transactions/transaction-calendar'
 import { routeTree } from '../routeTree.gen'
 import type { RouterContext } from './router-context'
+import { UnsavedChangesProvider } from './unsaved-changes'
 
 function createTestRouter(path: string, auth: ResolvedAuthSession) {
   const context: RouterContext = {
     auth,
-    queryClient: new QueryClient(),
+    queryClient: new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    }),
   }
   const router = createRouter({
     context,
@@ -33,7 +43,13 @@ function createTestRouter(path: string, auth: ResolvedAuthSession) {
     routeTree,
   })
 
-  render(<RouterProvider context={context} router={router} />)
+  render(
+    <QueryClientProvider client={context.queryClient}>
+      <UnsavedChangesProvider>
+        <RouterProvider context={context} router={router} />
+      </UnsavedChangesProvider>
+    </QueryClientProvider>,
+  )
 
   return router
 }
@@ -49,9 +65,7 @@ describe('protected navigation', () => {
       await screen.findByRole('heading', { name: 'Entre na sua conta.' }),
     ).toBeVisible()
     expect(
-      screen.queryByRole('heading', {
-        name: 'Seu espaço financeiro começa aqui.',
-      }),
+      screen.queryByRole('heading', { name: 'Lançamentos' }),
     ).not.toBeInTheDocument()
     expect(router.state.location.href).toBe('/login?redirect=%2Fapp')
   })
@@ -67,12 +81,12 @@ describe('protected navigation', () => {
     })
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Seu espaço financeiro começa aqui.',
-      }),
+      await screen.findByRole('heading', { name: 'Lançamentos' }),
     ).toBeVisible()
-    expect(screen.getByText('user@example.com')).toBeVisible()
-    expect(router.state.location.href).toBe('/app')
+    expect(screen.getByRole('button', { name: 'Sair' })).toBeVisible()
+    expect(router.state.location.href).toBe(
+      `/app?month=${getLocalCurrentMonth()}`,
+    )
   })
 
   it('should send an authenticated user away from registration', async () => {
@@ -86,12 +100,12 @@ describe('protected navigation', () => {
     })
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Seu espaço financeiro começa aqui.',
-      }),
+      await screen.findByRole('heading', { name: 'Lançamentos' }),
     ).toBeVisible()
     expect(screen.queryByText('Crie sua conta.')).not.toBeInTheDocument()
-    expect(router.state.location.href).toBe('/app')
+    expect(router.state.location.href).toBe(
+      `/app?month=${getLocalCurrentMonth()}`,
+    )
   })
 
   it('should keep a recovery session out of the authenticated app', async () => {
@@ -108,9 +122,7 @@ describe('protected navigation', () => {
       await screen.findByRole('heading', { name: 'Crie uma nova senha.' }),
     ).toBeVisible()
     expect(
-      screen.queryByRole('heading', {
-        name: 'Seu espaço financeiro começa aqui.',
-      }),
+      screen.queryByRole('heading', { name: 'Lançamentos' }),
     ).not.toBeInTheDocument()
     expect(router.state.location.href).toBe('/auth/update-password')
   })
@@ -126,10 +138,28 @@ describe('protected navigation', () => {
     })
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Seu espaço financeiro começa aqui.',
-      }),
+      await screen.findByRole('heading', { name: 'Lançamentos' }),
     ).toBeVisible()
-    expect(router.state.location.href).toBe('/app')
+    expect(router.state.location.href).toBe(
+      `/app?month=${getLocalCurrentMonth()}`,
+    )
+  })
+
+  it('should replace an invalid month with the device-local month', async () => {
+    const session = {
+      user: { email: 'user@example.com', id: 'user-a' },
+    } as Session
+    const router = createTestRouter('/app?month=2026-13', {
+      isPasswordRecovery: false,
+      session,
+      status: 'authenticated',
+    })
+
+    expect(
+      await screen.findByRole('heading', { name: 'Lançamentos' }),
+    ).toBeVisible()
+    expect(router.state.location.href).toBe(
+      `/app?month=${getLocalCurrentMonth()}`,
+    )
   })
 })

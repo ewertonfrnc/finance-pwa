@@ -31,6 +31,13 @@ test('should create an account, confirm it from Mailpit, and open the app', asyn
     page.getByRole('heading', { name: 'Crie sua conta.' }),
   ).toBeVisible()
 
+  await page.evaluate(() => navigator.serviceWorker.ready)
+  const offlineReadyAction = page.getByRole('button', { name: 'Entendi' })
+  await offlineReadyAction
+    .waitFor({ state: 'visible', timeout: 2_000 })
+    .catch(() => undefined)
+  if (await offlineReadyAction.isVisible()) await offlineReadyAction.click()
+
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Senha', { exact: true }).fill(password)
   await page.getByLabel('Confirme a senha').fill(password)
@@ -47,18 +54,14 @@ test('should create an account, confirm it from Mailpit, and open the app', asyn
   const message = await findMailpitMessageByRecipient(email)
   await page.goto(readMailpitMessageLink(message))
 
-  await expect(page).toHaveURL('/app')
-  await expect(
-    page.getByRole('heading', {
-      name: 'Seu espaço financeiro começa aqui.',
-    }),
-  ).toBeVisible()
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page).toHaveURL(/\/app\?month=\d{4}-\d{2}$/)
+  await expect(page.getByRole('heading', { name: 'Lançamentos' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
 
   const finalUrl = new URL(page.url())
   expect(finalUrl.origin).toBe('http://127.0.0.1:4173')
   expect(finalUrl.hash).toBe('')
-  expect(finalUrl.search).toBe('')
+  expect(finalUrl.search).toMatch(/^\?month=\d{4}-\d{2}$/)
 })
 
 test('should remove an expired callback error before showing a retry path', async ({
