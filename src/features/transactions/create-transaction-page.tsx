@@ -88,6 +88,7 @@ export function CreateTransactionPage({
       isSaved={savedMonth !== null}
       onCancel={() => void navigate({ search: { month }, to: '/app' })}
       onSubmit={(payload) => void handleSubmit(payload)}
+      pendingLabel="Lançando..."
       title="Novo lançamento"
     />
   )

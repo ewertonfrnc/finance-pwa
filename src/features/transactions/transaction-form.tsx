@@ -33,23 +33,27 @@ const KIND_PLACEHOLDER: Record<TransactionKind, string> = {
 
 type TransactionFormProps = {
   confirmLabel: string
+  errorAction?: { label: string; onAction: () => void }
   errorCopy: string | null
   initialValues: TransactionFormInput
   isPending: boolean
   isSaved: boolean
   onCancel: () => void
   onSubmit: (payload: TransactionPayload) => void
+  pendingLabel: string
   title: string
 }
 
 export function TransactionForm({
   confirmLabel,
+  errorAction,
   errorCopy,
   initialValues,
   isPending,
   isSaved,
   onCancel,
   onSubmit,
+  pendingLabel,
   title,
 }: TransactionFormProps) {
   const fieldId = useId()
@@ -177,7 +181,7 @@ export function TransactionForm({
             disabled={isPending || !isOnline}
             type="submit"
           >
-            {isPending ? 'Lançando...' : confirmLabel}
+            {isPending ? pendingLabel : confirmLabel}
           </button>
         </div>
 
@@ -196,12 +200,22 @@ export function TransactionForm({
       <div className="finance-safe-bottom finance-safe-x">
         <div className="mx-auto w-full max-w-2xl space-y-5 px-4 pt-6 sm:px-6">
           {errorCopy ? (
-            <p
-              className="rounded-3xl border border-expense/40 bg-expense-soft px-4 py-3 text-sm font-medium text-ink"
+            <div
+              className="rounded-3xl border border-expense/40 bg-expense-soft px-4 py-3"
               role="alert"
             >
-              {errorCopy}
-            </p>
+              <p className="text-sm font-medium text-ink">{errorCopy}</p>
+
+              {errorAction ? (
+                <button
+                  className="mt-3 min-h-11 rounded-full bg-ink px-4 text-sm font-semibold text-canvas transition hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  onClick={errorAction.onAction}
+                  type="button"
+                >
+                  {errorAction.label}
+                </button>
+              ) : null}
+            </div>
           ) : null}
 
           <StandaloneField

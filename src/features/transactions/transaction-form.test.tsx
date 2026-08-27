@@ -7,7 +7,13 @@ import {
   RouterProvider,
   useNavigate,
 } from '@tanstack/react-router'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const networkMocks = vi.hoisted(() => ({ isOnline: true }))
@@ -27,17 +33,28 @@ import type { TransactionPayload } from './transaction-form-schema'
 const today = getDefaultTransactionDate(getLocalCurrentMonth())
 
 type FormOverrides = {
+  errorAction?: { label: string; onAction: () => void }
+  errorCopy?: string | null
   isPending?: boolean
   onSubmit?: (payload: TransactionPayload) => void
 }
 
 async function renderForm({
+  errorAction,
+  errorCopy = null,
   isPending = false,
   onSubmit = () => {},
 }: FormOverrides) {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
   const formRoute = createRoute({
-    component: () => <FormHarness isPending={isPending} onSubmit={onSubmit} />,
+    component: () => (
+      <FormHarness
+        errorAction={errorAction}
+        errorCopy={errorCopy}
+        isPending={isPending}
+        onSubmit={onSubmit}
+      />
+    ),
     getParentRoute: () => rootRoute,
     path: '/',
   })
@@ -72,13 +89,19 @@ function typeAmount(digits: string) {
   }
 }
 
-function FormHarness({ isPending, onSubmit }: Required<FormOverrides>) {
+function FormHarness({
+  errorAction,
+  errorCopy,
+  isPending,
+  onSubmit,
+}: FormOverrides & Required<Pick<FormOverrides, 'isPending' | 'onSubmit'>>) {
   const navigate = useNavigate()
 
   return (
     <TransactionForm
       confirmLabel="Lançar"
-      errorCopy={null}
+      errorAction={errorAction}
+      errorCopy={errorCopy ?? null}
       initialValues={{
         amountDigits: '',
         date: today,
@@ -89,6 +112,7 @@ function FormHarness({ isPending, onSubmit }: Required<FormOverrides>) {
       isSaved={false}
       onCancel={() => void navigate({ to: '/app' })}
       onSubmit={onSubmit}
+      pendingLabel="Lançando..."
       title="Novo lançamento"
     />
   )
@@ -197,6 +221,26 @@ describe('TransactionForm', () => {
     await renderForm({ isPending: true })
 
     expect(screen.getByRole('button', { name: 'Lançando...' })).toBeDisabled()
+  })
+
+  it('should offer the recovery action next to the failure it belongs to', async () => {
+    const onAction = vi.fn<() => void>()
+    await renderForm({
+      errorAction: { label: 'Recarregar lançamento', onAction },
+      errorCopy: 'Esse lançamento foi alterado em outro lugar.',
+    })
+
+    const alert = screen.getByRole('alert')
+
+    expect(alert).toHaveTextContent(
+      'Esse lançamento foi alterado em outro lugar.',
+    )
+
+    fireEvent.click(
+      within(alert).getByRole('button', { name: 'Recarregar lançamento' }),
+    )
+
+    expect(onAction).toHaveBeenCalledTimes(1)
   })
 
   it('should confirm before discarding a dirty draft', async () => {
