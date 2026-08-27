@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   TRANSACTION_ERROR_COPY,
   getTransactionErrorCopy,
+  isTransactionConflict,
 } from './transaction-errors'
 
 describe('getTransactionErrorCopy', () => {
@@ -67,5 +68,19 @@ describe('getTransactionErrorCopy', () => {
     expect(getTransactionErrorCopy(undefined)).toBe(
       TRANSACTION_ERROR_COPY.generic,
     )
+  })
+
+  it('should recognize only the stale version failure as recoverable by reloading', () => {
+    expect(
+      isTransactionConflict({ code: '40001', message: 'transaction_conflict' }),
+    ).toBe(true)
+    expect(
+      isTransactionConflict({
+        code: 'P0002',
+        message: 'transaction_not_found',
+      }),
+    ).toBe(false)
+    expect(isTransactionConflict(new Error('Failed to fetch'))).toBe(false)
+    expect(isTransactionConflict(null)).toBe(false)
   })
 })

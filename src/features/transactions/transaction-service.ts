@@ -70,3 +70,52 @@ export async function createTransaction(
 
   return data
 }
+
+type ReadTransactionInput = {
+  id: string
+  signal: AbortSignal
+}
+
+export async function readTransaction({
+  id,
+  signal,
+}: ReadTransactionInput): Promise<Transaction | null> {
+  // RLS decides visibility, so a row owned by someone else arrives as null and
+  // reaches the same not-found state as a row that never existed.
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('id', id)
+    .abortSignal(signal)
+    .maybeSingle()
+
+  if (error) throw error
+
+  return data
+}
+
+export type UpdateTransactionInput = {
+  amountCents: number
+  description: string | null
+  expectedUpdatedAt: string
+  id: string
+  kind: TransactionKind
+  transactionDate: string
+}
+
+export async function updateTransaction(
+  input: UpdateTransactionInput,
+): Promise<Transaction> {
+  const { data, error } = await supabase.rpc('update_transaction', {
+    p_amount_cents: input.amountCents,
+    p_description: input.description ?? '',
+    p_expected_updated_at: input.expectedUpdatedAt,
+    p_id: input.id,
+    p_kind: input.kind,
+    p_transaction_date: input.transactionDate,
+  })
+
+  if (error) throw error
+
+  return data
+}

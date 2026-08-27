@@ -9,9 +9,13 @@ type PageResult = {
 
 const supabaseMocks = vi.hoisted(() => {
   const pageResults: PageResult[] = []
+  const singleResults: { data: Transaction | null; error: unknown }[] = []
   const builder = {
-    abortSignal: vi.fn<(signal: AbortSignal) => Promise<PageResult>>(),
+    abortSignal: vi.fn<(signal: AbortSignal) => unknown>(),
+    eq: vi.fn<(column: string, value: string) => unknown>(),
     gte: vi.fn<(column: string, value: string) => unknown>(),
+    maybeSingle:
+      vi.fn<() => Promise<{ data: Transaction | null; error: unknown }>>(),
     lt: vi.fn<(column: string, value: string) => unknown>(),
     lte: vi.fn<(column: string, value: string) => unknown>(),
     order:
@@ -21,15 +25,28 @@ const supabaseMocks = vi.hoisted(() => {
   }
 
   builder.select.mockReturnValue(builder)
+  builder.eq.mockReturnValue(builder)
   builder.gte.mockReturnValue(builder)
   builder.lt.mockReturnValue(builder)
   builder.lte.mockReturnValue(builder)
   builder.order.mockReturnValue(builder)
   builder.range.mockReturnValue(builder)
-  builder.abortSignal.mockImplementation(async () => {
-    const result = pageResults.shift()
+  // abortSignal is the last modifier in both reads: the monthly query awaits
+  // it directly, while the single-row query still calls maybeSingle after it.
+  builder.abortSignal.mockImplementation(() => {
+    const result = pageResults.shift() ?? {
+      data: null,
+      error: new Error('Missing mocked Data API page.'),
+    }
 
-    if (!result) throw new Error('Missing mocked Data API page.')
+    return Object.assign(Promise.resolve(result), {
+      maybeSingle: builder.maybeSingle,
+    })
+  })
+  builder.maybeSingle.mockImplementation(async () => {
+    const result = singleResults.shift()
+
+    if (!result) throw new Error('Missing mocked Data API row.')
 
     return result
   })
@@ -38,6 +55,7 @@ const supabaseMocks = vi.hoisted(() => {
     builder,
     from: vi.fn<(table: string) => unknown>(() => builder),
     pageResults,
+    singleResults,
     rpc: vi.fn<
       (
         fn: string,
@@ -54,6 +72,8 @@ vi.mock('../../lib/supabase/client', () => ({
 import {
   createTransaction,
   readMonthlyTransactions,
+  readTransaction,
+  updateTransaction,
 } from './transaction-service'
 
 function transaction(index: number): Transaction {
@@ -72,6 +92,7 @@ function transaction(index: number): Transaction {
 describe('transaction service', () => {
   beforeEach(() => {
     supabaseMocks.pageResults.length = 0
+    supabaseMocks.singleResults.length = 0
     supabaseMocks.from.mockClear()
     supabaseMocks.rpc.mockClear()
 
@@ -202,6 +223,117 @@ describe('createTransaction', () => {
         id: '00000000-0000-4000-8000-000000000000',
         kind: 'income',
         transactionDate: '2026-08-25',
+      }),
+    ).rejects.toBe(providerError)
+  })
+})
+
+describe('readTransaction', () => {
+  beforeEach(() => {
+    supabaseMocks.singleResults.length = 0
+    supabaseMocks.from.mockClear()
+
+    for (const mock of Object.values(supabaseMocks.builder)) mock.mockClear()
+  })
+
+  it('should read a single owned row with the caller signal', async () => {
+    const persisted = transaction(0)
+    supabaseMocks.singleResults.push({ data: persisted, error: null })
+    const signal = new AbortController().signal
+
+    await expect(
+      readTransaction({ id: persisted.id, signal }),
+    ).resolves.toEqual(persisted)
+
+    expect(supabaseMocks.from).toHaveBeenCalledWith('transactions')
+    expect(supabaseMocks.builder.eq).toHaveBeenCalledWith('id', persisted.id)
+    expect(supabaseMocks.builder.abortSignal).toHaveBeenCalledWith(signal)
+  })
+
+  it('should return null when RLS hides the row from this user', async () => {
+    supabaseMocks.singleResults.push({ data: null, error: null })
+
+    await expect(
+      readTransaction({
+        id: '00000000-0000-4000-8000-000000000000',
+        signal: new AbortController().signal,
+      }),
+    ).resolves.toBeNull()
+  })
+
+  it('should surface a provider failure for safe UI mapping', async () => {
+    const providerError = new Error('Provider detail')
+    supabaseMocks.singleResults.push({ data: null, error: providerError })
+
+    await expect(
+      readTransaction({
+        id: '00000000-0000-4000-8000-000000000000',
+        signal: new AbortController().signal,
+      }),
+    ).rejects.toBe(providerError)
+  })
+})
+
+describe('updateTransaction', () => {
+  beforeEach(() => {
+    supabaseMocks.rpc.mockClear()
+  })
+
+  it('should send the expected version with the typed arguments', async () => {
+    const persisted = transaction(0)
+    supabaseMocks.rpc.mockResolvedValue({ data: persisted, error: null })
+
+    await expect(
+      updateTransaction({
+        amountCents: 7500,
+        description: 'Mercado',
+        expectedUpdatedAt: '2026-08-25T12:00:00Z',
+        id: persisted.id,
+        kind: 'expense',
+        transactionDate: '2026-08-26',
+      }),
+    ).resolves.toEqual(persisted)
+
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith('update_transaction', {
+      p_amount_cents: 7500,
+      p_description: 'Mercado',
+      p_expected_updated_at: '2026-08-25T12:00:00Z',
+      p_id: persisted.id,
+      p_kind: 'expense',
+      p_transaction_date: '2026-08-26',
+    })
+  })
+
+  it('should send an empty description instead of null', async () => {
+    supabaseMocks.rpc.mockResolvedValue({ data: transaction(0), error: null })
+
+    await updateTransaction({
+      amountCents: 7500,
+      description: null,
+      expectedUpdatedAt: '2026-08-25T12:00:00Z',
+      id: '00000000-0000-4000-8000-000000000000',
+      kind: 'income',
+      transactionDate: '2026-08-26',
+    })
+
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith(
+      'update_transaction',
+      expect.objectContaining({ p_description: '' }),
+    )
+  })
+
+  it('should surface a stale version failure for safe UI mapping', async () => {
+    const providerError = { code: '40001', message: 'transaction_conflict' }
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: providerError })
+
+    await expect(
+      updateTransaction({
+        amountCents: 7500,
+        description: null,
+        expectedUpdatedAt: '2026-08-25T12:00:00Z',
+        id: '00000000-0000-4000-8000-000000000000',
+        kind: 'income',
+        transactionDate: '2026-08-26',
       }),
     ).rejects.toBe(providerError)
   })

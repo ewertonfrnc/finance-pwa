@@ -52,6 +52,14 @@ function readTransactionErrorDetails(error: unknown) {
   return { code: error.code, message }
 }
 
+// A stale version is the one failure with its own recovery path, so the UI
+// asks the question instead of matching the raw sqlstate in a component.
+export function isTransactionConflict(error: unknown) {
+  const details = readTransactionErrorDetails(error)
+
+  return details?.code === '40001' && details.message === 'transaction_conflict'
+}
+
 export function getTransactionErrorCopy(error: unknown) {
   const details = readTransactionErrorDetails(error)
 
