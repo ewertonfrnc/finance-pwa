@@ -204,7 +204,7 @@ export function EditTransactionPage({
   if (query.isPending) {
     return (
       <main
-        className="finance-safe-top finance-safe-x min-h-svh bg-subtle"
+        className="finance-safe-top finance-safe-x min-h-svh"
         data-page-canvas="subtle"
       >
         <output
@@ -330,7 +330,7 @@ function TransactionNotice({
 }: TransactionNoticeProps) {
   return (
     <main
-      className="finance-safe-top finance-safe-bottom finance-safe-x min-h-svh bg-subtle"
+      className="finance-safe-top finance-safe-bottom finance-safe-x min-h-svh"
       data-page-canvas="subtle"
     >
       <div className="mx-auto w-full max-w-md px-4 pt-16 sm:px-6">

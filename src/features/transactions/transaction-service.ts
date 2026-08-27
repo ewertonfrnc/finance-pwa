@@ -20,6 +20,14 @@ export async function readMonthlyTransactions({
   const { monthEnd, monthStart, nextMonthStart } = getMonthBounds(month)
   const transactions: Transaction[] = []
 
+  // Offset pagination with range() is intentional for the first beta.
+  // docs/plans/04-one-time-transactions.md specifies ordered, paginated
+  // monthly reads of 200 rows until a short page, with `id` as deterministic
+  // tie-breaker. A concurrent insert/delete between page fetches can duplicate
+  // or skip a row, but the window is a single sequential fetch and >200 rows
+  // in one month is rare in beta; a stable keyset or server snapshot would
+  // add contract complexity before the ledger (roadmap step 8) needs it.
+
   for (let from = 0; ; from += monthlyPageSize) {
     let query = supabase
       .from('transactions')

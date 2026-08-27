@@ -158,7 +158,7 @@ export function TransactionForm({
 
   return (
     <form
-      className="min-h-svh bg-subtle"
+      className="min-h-svh"
       data-page-canvas="subtle"
       noValidate
       onSubmit={handleSubmit}
