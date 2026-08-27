@@ -1,5 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Link,
+  Outlet,
+  RouterProvider,
+} from '@tanstack/react-router'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Transaction } from './transaction-types'
@@ -35,17 +44,53 @@ function transaction(description: string, month = '2026-08'): Transaction {
   }
 }
 
+// The list rows link to the edit route, so the history needs a router even in
+// a focused test. The month lives in the URL exactly as it does in the app.
 function renderPage(month = '2026-08') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
+  const rootRoute = createRootRoute({ component: () => <Outlet /> })
+  const historyRoute = createRoute({
+    component: HistoryHarness,
+    getParentRoute: () => rootRoute,
+    path: '/app',
+    validateSearch: (search: Record<string, unknown>) => ({
+      month: typeof search.month === 'string' ? search.month : month,
+    }),
+  })
+  const editRoute = createRoute({
+    component: () => <h1>Editar lançamento</h1>,
+    getParentRoute: () => rootRoute,
+    path: '/app/transactions/$transactionId/edit',
+  })
+
+  function HistoryHarness() {
+    // The ad-hoc test tree is not the registered router, so its search type
+    // does not resolve on its own.
+    const search = historyRoute.useSearch() as { month: string }
+
+    return (
+      <>
+        <Link search={{ month: '2026-09' }} to="/app">
+          Ir para setembro
+        </Link>
+        <TransactionsPage month={search.month} userId="user-a" />
+      </>
+    )
+  }
+
+  const router = createRouter({
+    history: createMemoryHistory({ initialEntries: [`/app?month=${month}`] }),
+    routeTree: rootRoute.addChildren([historyRoute, editRoute]),
+  })
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <TransactionsPage month={month} userId="user-a" />
+      <RouterProvider router={router as never} />
     </QueryClientProvider>,
   )
 
-  return { ...view, queryClient }
+  return { ...view, queryClient, router }
 }
 
 describe('TransactionsPage', () => {
@@ -61,7 +106,7 @@ describe('TransactionsPage', () => {
     renderPage()
 
     expect(
-      screen.getByRole('status', { name: 'Carregando lançamentos' }),
+      await screen.findByRole('status', { name: 'Carregando lançamentos' }),
     ).toBeVisible()
     expect(await screen.findByText('Mercado')).toBeVisible()
     expect(transactionMocks.readMonthlyTransactions).toHaveBeenCalledWith({
@@ -81,25 +126,17 @@ describe('TransactionsPage', () => {
         resolveSeptember = resolve
       })
     })
-    const { rerender } = renderPage()
+    renderPage()
 
     expect(await screen.findByText('Agosto')).toBeVisible()
 
-    rerender(
-      <QueryClientProvider
-        client={
-          new QueryClient({
-            defaultOptions: { queries: { retry: false } },
-          })
-        }
-      >
-        <TransactionsPage month="2026-09" userId="user-a" />
-      </QueryClientProvider>,
-    )
+    fireEvent.click(screen.getByRole('link', { name: 'Ir para setembro' }))
 
-    expect(screen.queryByText('Agosto')).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByText('Agosto')).not.toBeInTheDocument(),
+    )
     expect(
-      screen.getByRole('status', { name: 'Carregando lançamentos' }),
+      await screen.findByRole('status', { name: 'Carregando lançamentos' }),
     ).toBeVisible()
 
     resolveSeptember?.([transaction('Setembro', '2026-09')])
@@ -144,12 +181,12 @@ describe('TransactionsPage', () => {
     ).toBeVisible()
   })
 
-  it('should replace financial data with the online-required state offline', () => {
+  it('should replace financial data with the online-required state offline', async () => {
     transactionMocks.isOnline = false
     renderPage()
 
     expect(
-      screen.getByRole('heading', {
+      await screen.findByRole('heading', {
         name: 'Conecte-se para ver seus lançamentos.',
       }),
     ).toBeVisible()

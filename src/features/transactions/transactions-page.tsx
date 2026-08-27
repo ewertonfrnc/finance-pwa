@@ -45,7 +45,7 @@ export function TransactionsPage({ month, userId }: TransactionsPageProps) {
           <EmptyState />
         ) : null}
         {isOnline && query.isSuccess && query.data.length > 0 ? (
-          <TransactionList transactions={query.data} />
+          <TransactionList month={month} transactions={query.data} />
         ) : null}
 
         {isOnline && query.isSuccess && query.isFetching ? (

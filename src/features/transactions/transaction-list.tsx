@@ -1,11 +1,18 @@
+import { Link } from '@tanstack/react-router'
+
 import {
   formatTransactionDate,
   groupTransactionsByDate,
 } from './transaction-calendar'
 import { formatAmountCents } from './transaction-money'
-import type { Transaction, TransactionKind } from './transaction-types'
+import type {
+  Transaction,
+  TransactionKind,
+  TransactionMonth,
+} from './transaction-types'
 
 type TransactionListProps = {
+  month: TransactionMonth
   transactions: readonly Transaction[]
 }
 
@@ -14,7 +21,7 @@ const kindCopy: Record<TransactionKind, string> = {
   income: 'Entrada',
 }
 
-export function TransactionList({ transactions }: TransactionListProps) {
+export function TransactionList({ month, transactions }: TransactionListProps) {
   const groups = groupTransactionsByDate(transactions)
 
   return (
@@ -30,39 +37,69 @@ export function TransactionList({ transactions }: TransactionListProps) {
           <ul className="overflow-hidden rounded-3xl border border-line bg-panel shadow-(--finance-shadow-subtle)">
             {group.transactions.map((transaction) => (
               <li
-                className="flex min-h-18 items-center gap-3 border-b border-line/80 px-4 py-3 last:border-b-0 sm:px-5"
+                className="border-b border-line/80 last:border-b-0"
                 key={transaction.id}
               >
-                <TransactionKindIcon kind={transaction.kind} />
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-ink">
-                    {transaction.description ??
-                      `${kindCopy[transaction.kind]} sem descrição`}
-                  </p>
-                  <p className="mt-0.5 text-sm text-muted">
-                    {kindCopy[transaction.kind]}
-                  </p>
-                </div>
-
-                <p
-                  className={`shrink-0 text-right font-mono font-semibold tabular-nums ${
-                    transaction.kind === 'income'
-                      ? 'text-income-ink'
-                      : 'text-expense-ink'
-                  }`}
+                <Link
+                  className="flex min-h-18 items-center gap-3 px-4 py-3 transition hover:bg-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:px-5"
+                  params={{ transactionId: transaction.id }}
+                  search={{ month }}
+                  to="/app/transactions/$transactionId/edit"
                 >
-                  <span aria-hidden="true">
-                    {transaction.kind === 'income' ? '+' : '−'}{' '}
-                  </span>
-                  {formatAmountCents(transaction.amount_cents)}
-                </p>
+                  <TransactionKindIcon kind={transaction.kind} />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-ink">
+                      {transaction.description ??
+                        `${kindCopy[transaction.kind]} sem descrição`}
+                    </p>
+                    <p className="mt-0.5 text-sm text-muted">
+                      {kindCopy[transaction.kind]}
+                    </p>
+                  </div>
+
+                  <p
+                    className={`shrink-0 text-right font-mono font-semibold tabular-nums ${
+                      transaction.kind === 'income'
+                        ? 'text-income-ink'
+                        : 'text-expense-ink'
+                    }`}
+                  >
+                    <span aria-hidden="true">
+                      {transaction.kind === 'income' ? '+' : '−'}{' '}
+                    </span>
+                    {formatAmountCents(transaction.amount_cents)}
+                  </p>
+
+                  <DisclosureIcon />
+                </Link>
               </li>
             ))}
           </ul>
         </li>
       ))}
     </ol>
+  )
+}
+
+// The chevron marks a push into the row's own screen, which is what
+// distinguishes this row from a control that opens a menu in place.
+function DisclosureIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="-ml-0.5 -mr-1 size-4 shrink-0 text-faint"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="m9 6 6 6-6 6"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
   )
 }
 
