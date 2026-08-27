@@ -92,7 +92,8 @@ export function DeleteTransactionDialog({
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-muted" id={descriptionId}>
-          {description} · {amount}
+          {description} ·{' '}
+          <span className="font-mono font-medium tabular-nums">{amount}</span>
         </p>
 
         <p className="mt-1 text-sm leading-6 text-muted">
@@ -101,11 +102,11 @@ export function DeleteTransactionDialog({
 
         {errorCopy ? (
           <div
-            className="mt-4 rounded-3xl border border-coral/30 bg-coral/10 px-4 py-3"
+            className="mt-4 rounded-3xl border border-coral-ring bg-coral-soft px-4 py-3"
             id={errorId}
             role="alert"
           >
-            <p className="text-sm font-medium text-ink">{errorCopy}</p>
+            <p className="text-sm font-medium text-coral-ink">{errorCopy}</p>
 
             {hasConflict ? (
               <button
@@ -142,7 +143,7 @@ export function DeleteTransactionDialog({
 
           <button
             aria-describedby={confirmFootnote ? pendingFootnoteId : undefined}
-            className="min-h-11 rounded-full bg-coral px-5 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral disabled:cursor-not-allowed disabled:opacity-45"
+            className="min-h-11 rounded-full bg-coral px-5 text-sm font-semibold text-coral-contrast transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral disabled:cursor-not-allowed disabled:opacity-45"
             disabled={!isOnline || isPending}
             onClick={onConfirm}
             type="button"

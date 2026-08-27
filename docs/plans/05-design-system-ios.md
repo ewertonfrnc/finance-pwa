@@ -1,8 +1,9 @@
 # Design system and iOS shell implementation plan
 
-Status: complete
+Status: complete, with the 2026-08-27 shell follow-up implemented on
+`fix/design-system-shell`
 
-Last reviewed: 2026-08-26
+Last reviewed: 2026-08-27
 
 Roadmap step: 5
 
@@ -568,6 +569,42 @@ the installed app:
   `-v4` cache-bust across the manifest and `index.html` plus a reinstall on a
   device to prove the new icon replaced the cached one, so it earns its own
   step rather than riding along here.
+
+Resolution follow-up, 2026-08-27:
+
+- `app-icon.svg` and the four cache-busted `v4` PNGs now use the light ink
+  `#1a2e35` and teal `#328f97`; `favicon.svg` also uses the same palette but
+  keeps `/favicon.svg` without a versioned filename and is excluded from the
+  manifest-based icon assertion that covers the three PWA icons and the Apple
+  touch icon. The manifest, Apple metadata, and E2E assertions reference the
+  versioned `v4` PNGs and reject the retired colors;
+- the legacy red soft background, ink, ring, and contrasting foreground are
+  exposed as coral tokens. Error and destructive UI uses that family instead
+  of the expense category, and the dark destructive buttons measure 6.67:1;
+- the public header, global offline banner, and fixed dialogs consume their
+  top and bottom safe-area insets independently so the sticky header retains
+  its inset after the banner scrolls away; a banner visible at the very top
+  still counts the top inset twice, and this 47 px double count is accepted
+  until a scroll-aware handoff is measured;
+- every public Auth control now measures at least 44 by 44 CSS pixels, verified
+  with a landmark-aware assertion that requires at least one measurable control
+  per public route;
+- the amount input uses only glyphs present in the monetary subset, and the
+  delete summary and form amount render their amounts in JetBrains Mono
+  verified with the loaded `FontFace` status plus the computed `fontFamily`;
+- local production inspection covered 390 by 844 light and dark, simulated
+  47 px top and 34 px bottom insets, offline-banner handoff, and the dirty-draft
+  dialog. Physical icon replacement and the remaining device checks stay in
+  roadmap step 10.
+
+Validation follow-up, 2026-08-27:
+
+- static checks, TypeScript, unit tests, the production build, and 32
+  non-conflict Playwright cases pass;
+- the full local Playwright command reaches 32 passes and four timeouts in the
+  existing update/delete conflict cases. PostgREST 14.17 retries the
+  application-level `SQLSTATE 40001` instead of returning it to the client, so
+  a forward database correction is required outside this visual follow-up.
 
 Delivered commits:
 

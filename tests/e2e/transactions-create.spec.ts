@@ -7,6 +7,7 @@ import {
   getLocalCurrentMonth,
 } from '../../src/features/transactions/transaction-calendar'
 import { createLocalAuthUser, deleteLocalAuthUser } from './support/auth-admin'
+import { readContrastRatio } from './support/contrast'
 
 const password = 'local-password-123'
 
@@ -59,6 +60,34 @@ test('should create a transaction and keep it after reload', async ({
   expect(amount).not.toBeNull()
   expect(amount!.x).toBeGreaterThanOrEqual(32)
   expect(viewport!.width - amount!.x - amount!.width).toBeGreaterThanOrEqual(32)
+  const amountFont = await page.evaluate(async () => {
+    await document.fonts.ready
+    const probe = document.querySelector<HTMLElement>('span.font-mono')
+    const fontFace = [...document.fonts].find((face) =>
+      face.family.includes('JetBrains Mono'),
+    )
+
+    return {
+      family: probe ? getComputedStyle(probe).fontFamily : null,
+      status: fontFace?.status ?? 'missing',
+    }
+  })
+  expect(amountFont.family).toContain('JetBrains Mono')
+  expect(amountFont.status).toBe('loaded')
+
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.getByLabel('Descrição (opcional)').fill('Rascunho para contraste')
+  await page.getByRole('button', { name: 'Cancelar' }).click()
+  const discardDialog = page.getByRole('dialog')
+  await expect(discardDialog).toBeVisible()
+  expect(
+    await readContrastRatio(
+      discardDialog.getByRole('button', { name: 'Descartar' }),
+    ),
+  ).toBeGreaterThanOrEqual(4.5)
+  await discardDialog
+    .getByRole('button', { name: 'Continuar editando' })
+    .click()
 
   const typePicker = page.getByRole('button', { name: 'Tipo: Saída' })
   await expect(typePicker).toHaveAttribute('aria-expanded', 'false')

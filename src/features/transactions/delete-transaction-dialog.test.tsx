@@ -52,7 +52,8 @@ describe('DeleteTransactionDialog', () => {
     expect(
       screen.getByRole('heading', { name: 'Excluir lançamento?' }),
     ).toBeVisible()
-    expect(screen.getByText('Mercado · R$ 50,00')).toBeVisible()
+    expect(screen.getByText(/Mercado ·/)).toBeVisible()
+    expect(screen.getByText('R$ 50,00')).toBeVisible()
     expect(screen.getByText('Essa ação não pode ser desfeita.')).toBeVisible()
     expect(screen.queryByText(/00000000-0000/)).toBeNull()
     expect(screen.queryByText(/user-a/)).toBeNull()
@@ -64,7 +65,8 @@ describe('DeleteTransactionDialog', () => {
       transaction: transaction({ description: null, kind: 'income' }),
     })
 
-    expect(screen.getByText('Entrada sem descrição · R$ 50,00')).toBeVisible()
+    expect(screen.getByText(/Entrada sem descrição ·/)).toBeVisible()
+    expect(screen.getByText('R$ 50,00')).toBeVisible()
   })
 
   it('should call onCancel and not onConfirm when cancel is clicked', () => {

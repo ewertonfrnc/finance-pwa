@@ -80,7 +80,7 @@ export function ForgotPasswordPage() {
 
         {errorCopy ? (
           <p
-            className="rounded-2xl border border-coral/45 bg-coral/10 px-4 py-3 text-sm font-medium text-ink"
+            className="rounded-2xl border border-coral-ring bg-coral-soft px-4 py-3 text-sm font-medium text-coral-ink"
             role="alert"
           >
             {errorCopy}
@@ -98,7 +98,7 @@ export function ForgotPasswordPage() {
         <p className="text-center text-sm text-muted">
           Lembrou sua senha?{' '}
           <a
-            className="font-semibold text-ink underline decoration-line decoration-2 underline-offset-4 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center font-semibold text-ink underline decoration-line decoration-2 underline-offset-4 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             href="/login"
           >
             Entrar

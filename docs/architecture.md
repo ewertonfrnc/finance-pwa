@@ -1,6 +1,6 @@
 # Finance PWA architecture
 
-Last reviewed: 2026-08-26
+Last reviewed: 2026-08-27
 
 ## Scope
 
@@ -135,10 +135,15 @@ those tokens instead of embedding theme colors.
 custom properties map the shipped legacy palette to semantic roles and expose
 those roles to Tailwind through `@theme inline`. Components consume classes
 such as `bg-panel`, `text-ink`, and `text-expense-ink`; they do not repeat
-palette values. Derived states use `color-mix()` from existing tokens instead
-of adding component-specific colors. `index.html` duplicates the light and
-dark canvas values only for `theme-color` metadata, which cannot consume CSS
-custom properties.
+palette values. The coral family maps the legacy red fill, soft background,
+ink, and ring separately from the orange expense category. Derived states and
+shadows use `color-mix()` from existing tokens instead of adding
+component-specific colors. `index.html` and `vite.config.ts` duplicate the
+canvas values required by manifest metadata, and `index.html` supplies the
+Apple touch icon; the public SVG and PNG icon assets carry the fixed
+light-scheme brand colors. The favicon still lives at `/favicon.svg` and is
+excluded from the manifest-based icon assertion that covers the three PWA
+icons and the Apple touch icon.
 
 The application UI uses the platform system font. Monetary values alone use a
 4,660-byte JetBrains Mono subset containing the currency punctuation, signs,
@@ -149,9 +154,12 @@ The authenticated workspace uses two small translucent capsules in a
 zero-height sticky carrier. The month scope stays on the left and account and
 add actions stay on the right while transaction rows scroll behind them. The
 carrier remains in document flow so the network banner pushes the controls
-down instead of colliding with them. The page reserves top and bottom space for
-the capsules plus the respective safe-area insets, and `.finance-safe-x`
-protects horizontal controls in an inset viewport.
+down instead of colliding with them, and both surfaces consume the top
+safe-area inset independently so the sticky header retains its inset after the
+banner scrolls away; a banner at the very top leaves a 47 px double count that
+is accepted until a scroll-aware handoff is measured. The page reserves top
+and bottom space for the capsules, `.finance-safe-x` protects horizontal
+controls, and fixed dialogs remain above the bottom safe area.
 
 ## Authentication boundary
 

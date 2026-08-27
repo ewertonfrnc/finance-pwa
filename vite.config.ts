@@ -15,7 +15,7 @@ export default defineConfig({
     VitePWA({
       injectRegister: false,
       registerType: 'prompt',
-      includeAssets: ['favicon.svg', 'apple-touch-icon-v3.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon-v4.png'],
       manifest: {
         id: '/',
         name: 'Finance PWA',
@@ -32,19 +32,19 @@ export default defineConfig({
         categories: ['finance'],
         icons: [
           {
-            src: '/pwa-192x192-v3.png',
+            src: '/pwa-192x192-v4.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/pwa-512x512-v3.png',
+            src: '/pwa-512x512-v4.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/pwa-maskable-512x512-v3.png',
+            src: '/pwa-maskable-512x512-v4.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',

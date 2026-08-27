@@ -203,10 +203,10 @@ export function TransactionForm({
         <div className="mx-auto w-full max-w-2xl space-y-5 px-4 pt-6 sm:px-6">
           {errorCopy ? (
             <div
-              className="rounded-3xl border border-expense/40 bg-expense-soft px-4 py-3"
+              className="rounded-3xl border border-coral-ring bg-coral-soft px-4 py-3"
               role="alert"
             >
-              <p className="text-sm font-medium text-ink">{errorCopy}</p>
+              <p className="text-sm font-medium text-coral-ink">{errorCopy}</p>
 
               {errorAction ? (
                 <button
@@ -226,9 +226,9 @@ export function TransactionForm({
             footnoteId={`${fieldId}-amount-footnote`}
             label="Valor"
           >
-            <span className="flex items-baseline font-mono text-4xl font-semibold tabular-nums">
+            <span className="flex items-baseline gap-2 font-mono text-4xl font-semibold tabular-nums">
               <span aria-hidden="true" className="shrink-0 text-ink">
-                R$&nbsp;
+                R$
               </span>
               <input
                 aria-describedby={
@@ -354,7 +354,7 @@ export function TransactionForm({
               </div>
 
               <p
-                className={`px-4 pb-3 text-xs leading-5 ${errors.kind ? 'font-medium text-expense-ink' : 'text-muted'}`}
+                className={`px-4 pb-3 text-xs leading-5 ${errors.kind ? 'font-medium text-coral-ink' : 'text-muted'}`}
                 id={kindFootnoteId}
                 role={errors.kind ? 'alert' : undefined}
               >
@@ -387,7 +387,7 @@ export function TransactionForm({
 
             {errors.date ? (
               <p
-                className="px-1 pt-2 text-xs font-medium text-expense-ink"
+                className="px-1 pt-2 text-xs font-medium text-coral-ink"
                 id={`${fieldId}-date-error`}
                 role="alert"
               >
@@ -446,7 +446,7 @@ function StandaloneField({
 
       {error ? (
         <p
-          className="px-1 pt-2 text-xs font-medium text-expense-ink"
+          className="px-1 pt-2 text-xs font-medium text-coral-ink"
           id={errorId}
           role="alert"
         >
@@ -566,7 +566,7 @@ function DiscardDialog({
   return (
     <dialog
       aria-labelledby="discard-draft-title"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-3xl border border-line bg-panel p-5 text-left shadow-(--finance-shadow-strong) sm:inset-x-auto sm:right-6 sm:bottom-6 sm:mx-0"
+      className="finance-safe-fixed-dialog fixed z-50 mx-auto max-w-md rounded-3xl border border-line bg-panel p-5 text-left shadow-(--finance-shadow-strong) sm:mx-0"
       open
     >
       <h2 className="text-lg font-semibold text-ink" id="discard-draft-title">
@@ -585,7 +585,7 @@ function DiscardDialog({
           Continuar editando
         </button>
         <button
-          className="min-h-11 rounded-full bg-expense px-5 text-sm font-semibold text-canvas transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="min-h-11 rounded-full bg-coral px-5 text-sm font-semibold text-coral-contrast transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
           onClick={onDiscard}
           type="button"
         >

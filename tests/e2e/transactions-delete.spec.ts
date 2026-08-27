@@ -7,6 +7,7 @@ import {
   createLocalTransactionFixtures,
   updateLocalTransactionFixture,
 } from './support/finance-admin'
+import { readContrastRatio } from './support/contrast'
 
 const password = 'local-password-123'
 const month = '2026-08'
@@ -74,6 +75,7 @@ test('should delete the transaction and keep it deleted after reload', async ({
 }) => {
   await openTheTransaction(page)
 
+  await page.emulateMedia({ colorScheme: 'dark' })
   await page.getByRole('button', { name: 'Excluir lançamento' }).click()
 
   const dialog = page.getByRole('dialog')
@@ -81,13 +83,28 @@ test('should delete the transaction and keep it deleted after reload', async ({
   await expect(
     dialog.getByRole('heading', { name: 'Excluir lançamento?' }),
   ).toBeVisible()
-  await expect(
-    dialog.getByText('Mercado para excluir · R$ 50,00'),
-  ).toBeVisible()
-  await expect(dialog.getByRole('button', { name: 'Excluir' })).toBeEnabled()
+  await expect(dialog.getByText(/Mercado para excluir ·/)).toBeVisible()
+  const displayedAmount = dialog.getByText('R$ 50,00')
+  await expect(displayedAmount).toBeVisible()
+  const amountFont = await displayedAmount.evaluate(async (element) => {
+    await document.fonts.ready
+    const fontFace = [...document.fonts].find((face) =>
+      face.family.includes('JetBrains Mono'),
+    )
+
+    return {
+      family: getComputedStyle(element).fontFamily,
+      status: fontFace?.status ?? 'missing',
+    }
+  })
+  expect(amountFont.family).toContain('JetBrains Mono')
+  expect(amountFont.status).toBe('loaded')
+  const confirmDelete = dialog.getByRole('button', { name: 'Excluir' })
+  await expect(confirmDelete).toBeEnabled()
+  expect(await readContrastRatio(confirmDelete)).toBeGreaterThanOrEqual(4.5)
   await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeEnabled()
 
-  await dialog.getByRole('button', { name: 'Excluir' }).click()
+  await confirmDelete.click()
 
   await expect(page).toHaveURL(`/app?month=${month}`)
   await expect(page.getByText('Mercado para excluir')).toBeHidden()
