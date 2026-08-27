@@ -738,10 +738,14 @@ bunx tsc --noEmit
 bun run build
 ```
 
-Commit:
+Delivered commits:
 
 ```text
-feat: add one-time transaction editing
+5f60e0d feat: add the transaction update boundary
+39a2d92 refactor: let the transaction form carry a second call site
+e7e5dee feat: add conflict-safe transaction editing
+58ad03e feat: open a transaction from its history row
+155513c test: verify transaction editing against local Supabase
 ```
 
 Decisions taken during delivery, 2026-08-26:
