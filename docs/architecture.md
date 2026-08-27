@@ -1,6 +1,6 @@
 # Finance PWA architecture
 
-Last reviewed: 2026-08-25
+Last reviewed: 2026-08-26
 
 ## Scope
 
@@ -81,9 +81,12 @@ the access token. Exact wire types, grants, and errors live in
 [`finance-rules.md`](finance-rules.md).
 
 Transaction reads use direct table access with the existing owner-only RLS
-policy. Transaction writes use three narrowly granted RPCs while direct
-`insert`, `update`, and `delete` privileges remain revoked from
-`authenticated`.
+policy. Monthly reads query `transaction_date >= monthStart` and
+`< nextMonthStart`, order by `transaction_date desc, created_at desc, id desc`,
+page 200 rows with `.range()`, pass `AbortSignal`, and are keyed as
+`['transactions', userId, 'month', month]` and `['transactions', userId,
+'detail', id]`. Direct `insert`, `update`, and `delete` privileges remain
+revoked from `authenticated`; writes use three narrowly granted RPCs.
 
 The transaction mutation RPCs use `security definer` because `security
 invoker` would inherit the caller's intentionally read-only table privileges
@@ -92,8 +95,28 @@ and could not perform the write. Each function derives ownership from
 empty `search_path`, and returns only a caller-owned row. Execute privileges are
 revoked from `public` and `anon` and granted to `authenticated` and
 `service_role`. Create uses its client-generated transaction ID for idempotent
-retries; update and delete lock the owned row and compare its `updated_at`
-before mutating it.
+retries; update and delete lock the owned row `for update` and compare its
+exact `updated_at` before mutating it.
+
+Writes are not optimistic. Mutations stay pending until focused invalidation
+finishes: create invalidates the returned month, update invalidates the
+original and returned months plus detail (`setQueryData` for the authoritative
+detail row), delete removes the detail query and invalidates only the deleted
+row's month with `refetchType: 'all'`. Buttons stay disabled while pending and
+failures keep the form or dialog intact. Offline replaces reads with the
+online-required state and disables submit while keeping a draft editable.
+
+Routing keeps the financial workspace under `/app?month=YYYY-MM` and exposes
+`/_authenticated.app_.transactions.new` and
+`/_authenticated.app_.transactions.$transactionId.edit` as full-page sheets
+that do not inherit `_authenticated.app` layout or its missing-month redirect.
+The add and edit sheets confirm in the top chrome with the word `Lançar`; delete
+lives inside the edit sheet's form `footer` slot, inside the same `min-h-svh`
+scroll, and requires confirmation. Unsaved forms use `useBlocker` with a custom
+dialog and `beforeunload`; a shared `unsaved-changes` context prevents
+`updateServiceWorker(true)` while dirty. The document canvas owns the page
+background via `html:has([data-page-canvas])` so a `min-h-svh` sheet does not
+leave a white strip on standalone iOS.
 
 ## Application composition
 
@@ -185,10 +208,11 @@ the development project and exact callback URLs only in production.
 The local gate is:
 
 ```bash
-bunx supabase start
+bunx supabase status
 bunx supabase db reset
 bunx supabase test db
 bun run db:types
+git diff --exit-code -- src/lib/supabase/database.types.ts
 bun run check
 bunx tsc --noEmit
 bun run test
@@ -196,8 +220,21 @@ bun run test:e2e:local
 bun run build
 ```
 
-Component tests cover the controlled service-worker update decision. Browser
-tests cover the 360 px and desktop layouts, client-route navigation, recovery
-from an unknown route, manifest, icons, and service-worker output. A local
-browser proves the responsive shell, but it does not substitute for a Netlify
-Deploy Preview or installation tests on a physical Android phone and iPhone.
+Observed on 2026-08-26 on `feat/transactions` `a6e442c`: `supabase db reset`
+applied `20260825010000` and `20260825020000`, `71` pgTAP checks across `2`
+files, `database.types.ts` reproducible (`git diff --exit-code` clean),
+`0` `oxlint` warnings, `219` Vitest tests across `27` files, `34` Playwright
+cases (`auth`, `bootstrap`, `transactions-read/create/edit/delete`) on
+`mobile-chromium` and `desktop-chromium` against local Supabase, and a
+production build with `38` precached entries and `workbox.runtimeCaching: []`
+(`vite.config.ts:58`) so financial responses are never cached. Build logs
+contain no access token, `service_role` key, or financial payload.
+
+Component tests cover the controlled service-worker update decision and the
+transaction `R$ 50` create → reload → edit → move → delete path with conflict
+and failure recovery. Browser tests cover the `360 px` and desktop layouts,
+client-route navigation, recovery from an unknown route, manifest, icons, and
+service-worker output, with Auth and Data API against real local Supabase and
+RLS isolation between two users. A local browser proves the responsive shell,
+but it does not substitute for a Netlify Deploy Preview or installation tests
+on a physical Android phone and iPhone, which remain explicit pre-beta checks.

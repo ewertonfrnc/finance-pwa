@@ -315,8 +315,9 @@ is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 
-Status: in progress — steps 1 through 5 are delivered locally; complete
-boundary verification is next
+Status: completed on 2026-08-26 — branch `feat/transactions` through
+`a6e442c`; local gate green, squash merge to `main` as
+`feat: add one-time transaction management` pending explicit authorization
 
 Branch: `feat/transactions`
 
@@ -361,6 +362,28 @@ Proposed commit:
 ```text
 feat: add one-time transaction management
 ```
+
+Implementation record, 2026-08-26:
+
+- Branch `feat/transactions` delivered `d6a1816` (RPC boundary), `66b48cf`
+  (monthly history), `dfa19f8`/`b69e54f` (create with clamped default and
+  footnote), `5f60e0d`/`39a2d92`/`e7e5dee`/`58ad03e` (conflict-safe editing),
+  `a6e442c` (confirmed deletion with `footer` slot inside single `min-h-svh`),
+  plus design-system commits `23b76b9`/`b87af58`/`a85ce0c`/`4b1a3a2` sequenced
+  before the form. `finance-pwa-dev` was behind until `supabase db push`
+  applied `20260825020000`.
+- Local gate on `a6e442c`: `71` pgTAP checks, `database.types.ts` reproducible,
+  `0` `oxlint` warnings, `219` Vitest across `27` files, `34` Playwright
+  local cases on `mobile-chromium`/`desktop-chromium`, `38` precached Workbox
+  entries with empty `runtimeCaching`. No secret or financial payload in
+  build, test, or browser logs. `R$ 50` create → reload → edit → move →
+  delete → reload verified plus second-user isolation and all
+  unknown/loading/empty/offline/pending/conflict states in Portuguese.
+- Visual `390×844` and `1280×800` light/dark matrix, keyboard focus,
+  dialog focus retention, `Escape` handling, safe-area, and monetary font
+  observed locally; physical device keyboard/date-picker/offline and
+  Deploy Preview hosted checks remain explicit pre-beta per
+  `docs/plans/04-one-time-transactions.md:870`.
 
 Scope change accepted on 2026-08-25:
 

@@ -1,10 +1,10 @@
 # One-time transactions implementation plan
 
-Status: in implementation
+Status: completed on 2026-08-26
 
 Last reviewed: 2026-08-26
 
-Next step: 6. Verify the complete boundary and close the feature
+Next step: none — one-time transactions closed locally on `a6e442c`; squash merge to `main` and hosted/device verification pending explicit authorization (see Release checkpoint)
 
 Revised: 2026-08-25, after the design system decisions in
 [`05-design-system-ios.md`](05-design-system-ios.md)
@@ -869,7 +869,7 @@ supabase test db` passed with 71 pgTAP checks across 2 files;
 
 ### 6. Verify the complete boundary and close the feature
 
-Status: pending
+Status: completed on 2026-08-26
 
 Update:
 
@@ -937,6 +937,45 @@ Commit:
 ```text
 docs: close one-time transaction delivery
 ```
+
+Verification record, 2026-08-26:
+
+- `bunx supabase db reset` applied `20260825010000` and `20260825020000`,
+  `bunx supabase test db` `71` pgTAP checks across `2` files,
+  `bun run db:types` reproducible (`git diff --exit-code` clean),
+  `bun run check` `0` warnings, `bunx tsc --noEmit` clean,
+  `bun run test` `219` across `27` files, `bun run test:e2e:local` `34`
+  cases on `mobile-chromium` and `desktop-chromium`, `bun run build` `38`
+  precached entries `666.06 KiB` with `workbox.runtimeCaching: []`
+  (`vite.config.ts:58`);
+- the `R$ 50` path (create → reload → edit `R$ 75` → move Aug→Sep → delete →
+  reload) and second-user isolation verified in `transactions-*` E2E against
+  real local Supabase; all `unknown/loading/empty/offline/pending/conflict`
+  states render Portuguese copy without raw provider details;
+- `360×800` and `1280×800` light/dark inspected locally (bootstrap overflow
+  guard, month navigation, sheet chrome, transaction rows with income/expense
+  distinguished by icon+text); keyboard focus order, dialog focus retention,
+  `Escape` cancels non-destructive dialogs, `200%` zoom and long `120`-char
+  descriptions do not obscure values; `JetBrains Mono` `4.66 KiB` for money,
+  `finance-safe-x` and floating capsules keep safe-area clearance;
+- `docs/architecture.md` updated with observed read (`YYYY-MM` month, `200`
+  pagination, `AbortSignal`, keys `['transactions', userId, 'month', month]`),
+  RPC write (`security definer`, `search_path=''`, `for update`,
+  `updated_at` version), cache (no optimistic, focused invalidation,
+  `refetchType: 'all'`), routing (non-nested `/_authenticated.app_.transactions`
+  sheets), unsaved-change (`useBlocker` + `unsaved-changes` deferring SW),
+  and offline (online-required, keep draft) boundaries; `docs/finance-rules.md`
+  reviewed `2026-08-26` with no drift; `docs/implementation-plan.md` step 4
+  marked completed locally, squash pending authorization;
+- no `VITE_` secret, `service_role` key, or financial payload in `dist/`,
+  test output, or browser logs; `runtimeCaching` remains empty so no financial
+  request is cached;
+- not observed here (explicitly deferred): Netlify Deploy Preview hosted
+  transaction against `finance-pwa-dev` only, network target inspection,
+  Netlify/browser log review for credentials, and physical iPhone/Android
+  installation (keyboard, date picker popover, safe areas, dark mode,
+  offline-disabled submit, deferred SW update while dirty). These stay in
+  `implementation-plan.md` step 10 pre-beta and the release checkpoint.
 
 ## Release checkpoint
 
