@@ -66,10 +66,10 @@ export function ConfirmPage({ auth, onConfirmed }: ConfirmPageProps) {
       title={content.title}
     >
       <div
-        className="rounded-3xl border border-coral/45 bg-coral/10 px-5 py-5"
+        className="rounded-3xl border border-coral-ring bg-coral-soft px-5 py-5"
         role="alert"
       >
-        <p className="text-sm leading-6 text-ink">
+        <p className="text-sm leading-6 text-coral-ink">
           Nenhum dado da conta foi alterado.
         </p>
       </div>

@@ -2,7 +2,7 @@
 
 Status: in progress
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
 
 ## Outcome
 
@@ -315,9 +315,8 @@ is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 
-Status: completed on 2026-08-26 — branch `feat/transactions` through
-`a6e442c`; local gate green, squash merge to `main` as
-`feat: add one-time transaction management` pending explicit authorization
+Status: completed on 2026-08-26 and merged to `main` in `407ff85` through pull
+request #6
 
 Branch: `feat/transactions`
 
@@ -470,11 +469,35 @@ a85ce0c feat: extend the app under iOS safe areas
 4b1a3a2 feat: float the workspace chrome over the ledger
 ```
 
-Proposed commit:
+Delivered squash merge:
 
 ```text
-chore: adopt the finance design system
+407ff85 Merge pull request #6 from ewertonfrnc/feat/transactions
 ```
+
+Follow-up record, 2026-08-27:
+
+- branch `fix/design-system-shell` replaces the three PWA and Apple icons
+  with cache-busted `v4` assets using the current ink and teal palette; the
+  favicon keeps `/favicon.svg` and is excluded from the manifest-based icon
+  assertion that covers the three PWA icons and the Apple touch icon;
+- the complete legacy red family now separates destructive and error states
+  from the orange expense category, including a 6.67:1 dark destructive-button
+  contrast observed in Chromium;
+- the public header, global offline banner, and fixed dialogs consume their
+  safe-area insets independently so the sticky header retains its inset after
+  the banner scrolls away; a banner visible at the very top still counts the
+  top inset twice, and this 47 px double count is accepted until a
+  scroll-aware handoff is measured;
+- monetary copy in the delete confirmation uses JetBrains Mono, verified with
+  the loaded `FontFace` status plus the computed `fontFamily`; the amount input no
+  longer requests an absent non-breaking-space glyph, and the three inline
+  Auth links meet the 44 by 44 target;
+- `bun run check`, `bunx tsc --noEmit`, the unit suite, and the production build
+  pass. Thirty-two non-conflict local Playwright cases pass across mobile and
+  desktop Chromium. The four update/delete conflict variants are blocked by
+  PostgREST 14.17 retrying the application-level `40001` raised by the existing
+  RPCs; this predates the design follow-up and requires a forward database fix.
 
 ### 6. Widen the transaction kinds
 

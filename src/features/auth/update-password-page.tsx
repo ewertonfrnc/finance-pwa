@@ -109,7 +109,7 @@ export function UpdatePasswordPage({
         {completionFailed ? (
           <>
             <p
-              className="rounded-2xl border border-coral/45 bg-coral/10 px-4 py-3 text-sm font-medium leading-6 text-ink"
+              className="rounded-2xl border border-coral-ring bg-coral-soft px-4 py-3 text-sm font-medium leading-6 text-coral-ink"
               role="alert"
             >
               Entre novamente. Se outra sessão continuar aberta, encerre-a no
@@ -161,10 +161,10 @@ export function UpdatePasswordPage({
         }
       >
         <div
-          className="rounded-3xl border border-coral/45 bg-coral/10 px-5 py-5"
+          className="rounded-3xl border border-coral-ring bg-coral-soft px-5 py-5"
           role="alert"
         >
-          <p className="text-sm leading-6 text-ink">
+          <p className="text-sm leading-6 text-coral-ink">
             Nenhuma senha foi alterada.
           </p>
         </div>
@@ -228,7 +228,7 @@ export function UpdatePasswordPage({
 
         {errorCopy ? (
           <p
-            className="rounded-2xl border border-coral/45 bg-coral/10 px-4 py-3 text-sm font-medium text-ink"
+            className="rounded-2xl border border-coral-ring bg-coral-soft px-4 py-3 text-sm font-medium text-coral-ink"
             role="alert"
           >
             {errorCopy}

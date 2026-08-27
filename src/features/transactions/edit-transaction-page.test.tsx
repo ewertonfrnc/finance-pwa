@@ -314,7 +314,9 @@ describe('EditTransactionPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Excluir lançamento?' }),
     ).toBeVisible()
-    expect(screen.getByText('Mercado · R$ 50,00')).toBeVisible()
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText(/Mercado ·/)).toBeVisible()
+    expect(within(dialog).getByText('R$ 50,00')).toBeVisible()
     expect(screen.queryByText(transactionId)).toBeNull()
     expect(screen.queryByText('user-a')).toBeNull()
 
@@ -448,11 +450,13 @@ describe('EditTransactionPage', () => {
       screen.getByRole('button', { name: 'Recarregar lançamento' }),
     )
 
-    await waitFor(() =>
+    const dialog = screen.getByRole('dialog')
+    await waitFor(() => {
       expect(
-        screen.getByText('Mercado corrigido em outro aparelho · R$ 99,00'),
-      ).toBeVisible(),
-    )
+        within(dialog).getByText(/Mercado corrigido em outro aparelho ·/),
+      ).toBeVisible()
+      expect(within(dialog).getByText('R$ 99,00')).toBeVisible()
+    })
     expect(screen.queryByRole('alert')).toBeNull()
 
     serviceMocks.deleteTransaction.mockResolvedValue(

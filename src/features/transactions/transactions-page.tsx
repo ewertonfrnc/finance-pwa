@@ -114,12 +114,12 @@ function OfflineState() {
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <section
-      className="rounded-4xl border border-expense/40 bg-panel px-6 py-10 text-center shadow-(--finance-shadow-subtle) sm:px-10"
+      className="rounded-4xl border border-coral-ring bg-panel px-6 py-10 text-center shadow-(--finance-shadow-subtle) sm:px-10"
       role="alert"
     >
       <span
         aria-hidden="true"
-        className="mx-auto grid size-14 place-items-center rounded-3xl bg-expense-soft text-expense"
+        className="mx-auto grid size-14 place-items-center rounded-3xl bg-coral-soft text-coral-ink"
       >
         <AlertIcon />
       </span>

@@ -73,7 +73,7 @@ export function AuthenticatedAppPage({
           {errorCopy ? (
             <div className="flex justify-end px-4 sm:px-6">
               <p
-                className="pointer-events-auto mt-2 max-w-sm rounded-2xl border border-expense/40 bg-expense-soft px-4 py-3 text-sm font-medium text-ink shadow-(--finance-shadow-subtle)"
+                className="pointer-events-auto mt-2 max-w-sm rounded-2xl border border-coral-ring bg-coral-soft px-4 py-3 text-sm font-medium text-coral-ink shadow-(--finance-shadow-subtle)"
                 role="alert"
               >
                 {errorCopy}

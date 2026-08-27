@@ -14,21 +14,23 @@ export function HomePage() {
         className="absolute top-168 -left-28 size-72 rounded-full bg-coral/20 blur-3xl lg:top-32"
       />
 
-      <header className="relative mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-12 lg:py-8">
-        <div className="flex items-center gap-3">
-          <BrandMark className="size-11 text-ink" />
-          <span className="text-xl font-semibold tracking-tight text-ink">
-            Finance
-          </span>
-        </div>
-        <Link
-          className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-panel/70 px-5 text-sm font-semibold text-ink backdrop-blur transition hover:border-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          search={{ redirect: undefined }}
-          to="/login"
-        >
-          Entrar
-        </Link>
-      </header>
+      <div className="finance-safe-top finance-safe-x relative">
+        <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-12 lg:py-8">
+          <div className="flex items-center gap-3">
+            <BrandMark className="size-11 text-ink" />
+            <span className="text-xl font-semibold tracking-tight text-ink">
+              Finance
+            </span>
+          </div>
+          <Link
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-panel/70 px-5 text-sm font-semibold text-ink backdrop-blur transition hover:border-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            search={{ redirect: undefined }}
+            to="/login"
+          >
+            Entrar
+          </Link>
+        </header>
+      </div>
 
       <section className="relative mx-auto grid w-full max-w-7xl items-center gap-12 px-5 pt-12 pb-20 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.82fr)] lg:gap-20 lg:px-12 lg:pt-24 lg:pb-28">
         <div className="max-w-3xl">
@@ -117,7 +119,7 @@ function MonthPreview() {
   return (
     <aside
       aria-label="Prévia da visão mensal"
-      className="relative mx-auto w-full max-w-lg rounded-[2.25rem] border border-white/10 bg-ink p-3 text-canvas shadow-(--finance-shadow-strong)"
+      className="relative mx-auto w-full max-w-lg rounded-[2.25rem] border border-canvas/10 bg-ink p-3 text-canvas shadow-(--finance-shadow-strong)"
     >
       <div className="rounded-[1.7rem] border border-canvas/10 bg-ink-soft p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">

@@ -53,6 +53,71 @@ test('should recover from an unknown client route', async ({ page }) => {
   await expect(page).toHaveURL('/')
 })
 
+test('should keep public controls at least 44 by 44 pixels', async ({
+  page,
+}) => {
+  const publicRouteLandmark: Record<string, { name: string; role: string }> = {
+    '/': { name: 'Veja o mês inteiro antes de gastar.', role: 'heading' },
+    '/login': { name: 'Entre na sua conta.', role: 'heading' },
+    '/register': { name: 'Crie sua conta.', role: 'heading' },
+    '/forgot-password': { name: 'Recupere seu acesso.', role: 'heading' },
+    '/offline': {
+      name: 'Sem internet, sem dados desatualizados.',
+      role: 'heading',
+    },
+  }
+
+  for (const route of [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/offline',
+  ]) {
+    await page.goto(route)
+    const landmark = publicRouteLandmark[route]
+    await expect(
+      page.getByRole(landmark.role as 'heading', { name: landmark.name }),
+    ).toBeVisible()
+
+    const measurableCount = await page
+      .locator('a, button, input, select, textarea')
+      .evaluateAll(
+        (elements) =>
+          elements.filter((element) => {
+            const bounds = element.getBoundingClientRect()
+            return bounds.width > 0 && bounds.height > 0
+          }).length,
+      )
+
+    expect(
+      measurableCount,
+      `${route} should expose at least one measurable control`,
+    ).toBeGreaterThan(0)
+
+    const undersizedTargets = await page
+      .locator('a, button, input, select, textarea')
+      .evaluateAll((elements) =>
+        elements.flatMap((element) => {
+          const bounds = element.getBoundingClientRect()
+          if (
+            bounds.width === 0 ||
+            bounds.height === 0 ||
+            (bounds.width >= 44 && bounds.height >= 44)
+          )
+            return []
+          return [
+            element.getAttribute('aria-label') ??
+              element.textContent?.trim() ??
+              element.tagName,
+          ]
+        }),
+      )
+
+    expect(undersizedTargets, route).toEqual([])
+  }
+})
+
 test('should expose an installable manifest and register its service worker', async ({
   page,
 }) => {
@@ -81,22 +146,22 @@ test('should expose an installable manifest and register its service worker', as
   expect(manifest.icons).toEqual([
     expect.objectContaining({
       sizes: '192x192',
-      src: '/pwa-192x192-v3.png',
+      src: '/pwa-192x192-v4.png',
     }),
     expect.objectContaining({
       sizes: '512x512',
-      src: '/pwa-512x512-v3.png',
+      src: '/pwa-512x512-v4.png',
     }),
     expect.objectContaining({
       sizes: '512x512',
-      src: '/pwa-maskable-512x512-v3.png',
+      src: '/pwa-maskable-512x512-v4.png',
     }),
   ])
 
   const appleTouchIcon = page.locator('link[rel="apple-touch-icon"]')
   await expect(appleTouchIcon).toHaveAttribute(
     'href',
-    '/apple-touch-icon-v3.png',
+    '/apple-touch-icon-v4.png',
   )
   await expect(appleTouchIcon).toHaveAttribute('sizes', '180x180')
 
@@ -107,10 +172,11 @@ test('should expose an installable manifest and register its service worker', as
           (source) =>
             new Promise<{
               accentRatio: number
-              canvasRatio: number
               height: number
               inkRatio: number
               opaqueRatio: number
+              retiredAccentRatio: number
+              retiredInkRatio: number
               width: number
             }>((resolve, reject) => {
               const image = new Image()
@@ -133,11 +199,18 @@ test('should expose an installable manifest and register its service worker', as
                   canvas.height,
                 ).data
                 const colors = {
-                  accent: [201, 242, 119],
-                  canvas: [243, 238, 228],
-                  ink: [18, 60, 53],
+                  accent: [50, 143, 151],
+                  ink: [26, 46, 53],
+                  retiredAccent: [201, 242, 119],
+                  retiredInk: [18, 60, 53],
                 }
-                const matches = { accent: 0, canvas: 0, ink: 0, opaque: 0 }
+                const matches = {
+                  accent: 0,
+                  ink: 0,
+                  opaque: 0,
+                  retiredAccent: 0,
+                  retiredInk: 0,
+                }
 
                 for (let index = 0; index < pixels.length; index += 4) {
                   const [red, green, blue, alpha] = pixels.slice(
@@ -161,10 +234,11 @@ test('should expose an installable manifest and register its service worker', as
                 const pixelCount = canvas.width * canvas.height
                 resolve({
                   accentRatio: matches.accent / pixelCount,
-                  canvasRatio: matches.canvas / pixelCount,
                   height: image.naturalHeight,
                   inkRatio: matches.ink / pixelCount,
                   opaqueRatio: matches.opaque / pixelCount,
+                  retiredAccentRatio: matches.retiredAccent / pixelCount,
+                  retiredInkRatio: matches.retiredInk / pixelCount,
                   width: image.naturalWidth,
                 })
               })
@@ -174,7 +248,7 @@ test('should expose an installable manifest and register its service worker', as
         ),
       )
     },
-    ['/apple-touch-icon-v3.png', ...manifest.icons.map((icon) => icon.src)],
+    ['/apple-touch-icon-v4.png', ...manifest.icons.map((icon) => icon.src)],
   )
 
   expect(iconEvidence.map(({ height, width }) => ({ height, width }))).toEqual([
@@ -186,9 +260,10 @@ test('should expose an installable manifest and register its service worker', as
 
   for (const evidence of iconEvidence) {
     expect(evidence.opaqueRatio).toBe(1)
-    expect(evidence.canvasRatio).toBeLessThan(0.01)
     expect(evidence.inkRatio).toBeGreaterThan(0.8)
     expect(evidence.accentRatio).toBeGreaterThan(0.01)
+    expect(evidence.retiredInkRatio).toBeLessThan(0.01)
+    expect(evidence.retiredAccentRatio).toBeLessThan(0.01)
   }
 
   const serviceWorkerScope = await page.evaluate(async () => {

@@ -28,6 +28,10 @@
   --color-accent-ink: var(--finance-accent-ink);
   --color-accent-contrast: var(--finance-accent-contrast);
   --color-coral: var(--finance-coral);
+  --color-coral-soft: var(--finance-coral-soft);
+  --color-coral-ink: var(--finance-coral-ink);
+  --color-coral-ring: var(--finance-coral-ring);
+  --color-coral-contrast: var(--finance-coral-contrast);
   --color-warning: var(--finance-warning);
   --color-warning-ink: var(--finance-warning-ink);
   --color-success: var(--finance-success);
@@ -72,6 +76,10 @@
   );
   --finance-accent-contrast: #ffffff; /* accentForeground */
   --finance-coral: #bd413f; /* red */
+  --finance-coral-soft: #ffece9; /* redSoftBg */
+  --finance-coral-ink: #ac3031; /* redSoftText */
+  --finance-coral-ring: #f0c5c1; /* redRing */
+  --finance-coral-contrast: var(--finance-canvas);
   --finance-warning: #ffeec5; /* amberBg */
   /* Legacy `amber` #a06200 measures 4.31:1 on `amberBg`. The status banner sets
      it at 14px, so it is deepened toward ink to clear 4.5:1. */
@@ -91,10 +99,15 @@
   --finance-font-mono:
     'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono',
     monospace;
-  --finance-shadow: 0 24px 70px rgb(36 48 42 / 10%);
-  --finance-shadow-strong: 0 32px 90px rgb(18 60 53 / 24%);
-  --finance-shadow-button: 0 14px 32px rgb(18 60 53 / 18%);
-  --finance-shadow-subtle: 0 10px 30px rgb(36 48 42 / 7%);
+  --finance-shadow-color: var(--finance-ink);
+  --finance-shadow: 0 24px 70px
+    color-mix(in srgb, var(--finance-shadow-color) 10%, transparent);
+  --finance-shadow-strong: 0 32px 90px
+    color-mix(in srgb, var(--finance-shadow-color) 24%, transparent);
+  --finance-shadow-button: 0 14px 32px
+    color-mix(in srgb, var(--finance-shadow-color) 18%, transparent);
+  --finance-shadow-subtle: 0 10px 30px
+    color-mix(in srgb, var(--finance-shadow-color) 7%, transparent);
   font-family: var(--finance-font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -117,6 +130,9 @@
     --finance-accent-ink: #4f9b94;
     --finance-accent-contrast: #0a100d;
     --finance-coral: #ed756e;
+    --finance-coral-soft: #572825;
+    --finance-coral-ink: #ffaea6;
+    --finance-coral-ring: #6e3d39;
     --finance-warning: #42370d;
     --finance-warning-ink: #baa44d; /* amber, already 4.77:1 on the fill */
     --finance-success: #6ec89a; /* greenMid, so the status dot stays visible */
@@ -126,10 +142,15 @@
     --finance-expense: #b15c2d;
     --finance-expense-soft: #432a20;
     --finance-expense-ink: #fff2ea;
-    --finance-shadow: 0 24px 70px rgb(0 0 0 / 24%);
-    --finance-shadow-strong: 0 32px 90px rgb(0 0 0 / 38%);
-    --finance-shadow-button: 0 14px 32px rgb(0 0 0 / 24%);
-    --finance-shadow-subtle: 0 10px 30px rgb(0 0 0 / 18%);
+    --finance-shadow-color: #000000; /* overlayStandard */
+    --finance-shadow: 0 24px 70px
+      color-mix(in srgb, var(--finance-shadow-color) 24%, transparent);
+    --finance-shadow-strong: 0 32px 90px
+      color-mix(in srgb, var(--finance-shadow-color) 38%, transparent);
+    --finance-shadow-button: 0 14px 32px
+      color-mix(in srgb, var(--finance-shadow-color) 24%, transparent);
+    --finance-shadow-subtle: 0 10px 30px
+      color-mix(in srgb, var(--finance-shadow-color) 18%, transparent);
   }
 }
 
@@ -184,6 +205,20 @@ button {
 .finance-safe-x {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+}
+
+.finance-safe-fixed-dialog {
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: max(1rem, env(safe-area-inset-left));
+}
+
+@media (min-width: 40rem) {
+  .finance-safe-fixed-dialog {
+    right: max(1.5rem, env(safe-area-inset-right));
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
+    left: auto;
+  }
 }
 
 ::selection {

@@ -8,8 +8,11 @@ export function NetworkStatus() {
   }
 
   return (
-    <output className="relative z-50 bg-warning px-4 py-2 text-center text-sm font-medium text-warning-ink">
-      Sem conexão. Você pode abrir o app, mas dados financeiros exigem internet.
+    <output className="finance-safe-top finance-safe-x relative z-50 block bg-warning text-center text-sm font-medium text-warning-ink">
+      <span className="block px-4 py-2">
+        Sem conexão. Você pode abrir o app, mas dados financeiros exigem
+        internet.
+      </span>
     </output>
   )
 }
