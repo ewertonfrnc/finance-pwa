@@ -4,7 +4,7 @@ Status: in implementation
 
 Last reviewed: 2026-08-26
 
-Next step: 3. Deliver one-time transaction creation
+Next step: 5. Deliver confirmed transaction deletion
 
 Revised: 2026-08-25, after the design system decisions in
 [`05-design-system-ios.md`](05-design-system-ios.md)
@@ -676,7 +676,7 @@ submit state on a physical device. They stay in the roadmap step 10 pass.
 
 ### 4. Deliver conflict-safe transaction editing
 
-Status: pending
+Status: completed on 2026-08-26
 
 Create:
 
@@ -743,6 +743,39 @@ Commit:
 ```text
 feat: add one-time transaction editing
 ```
+
+Decisions taken during delivery, 2026-08-26:
+
+- a conflict keeps the user's edited fields on screen. The alert carries the
+  consequence of recovery — `Recarregar substitui o que você editou pelos
+dados salvos.` — and `Recarregar lançamento` is the only thing that replaces
+  them. Discarding typed work without saying so is the failure this contract
+  exists to prevent;
+- the row link carries the browsed month, and a direct URL without `month`
+  falls back to the month of the row it loads. Cancel never lands the user on
+  a month they were not looking at;
+- `update_transaction` returns the authoritative row, so the mutation writes it
+  into the detail key with `setQueryData` instead of invalidating it. An
+  invalidation would refetch a screen the user is leaving and race the
+  navigation. The affected months are still invalidated with `refetchType:
+'all'`, exactly as create does.
+
+Verification record, 2026-08-26:
+
+- the complete unit suite passed with 26 files and 198 tests; the local
+  Playwright `transactions-edit` spec passed on desktop and mobile Chromium,
+  and the full local suite passed with 28 cases against real local Supabase,
+  including the real `40001` conflict raised by a concurrent admin write;
+- `bun run check`, `bunx tsc --noEmit`, and `bun run build` passed;
+- the history row, the edit sheet, and the conflict alert were inspected at
+  390 by 844 in light and dark. The alert keeps its contrast in dark, and the
+  recovery action reads as the primary control inside it;
+- the row description now truncates earlier next to the disclosure chevron.
+  Measured against the amount column, removing the chevron would not stop the
+  truncation on a 390 px screen, so it stays; the daily balance ledger in
+  roadmap step 8 owns the next revision of this row;
+- not observed here: physical device behavior for the edit sheet and the
+  offline read state. They stay in the roadmap step 10 pass.
 
 ### 5. Deliver confirmed transaction deletion
 

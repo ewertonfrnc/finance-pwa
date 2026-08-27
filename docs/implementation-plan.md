@@ -315,8 +315,8 @@ is limited to an approved smoke and cannot support invited users.
 
 ### 4. Deliver one-time transactions end to end
 
-Status: in progress — steps 1 through 3 are delivered locally; conflict-safe
-editing is next
+Status: in progress — steps 1 through 4 are delivered locally; confirmed
+deletion is next
 
 Branch: `feat/transactions`
 
