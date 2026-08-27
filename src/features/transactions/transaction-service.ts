@@ -119,3 +119,21 @@ export async function updateTransaction(
 
   return data
 }
+
+export type DeleteTransactionInput = {
+  expectedUpdatedAt: string
+  id: string
+}
+
+export async function deleteTransaction(
+  input: DeleteTransactionInput,
+): Promise<Transaction> {
+  const { data, error } = await supabase.rpc('delete_transaction', {
+    p_expected_updated_at: input.expectedUpdatedAt,
+    p_id: input.id,
+  })
+
+  if (error) throw error
+
+  return data
+}

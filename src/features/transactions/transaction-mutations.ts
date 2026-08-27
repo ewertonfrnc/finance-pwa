@@ -2,7 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { getTransactionMonth } from './transaction-calendar'
 import { transactionQueryKeys } from './transaction-queries'
-import { createTransaction, updateTransaction } from './transaction-service'
+import {
+  createTransaction,
+  deleteTransaction,
+  updateTransaction,
+} from './transaction-service'
 import type { UpdateTransactionInput } from './transaction-service'
 import type { TransactionMonth } from './transaction-types'
 
@@ -29,6 +33,27 @@ export function useCreateTransaction(userId: string) {
 
 export type UpdateTransactionVariables = UpdateTransactionInput & {
   originalMonth: TransactionMonth
+}
+
+export function useDeleteTransaction(userId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (variables: { id: string; expectedUpdatedAt: string }) =>
+      deleteTransaction(variables),
+    onSuccess: async (transaction) => {
+      const month = getTransactionMonth(transaction.transaction_date)
+
+      queryClient.removeQueries({
+        queryKey: transactionQueryKeys.detail(userId, transaction.id),
+      })
+
+      await queryClient.invalidateQueries({
+        queryKey: transactionQueryKeys.month(userId, month),
+        refetchType: 'all',
+      })
+    },
+  })
 }
 
 export function useUpdateTransaction(userId: string) {

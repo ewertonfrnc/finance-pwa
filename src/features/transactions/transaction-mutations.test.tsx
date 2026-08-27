@@ -7,17 +7,20 @@ import type { Transaction } from './transaction-types'
 
 const transactionMocks = vi.hoisted(() => ({
   createTransaction: vi.fn<(input: unknown) => Promise<Transaction>>(),
+  deleteTransaction: vi.fn<(input: unknown) => Promise<Transaction>>(),
   updateTransaction: vi.fn<(input: unknown) => Promise<Transaction>>(),
 }))
 
 vi.mock('./transaction-service', () => ({
   createTransaction: transactionMocks.createTransaction,
+  deleteTransaction: transactionMocks.deleteTransaction,
   updateTransaction: transactionMocks.updateTransaction,
 }))
 
 import { transactionQueryKeys } from './transaction-queries'
 import {
   useCreateTransaction,
+  useDeleteTransaction,
   useUpdateTransaction,
 } from './transaction-mutations'
 
@@ -73,6 +76,10 @@ function renderUpdateTransaction(userId = 'user-a') {
 
 function renderCreateTransaction(userId = 'user-a') {
   return renderMutation(() => useCreateTransaction(userId), userId)
+}
+
+function renderDeleteTransaction(userId = 'user-a') {
+  return renderMutation(() => useDeleteTransaction(userId), userId)
 }
 
 describe('useCreateTransaction', () => {
@@ -280,6 +287,106 @@ describe('useUpdateTransaction', () => {
     )
 
     result.current.mutate(updateVariables())
+
+    await waitFor(() => expect(invalidateQueries).toHaveBeenCalled())
+    expect(result.current.isPending).toBe(true)
+
+    resolveInvalidation()
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+  })
+})
+
+describe('useDeleteTransaction', () => {
+  beforeEach(() => {
+    transactionMocks.deleteTransaction.mockReset()
+  })
+
+  it('should remove the detail query and invalidate the deleted month', async () => {
+    transactionMocks.deleteTransaction.mockResolvedValue(
+      transaction({ transaction_date: '2026-08-25' }),
+    )
+    const { queryClient, result } = renderDeleteTransaction('user-a')
+    const removeQueries = vi.spyOn(queryClient, 'removeQueries')
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries')
+
+    // Seed the detail query so removal is observable.
+    queryClient.setQueryData(
+      transactionQueryKeys.detail(
+        'user-a',
+        '00000000-0000-4000-8000-000000000001',
+      ),
+      transaction(),
+    )
+    expect(
+      queryClient.getQueryData(
+        transactionQueryKeys.detail(
+          'user-a',
+          '00000000-0000-4000-8000-000000000001',
+        ),
+      ),
+    ).toBeDefined()
+
+    result.current.mutate({
+      expectedUpdatedAt: '2026-08-25T12:00:00Z',
+      id: '00000000-0000-4000-8000-000000000001',
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(removeQueries).toHaveBeenCalledWith({
+      queryKey: transactionQueryKeys.detail(
+        'user-a',
+        '00000000-0000-4000-8000-000000000001',
+      ),
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: transactionQueryKeys.month('user-a', '2026-08'),
+      refetchType: 'all',
+    })
+    expect(
+      queryClient.getQueryData(
+        transactionQueryKeys.detail(
+          'user-a',
+          '00000000-0000-4000-8000-000000000001',
+        ),
+      ),
+    ).toBeUndefined()
+  })
+
+  it('should send the expected version to the service', async () => {
+    transactionMocks.deleteTransaction.mockResolvedValue(transaction())
+    const { result } = renderDeleteTransaction()
+
+    result.current.mutate({
+      expectedUpdatedAt: '2026-08-25T12:00:00Z',
+      id: '00000000-0000-4000-8000-000000000001',
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(transactionMocks.deleteTransaction).toHaveBeenCalledWith({
+      expectedUpdatedAt: '2026-08-25T12:00:00Z',
+      id: '00000000-0000-4000-8000-000000000001',
+    })
+  })
+
+  it('should stay pending until the month invalidation finishes', async () => {
+    transactionMocks.deleteTransaction.mockResolvedValue(transaction())
+    const { queryClient, result } = renderDeleteTransaction()
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries')
+    let resolveInvalidation: () => void = noop
+    invalidateQueries.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveInvalidation = resolve
+        }),
+    )
+
+    result.current.mutate({
+      expectedUpdatedAt: '2026-08-25T12:00:00Z',
+      id: '00000000-0000-4000-8000-000000000001',
+    })
 
     await waitFor(() => expect(invalidateQueries).toHaveBeenCalled())
     expect(result.current.isPending).toBe(true)

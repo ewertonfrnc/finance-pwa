@@ -71,6 +71,7 @@ vi.mock('../../lib/supabase/client', () => ({
 
 import {
   createTransaction,
+  deleteTransaction,
   readMonthlyTransactions,
   readTransaction,
   updateTransaction,
@@ -334,6 +335,53 @@ describe('updateTransaction', () => {
         id: '00000000-0000-4000-8000-000000000000',
         kind: 'income',
         transactionDate: '2026-08-26',
+      }),
+    ).rejects.toBe(providerError)
+  })
+})
+
+describe('deleteTransaction', () => {
+  beforeEach(() => {
+    supabaseMocks.rpc.mockClear()
+  })
+
+  it('should send the expected version with the typed arguments', async () => {
+    const persisted = transaction(0)
+    supabaseMocks.rpc.mockResolvedValue({ data: persisted, error: null })
+
+    await expect(
+      deleteTransaction({
+        expectedUpdatedAt: '2026-08-25T12:00:00Z',
+        id: persisted.id,
+      }),
+    ).resolves.toEqual(persisted)
+
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith('delete_transaction', {
+      p_expected_updated_at: '2026-08-25T12:00:00Z',
+      p_id: persisted.id,
+    })
+  })
+
+  it('should surface a stale version failure for safe UI mapping', async () => {
+    const providerError = { code: '40001', message: 'transaction_conflict' }
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: providerError })
+
+    await expect(
+      deleteTransaction({
+        expectedUpdatedAt: '2026-08-25T12:00:00Z',
+        id: '00000000-0000-4000-8000-000000000000',
+      }),
+    ).rejects.toBe(providerError)
+  })
+
+  it('should surface a missing row failure for safe UI mapping', async () => {
+    const providerError = { code: 'P0002', message: 'transaction_not_found' }
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: providerError })
+
+    await expect(
+      deleteTransaction({
+        expectedUpdatedAt: '2026-08-25T12:00:00Z',
+        id: '00000000-0000-4000-8000-000000000000',
       }),
     ).rejects.toBe(providerError)
   })

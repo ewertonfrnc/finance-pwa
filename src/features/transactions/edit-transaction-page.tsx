@@ -11,10 +11,14 @@ import {
   getTransactionErrorCopy,
   isTransactionConflict,
 } from './transaction-errors'
+import { DeleteTransactionDialog } from './delete-transaction-dialog'
 import { TransactionForm } from './transaction-form'
 import type { TransactionPayload } from './transaction-form-schema'
 import { toCentavoDigits } from './transaction-money'
-import { useUpdateTransaction } from './transaction-mutations'
+import {
+  useDeleteTransaction,
+  useUpdateTransaction,
+} from './transaction-mutations'
 import { transactionDetailQueryOptions } from './transaction-queries'
 import type { Transaction, TransactionMonth } from './transaction-types'
 
@@ -43,9 +47,16 @@ export function EditTransactionPage({
     enabled: isOnline,
   })
   const updateTransaction = useUpdateTransaction(userId)
+  const deleteTransaction = useDeleteTransaction(userId)
   const [errorCopy, setErrorCopy] = useState<string | null>(null)
   const [hasConflict, setHasConflict] = useState(false)
   const [savedMonth, setSavedMonth] = useState<TransactionMonth | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [deleteErrorCopy, setDeleteErrorCopy] = useState<string | null>(null)
+  const [hasDeleteConflict, setHasDeleteConflict] = useState(false)
+  const [deletedMonth, setDeletedMonth] = useState<TransactionMonth | null>(
+    null,
+  )
 
   const transaction = query.data ?? null
 
@@ -77,6 +88,16 @@ export function EditTransactionPage({
 
     void navigate({ replace: true, search: { month: savedMonth }, to: '/app' })
   }, [navigate, savedMonth])
+
+  useEffect(() => {
+    if (!deletedMonth) return
+
+    void navigate({
+      replace: true,
+      search: { month: deletedMonth },
+      to: '/app',
+    })
+  }, [deletedMonth, navigate])
 
   async function handleSubmit(
     payload: TransactionPayload,
@@ -120,6 +141,52 @@ export function EditTransactionPage({
     }
 
     setHasConflict(false)
+  }
+
+  async function handleDeleteConfirm() {
+    if (!transaction) return
+
+    setDeleteErrorCopy(null)
+    setHasDeleteConflict(false)
+
+    try {
+      const deleted = await deleteTransaction.mutateAsync({
+        expectedUpdatedAt: transaction.updated_at,
+        id: transaction.id,
+      })
+
+      setDeletedMonth(getTransactionMonth(deleted.transaction_date))
+    } catch (error) {
+      const conflict = isTransactionConflict(error)
+
+      setHasDeleteConflict(conflict)
+      setDeleteErrorCopy(
+        conflict
+          ? `${getTransactionErrorCopy(error)} ${CONFLICT_RECOVERY_HINT}`
+          : getTransactionErrorCopy(error),
+      )
+    }
+  }
+
+  async function handleDeleteConflictReload() {
+    setDeleteErrorCopy(null)
+
+    const result = await query.refetch()
+
+    if (result.isError) {
+      setDeleteErrorCopy(getTransactionErrorCopy(result.error))
+      return
+    }
+
+    setHasDeleteConflict(false)
+  }
+
+  function handleDeleteDialogCancel() {
+    if (deleteTransaction.isPending) return
+
+    setIsDeleteDialogOpen(false)
+    setDeleteErrorCopy(null)
+    setHasDeleteConflict(false)
   }
 
   if (!isOnline) {
@@ -172,31 +239,79 @@ export function EditTransactionPage({
     )
   }
 
+  const isDeletePending = deleteTransaction.isPending
+  const isFormSaved = savedMonth !== null || deletedMonth !== null
+
   return (
-    <TransactionForm
-      confirmLabel="Salvar"
-      errorAction={
-        hasConflict
-          ? {
-              label: CONFLICT_ACTION_LABEL,
-              onAction: () => void handleConflictReload(),
-            }
-          : undefined
-      }
-      errorCopy={errorCopy}
-      initialValues={initialValues}
-      isPending={updateTransaction.isPending}
-      isSaved={savedMonth !== null}
-      // A reloaded row is a different starting point, so the fields and the
-      // dirty comparison both restart from the version the server just sent.
-      key={transaction.updated_at}
-      onCancel={() =>
-        void navigate({ search: { month: returnMonth }, to: '/app' })
-      }
-      onSubmit={(payload) => void handleSubmit(payload, transaction)}
-      pendingLabel="Salvando..."
-      title="Editar lançamento"
-    />
+    <>
+      <TransactionForm
+        confirmLabel="Salvar"
+        errorAction={
+          hasConflict
+            ? {
+                label: CONFLICT_ACTION_LABEL,
+                onAction: () => void handleConflictReload(),
+              }
+            : undefined
+        }
+        errorCopy={errorCopy}
+        footer={
+          <section aria-labelledby="delete-transaction-title">
+            <h2 className="sr-only" id="delete-transaction-title">
+              Zona de perigo
+            </h2>
+            <button
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-coral transition hover:text-coral/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+                className="grid size-6 place-items-center rounded-full border border-coral/30"
+              >
+                <svg className="size-3.5" fill="none" viewBox="0 0 24 24">
+                  <path
+                    d="M9 3h6m-9 3h12m-2 0-.5 10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6.5 6M10 10v6m4-6v6"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.6"
+                  />
+                </svg>
+              </span>
+              Excluir lançamento
+            </button>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Remove o lançamento do mês. Não pode ser desfeito.
+            </p>
+          </section>
+        }
+        initialValues={initialValues}
+        isPending={updateTransaction.isPending}
+        isSaved={isFormSaved}
+        // A reloaded row is a different starting point, so the fields and the
+        // dirty comparison both restart from the version the server just sent.
+        key={transaction.updated_at}
+        onCancel={() =>
+          void navigate({ search: { month: returnMonth }, to: '/app' })
+        }
+        onSubmit={(payload) => void handleSubmit(payload, transaction)}
+        pendingLabel="Salvando..."
+        title="Editar lançamento"
+      />
+
+      <DeleteTransactionDialog
+        errorCopy={deleteErrorCopy}
+        hasConflict={hasDeleteConflict}
+        isOnline={isOnline}
+        isPending={isDeletePending}
+        onCancel={handleDeleteDialogCancel}
+        onConfirm={() => void handleDeleteConfirm()}
+        onConflictReload={() => void handleDeleteConflictReload()}
+        open={isDeleteDialogOpen}
+        transaction={transaction}
+      />
+    </>
   )
 }
 

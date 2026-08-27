@@ -35,6 +35,7 @@ type TransactionFormProps = {
   confirmLabel: string
   errorAction?: { label: string; onAction: () => void }
   errorCopy: string | null
+  footer?: React.ReactNode
   initialValues: TransactionFormInput
   isPending: boolean
   isSaved: boolean
@@ -48,6 +49,7 @@ export function TransactionForm({
   confirmLabel,
   errorAction,
   errorCopy,
+  footer,
   initialValues,
   isPending,
   isSaved,
@@ -400,6 +402,10 @@ export function TransactionForm({
               </p>
             ) : null}
           </section>
+
+          {footer ? (
+            <div className="border-t border-line pt-6">{footer}</div>
+          ) : null}
         </div>
       </div>
 

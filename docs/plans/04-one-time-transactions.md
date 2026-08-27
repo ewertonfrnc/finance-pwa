@@ -4,7 +4,7 @@ Status: in implementation
 
 Last reviewed: 2026-08-26
 
-Next step: 5. Deliver confirmed transaction deletion
+Next step: 6. Verify the complete boundary and close the feature
 
 Revised: 2026-08-25, after the design system decisions in
 [`05-design-system-ios.md`](05-design-system-ios.md)
@@ -783,7 +783,7 @@ Verification record, 2026-08-26:
 
 ### 5. Deliver confirmed transaction deletion
 
-Status: pending
+Status: completed on 2026-08-26
 
 Create:
 
@@ -798,7 +798,10 @@ Update:
 - `src/features/transactions/transaction-mutations.ts` to version-check,
   remove the detail query, and invalidate only the deleted row's month;
 - `src/features/transactions/edit-transaction-page.tsx` with the destructive
-  action and responsive confirmation presentation.
+  action and responsive confirmation presentation;
+- `src/features/transactions/transaction-form.tsx` with a `footer` slot so
+  the destructive action lives inside the same `min-h-svh` scroll, not in a
+  second viewport.
 
 Keep delete inside the edit flow for this beta. Do not add swipe gestures,
 bulk selection, or an unconfirmed list-row action.
@@ -834,6 +837,35 @@ Commit:
 ```text
 feat: add one-time transaction deletion
 ```
+
+Verification record, 2026-08-26:
+
+- the transaction RPC `delete_transaction` was already on `main` via
+  `supabase/migrations/20260825020000_transaction_mutations.sql:173`
+  (`security definer`, `search_path=''`, `for update`, `40001`/`P0002`);
+  the hosted `finance-pwa-dev` was behind until `bunx supabase db push` applied
+  `20260825020000` on 2026-08-26 (`Local`/`Remote` both at `20260825020000`);
+- the complete unit suite passed with 27 files and 219 tests; the local
+  Playwright `transactions-delete` (6 cases) and full `transactions` (16 cases)
+  passed on desktop and mobile Chromium against real local Supabase, including
+  the real `40001` conflict raised by a concurrent admin write and the
+  recoverable generic failure that keeps the dialog open;
+- the stale delete was observed to preserve the newer row and require
+  `Recarregar lançamento` with the hint `Recarregar substitui o que você editou
+pelos dados salvos.`, matching the edit recovery language;
+- the edit sheet at `390x844` now shows `Excluir lançamento` as `text-coral`
+  with a `6px` circular trash icon inside the same form scroll (`footer` slot
+  `border-t pt-6`), not in a second `min-h-svh` sibling — the earlier double
+  viewport required a full-screen swipe, the current placement needs one short
+  swipe;
+- after a successful delete the `detail` query is removed and only the deleted
+  row's month is invalidated with `refetchType: 'all'`, the list no longer shows
+  `Saldo Inicial · R$ 1.500,00` and a reload keeps `Nenhum lançamento neste
+mês.`;
+- `bun run check`, `bunx tsc --noEmit`, and `bun run build` passed; `bunx
+supabase test db` passed with 71 pgTAP checks across 2 files;
+- not observed here: physical device behavior for the delete dialog and the
+  offline state. They stay in the roadmap step 10 pass.
 
 ### 6. Verify the complete boundary and close the feature
 
