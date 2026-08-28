@@ -1,8 +1,8 @@
 # Starting-position onboarding implementation plan
 
-Status: planned on 2026-08-27
+Status: in progress — steps 1–3 delivered on 2026-08-28, steps 4–6 pending
 
-Last reviewed: 2026-08-27
+Last reviewed: 2026-08-28
 
 Roadmap step: 7
 

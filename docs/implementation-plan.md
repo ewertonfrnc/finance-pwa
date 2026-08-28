@@ -589,7 +589,7 @@ Deferred from this step:
 
 ### 7. Deliver starting-position onboarding
 
-Status: pending
+Status: in progress — steps 1–3 delivered on 2026-08-28 (`b4507e6` shared primitives, `77797df` client boundary, onboarding entry/review/retry flow); steps 4–6 pending
 
 Branch: `feat/starting-position`
 
