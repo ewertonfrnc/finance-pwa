@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 import { createLocalAuthUser, deleteLocalAuthUser } from './support/auth-admin'
+import { createLocalStartingPositionFixture } from './support/finance-admin'
 
 const password = 'local-password-123'
 
@@ -14,6 +15,11 @@ test.beforeEach(async ({ browserName }, testInfo) => {
   email = `auth-login-${browserName}-${testInfo.project.name}-${randomUUID()}@example.com`
   const user = await createLocalAuthUser({ email, password })
   userId = user.id
+  await createLocalStartingPositionFixture({
+    balance_cents: 5000,
+    effective_on: '2026-08-27',
+    user_id: userId,
+  })
 })
 
 test.afterEach(async () => {

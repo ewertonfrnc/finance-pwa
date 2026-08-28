@@ -3,7 +3,10 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 import { createLocalAuthUser, deleteLocalAuthUser } from './support/auth-admin'
-import { createLocalTransactionFixtures } from './support/finance-admin'
+import {
+  createLocalStartingPositionFixture,
+  createLocalTransactionFixtures,
+} from './support/finance-admin'
 
 const password = 'local-password-123'
 
@@ -25,6 +28,11 @@ test.beforeEach(async ({ browserName }, testInfo) => {
   ])
   ownerId = owner.id
   otherUserId = otherUser.id
+  await createLocalStartingPositionFixture({
+    balance_cents: 5000,
+    effective_on: '2026-08-27',
+    user_id: ownerId,
+  })
 
   const scrollFixtures = Array.from({ length: 20 }, (_, index) => {
     const day = 23 - index

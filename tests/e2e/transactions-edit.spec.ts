@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { TRANSACTION_KIND_META } from '../../src/features/transactions/transaction-kind'
 import { createLocalAuthUser, deleteLocalAuthUser } from './support/auth-admin'
 import {
+  createLocalStartingPositionFixture,
   createLocalTransactionFixtures,
   updateLocalTransactionFixture,
 } from './support/finance-admin'
@@ -23,6 +24,11 @@ test.beforeEach(async ({ browserName }, testInfo) => {
 
   const user = await createLocalAuthUser({ email, password })
   userId = user.id
+  await createLocalStartingPositionFixture({
+    balance_cents: 5000,
+    effective_on: '2026-08-27',
+    user_id: userId,
+  })
 
   await createLocalTransactionFixtures([
     {

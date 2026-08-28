@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 import { createLocalAuthUser, deleteLocalAuthUser } from './support/auth-admin'
+import { createLocalStartingPositionFixture } from './support/finance-admin'
 import {
   findMailpitMessageByRecipient,
   readMailpitMessageLink,
@@ -22,6 +23,11 @@ test.beforeEach(async ({ browserName }, testInfo) => {
   unknownEmail = `auth-recovery-unknown-${uniqueId}@example.com`
   const user = await createLocalAuthUser({ email, password: oldPassword })
   userId = user.id
+  await createLocalStartingPositionFixture({
+    balance_cents: 5000,
+    effective_on: '2026-08-27',
+    user_id: userId,
+  })
 })
 
 test.afterEach(async () => {

@@ -37,6 +37,15 @@ vi.mock('../../lib/use-network-status', () => ({
   useNetworkStatus: () => serviceMocks.isOnline,
 }))
 
+const startingPositionMocks = vi.hoisted(() => ({
+  readStartingPosition: vi.fn<() => Promise<unknown>>(),
+}))
+
+vi.mock('../starting-position/starting-position-service', () => ({
+  initializeStartingPosition: vi.fn<() => Promise<unknown>>(),
+  readStartingPosition: startingPositionMocks.readStartingPosition,
+}))
+
 vi.mock('../auth/auth-service', () => ({
   signInWithEmail: vi.fn<() => void>(),
   registerWithEmail: vi.fn<() => void>(),
@@ -120,6 +129,12 @@ describe('EditTransactionPage', () => {
     serviceMocks.readTransaction.mockReset()
     serviceMocks.updateTransaction.mockReset()
     serviceMocks.deleteTransaction.mockReset()
+    startingPositionMocks.readStartingPosition.mockResolvedValue({
+      balance_cents: 5000,
+      created_at: '2026-08-27T12:00:00Z',
+      effective_on: '2026-08-27',
+      user_id: 'user-a',
+    })
   })
 
   it('should open the persisted kind, amount, description, and date', async () => {

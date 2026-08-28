@@ -6,7 +6,9 @@ import {
   isTransactionMonth,
 } from '../features/transactions/transaction-calendar'
 
-export const Route = createFileRoute('/_authenticated/app_/transactions/new')({
+export const Route = createFileRoute(
+  '/_authenticated/_positioned/app_/transactions/new',
+)({
   component: CreateTransactionRoute,
   validateSearch: (search: Record<string, unknown>): { month?: string } => ({
     month: isTransactionMonth(search.month) ? search.month : undefined,

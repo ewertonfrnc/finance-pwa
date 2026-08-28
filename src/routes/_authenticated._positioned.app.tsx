@@ -6,7 +6,7 @@ import {
   isTransactionMonth,
 } from '../features/transactions/transaction-calendar'
 
-export const Route = createFileRoute('/_authenticated/app')({
+export const Route = createFileRoute('/_authenticated/_positioned/app')({
   beforeLoad: ({ search }) => {
     if (!search.month) {
       throw redirect({
