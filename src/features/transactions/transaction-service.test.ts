@@ -324,7 +324,7 @@ describe('updateTransaction', () => {
   })
 
   it('should surface a stale version failure for safe UI mapping', async () => {
-    const providerError = { code: '40001', message: 'transaction_conflict' }
+    const providerError = { code: 'PT409', message: 'transaction_conflict' }
     supabaseMocks.rpc.mockResolvedValue({ data: null, error: providerError })
 
     await expect(
@@ -363,7 +363,7 @@ describe('deleteTransaction', () => {
   })
 
   it('should surface a stale version failure for safe UI mapping', async () => {
-    const providerError = { code: '40001', message: 'transaction_conflict' }
+    const providerError = { code: 'PT409', message: 'transaction_conflict' }
     supabaseMocks.rpc.mockResolvedValue({ data: null, error: providerError })
 
     await expect(

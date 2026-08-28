@@ -149,6 +149,30 @@ describe('CreateTransactionPage', () => {
     expect(router.state.location.search).toEqual({ month: currentMonth })
   })
 
+  it('should send a newly widened kind selected in the picker', async () => {
+    serviceMocks.createTransaction.mockResolvedValue(
+      persistedTransaction({ kind: 'daily' }),
+    )
+    const router = await renderCreateRoute(
+      `/app/transactions/new?month=${currentMonth}`,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tipo: Saída' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Diário' }))
+    typeAmount('5000')
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/app'))
+
+    expect(serviceMocks.createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amountCents: 5000,
+        kind: 'daily',
+      }),
+      expect.anything(),
+    )
+  })
+
   it('should keep the draft and translate a provider failure', async () => {
     serviceMocks.createTransaction.mockRejectedValue({
       code: '23505',

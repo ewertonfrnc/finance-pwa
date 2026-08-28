@@ -42,7 +42,13 @@ test.afterEach(async () => {
   if (userId) await deleteLocalAuthUser(userId)
 })
 
-async function openTheTransaction(page: Page) {
+async function openTheTransaction(
+  page: Page,
+  target: { description: string; id: string } = {
+    description: 'Mercado para excluir',
+    id: transactionId,
+  },
+) {
   await page.goto('/login')
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Senha').fill(password)
@@ -57,10 +63,10 @@ async function openTheTransaction(page: Page) {
     .catch(() => undefined)
   if (await offlineReadyAction.isVisible()) await offlineReadyAction.click()
 
-  await page.getByRole('link', { name: /Mercado para excluir/ }).click()
+  await page.getByRole('link', { name: new RegExp(target.description) }).click()
 
   await expect(page).toHaveURL(
-    `/app/transactions/${transactionId}/edit?month=${month}`,
+    `/app/transactions/${target.id}/edit?month=${month}`,
   )
   await expect(
     page.getByRole('heading', { name: 'Editar lançamento' }),
@@ -178,4 +184,43 @@ test('should cancel the delete without mutating the row', async ({ page }) => {
 
   await page.goto(`/app?month=${month}`)
   await expect(page.getByText('Mercado para excluir')).toBeVisible()
+})
+
+test('should name a description-less new-kind transaction correctly in the delete dialog', async ({
+  page,
+}) => {
+  const dailyTransactionId = randomUUID()
+
+  await createLocalTransactionFixtures([
+    {
+      amount_cents: 4500,
+      created_at: '2026-08-24T09:00:00Z',
+      description: null,
+      id: dailyTransactionId,
+      kind: 'daily',
+      transaction_date: '2026-08-24',
+      updated_at: '2026-08-24T09:00:00Z',
+      user_id: userId,
+    },
+  ])
+
+  await openTheTransaction(page, {
+    description: 'Diário sem descrição',
+    id: dailyTransactionId,
+  })
+
+  await page.getByRole('button', { name: 'Excluir lançamento' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText(/Diário sem descrição ·/)).toBeVisible()
+
+  await dialog.getByRole('button', { name: 'Excluir' }).click()
+
+  await expect(page).toHaveURL(`/app?month=${month}`)
+  await expect(page.getByText('Diário sem descrição')).toBeHidden()
+
+  await page.reload()
+
+  await expect(page.getByText('Diário sem descrição')).toBeHidden()
 })

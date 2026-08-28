@@ -501,9 +501,12 @@ Follow-up record, 2026-08-27:
 
 ### 6. Widen the transaction kinds
 
-Status: pending
+Status: complete, except the runtime visual pass recorded below
 
 Branch: `feat/transaction-kinds`
+
+Detailed plan:
+[`docs/plans/06-transaction-kinds.md`](plans/06-transaction-kinds.md)
 
 Create:
 
@@ -544,6 +547,45 @@ Proposed commit:
 ```text
 feat: widen the transaction kinds
 ```
+
+Observed on 2026-08-27:
+
+- `20260827010000_widen_transaction_kinds.sql` appends `daily` and `savings`,
+  leaving `enum_range` at `{income,expense,daily,savings}`. An upgrade
+  rehearsal from `20260825020000` hashed the seeded transaction rows before and
+  after applying the pending migrations and observed the identical digest
+  `0c8bf1e882f927606577389557384dc2`, so existing rows are unchanged;
+- `20260827020000_use_http_conflict_sqlstate.sql` recreates `update_transaction`
+  and `delete_transaction` with `PT409` in place of the stale-version `40001`
+  that PostgREST 14.17 retried. The four update and delete conflict variants
+  that step 5 recorded as blocked now return within the normal timeout, between
+  3.1 and 4.3 seconds across both Playwright projects;
+- `src/features/transactions/transaction-kind.tsx` owns the four-kind product
+  metadata and the inline SVG marks, replacing the duplicated records in the
+  form, the list, and the delete dialog. Removing one entry from its exhaustive
+  `Record` was observed to fail `tsc` with `TS2741`;
+- `src/styles/index.css` adds the `daily` and `savings` triples in light and
+  dark without changing an existing category or danger color;
+- `bun run db:types` regenerated `src/lib/supabase/database.types.ts` with all
+  four values in both the union and `Constants`, and repeated runs produced a
+  stable digest;
+- `bun run check`, `bunx tsc --noEmit`, and `bun run build` pass. The unit suite
+  passes at 27 files and 233 tests. `bunx supabase test db` passes at 2 files
+  and 77 assertions. `bun run test:e2e:local -- transactions` passes at 22
+  cases, 11 per project, including creation of all four kinds through the form,
+  a `22P02` rejection of an authenticated `transfer` RPC that inserted no row,
+  and a kind change that survived a reload.
+
+Deferred from this step:
+
+- the runtime visual pass over the four category marks and their light and dark
+  contrast was not performed. The Playwright suite asserts no horizontal
+  overflow at 390 by 844 and 1280 by 800, a 44 by 44 minimum target, and four
+  distinct computed background colors, but no one inspected the rendered
+  glyphs. This check moves to the device and browser pass owned by roadmap
+  step 10;
+- every hosted check remains outstanding, including applying both migrations to
+  a hosted project and observing `PT409` through a hosted Data API.
 
 ### 7. Deliver starting-position onboarding
 

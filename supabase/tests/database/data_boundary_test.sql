@@ -23,8 +23,8 @@ select is(
   (
     select enum_range(null::public.transaction_kind)::text
   ),
-  '{income,expense}',
-  'transaction_kind should contain only income and expense'
+  '{income,expense,daily,savings}',
+  'transaction_kind should contain income, expense, daily, and savings in order'
 );
 
 select ok(

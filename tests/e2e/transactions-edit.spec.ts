@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 
 import { expect, test, type Page } from '@playwright/test'
 
+import { TRANSACTION_KIND_META } from '../../src/features/transactions/transaction-kind'
 import { createLocalAuthUser, deleteLocalAuthUser } from './support/auth-admin'
 import {
   createLocalTransactionFixtures,
@@ -84,6 +85,34 @@ test('should persist an edited amount and description', async ({ page }) => {
   await expect(page.getByText('Mercado corrigido')).toBeVisible()
   await expect(page.getByText('R$ 75,00')).toBeVisible()
   await expect(page.getByText('Mercado da semana')).toBeHidden()
+})
+
+test('should change the transaction kind and keep it after reload', async ({
+  page,
+}) => {
+  await openTheTransaction(page)
+
+  const savingsLabel = TRANSACTION_KIND_META.savings.label
+  // The button's accessible name carries the selected label, so it changes
+  // from "Tipo: Saída" to "Tipo: Economia" once the new kind is picked.
+  const typePicker = page.getByRole('button', { name: /^Tipo: / })
+  await typePicker.click()
+  await page
+    .getByRole('group', { name: 'Escolha o tipo' })
+    .getByText(savingsLabel, { exact: true })
+    .click()
+  await expect(typePicker).toHaveAttribute('aria-expanded', 'false')
+
+  await page.getByRole('button', { name: 'Salvar' }).click()
+
+  await expect(page).toHaveURL(`/app?month=${month}`)
+  await expect(page.getByText('Mercado da semana')).toBeVisible()
+  await expect(page.getByText(savingsLabel, { exact: true })).toBeVisible()
+
+  await page.reload()
+
+  await expect(page.getByText('Mercado da semana')).toBeVisible()
+  await expect(page.getByText(savingsLabel, { exact: true })).toBeVisible()
 })
 
 test('should move the transaction to the month of its new date', async ({

@@ -33,6 +33,26 @@ const transactions: Transaction[] = [
     updated_at: '2026-08-24T12:00:00Z',
     user_id: 'user-a',
   },
+  {
+    amount_cents: 3200,
+    created_at: '2026-08-23T12:00:00Z',
+    description: null,
+    id: 'daily-a',
+    kind: 'daily',
+    transaction_date: '2026-08-23',
+    updated_at: '2026-08-23T12:00:00Z',
+    user_id: 'user-a',
+  },
+  {
+    amount_cents: 45000,
+    created_at: '2026-08-22T12:00:00Z',
+    description: null,
+    id: 'savings-a',
+    kind: 'savings',
+    transaction_date: '2026-08-22',
+    updated_at: '2026-08-22T12:00:00Z',
+    user_id: 'user-a',
+  },
 ]
 
 async function renderList() {
@@ -73,6 +93,23 @@ describe('TransactionList', () => {
     expect(within(list).getByText('Saída sem descrição')).toBeVisible()
     expect(within(list).getByText('Saída')).toBeVisible()
     expect(within(list).getByText('R$ 125,50')).toBeVisible()
+  })
+
+  it('should render every kind label, fallback description, sign, and amount', async () => {
+    await renderList()
+
+    const list = screen.getByRole('list', { name: 'Lançamentos do mês' })
+
+    expect(within(list).getByText('Diário sem descrição')).toBeVisible()
+    expect(within(list).getByText('Diário')).toBeVisible()
+    expect(within(list).getByText('R$ 32,00')).toBeVisible()
+
+    expect(within(list).getByText('Economia sem descrição')).toBeVisible()
+    expect(within(list).getByText('Economia')).toBeVisible()
+    expect(within(list).getByText('R$ 450,00')).toBeVisible()
+
+    expect(within(list).getByText('+')).toBeVisible()
+    expect(within(list).getAllByText('−')).toHaveLength(3)
   })
 
   it('should open the edit screen of the selected row keeping the browsed month', async () => {

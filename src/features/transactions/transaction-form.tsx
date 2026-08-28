@@ -10,26 +10,14 @@ import {
   type TransactionFormInput,
   type TransactionPayload,
 } from './transaction-form-schema'
-import { formatCentavoDigits, parseCentavoDigits } from './transaction-money'
 import {
-  TRANSACTION_DESCRIPTION_MAX_LENGTH,
-  type TransactionKind,
-} from './transaction-types'
-
-const KIND_LABEL: Record<TransactionKind, string> = {
-  expense: 'Saída',
-  income: 'Entrada',
-}
-
-const KIND_FOOTNOTE: Record<TransactionKind, string> = {
-  expense: 'Reduz o saldo do dia como gasto pontual.',
-  income: 'Aumenta o saldo do dia.',
-}
-
-const KIND_PLACEHOLDER: Record<TransactionKind, string> = {
-  expense: 'Onde foi parar essa grana?',
-  income: 'De onde veio essa grana?',
-}
+  TRANSACTION_KIND_META,
+  TRANSACTION_KIND_ORDER,
+  TransactionKindBadge,
+  TransactionKindDot,
+} from './transaction-kind'
+import { formatCentavoDigits, parseCentavoDigits } from './transaction-money'
+import { TRANSACTION_DESCRIPTION_MAX_LENGTH } from './transaction-types'
 
 type TransactionFormProps = {
   confirmLabel: string
@@ -268,7 +256,7 @@ export function TransactionForm({
               id={`${fieldId}-description`}
               maxLength={TRANSACTION_DESCRIPTION_MAX_LENGTH}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder={KIND_PLACEHOLDER[kind]}
+              placeholder={TRANSACTION_KIND_META[kind].descriptionPlaceholder}
               ref={descriptionRef}
               type="text"
               value={description}
@@ -288,17 +276,21 @@ export function TransactionForm({
                 aria-controls={kindPickerId}
                 aria-describedby={kindFootnoteId}
                 aria-expanded={isKindPickerOpen}
-                aria-label={`Tipo: ${KIND_LABEL[kind]}`}
+                aria-label={`Tipo: ${TRANSACTION_KIND_META[kind].label}`}
                 className="flex min-h-15 w-full items-center gap-3 px-4 text-left transition hover:bg-canvas/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
                 onClick={() => setIsKindPickerOpen((open) => !open)}
                 ref={kindRef}
                 type="button"
               >
-                <KindIcon kind={kind} />
+                <TransactionKindBadge
+                  className="size-9"
+                  kind={kind}
+                  markClassName="size-4"
+                />
                 <span className="font-medium text-ink">Tipo</span>
                 <span className="ml-auto inline-flex min-h-9 items-center gap-2 rounded-full bg-subtle px-3 text-sm font-semibold text-ink">
-                  <KindDot kind={kind} />
-                  {KIND_LABEL[kind]}
+                  <TransactionKindDot className="size-2.5" kind={kind} />
+                  {TRANSACTION_KIND_META[kind].label}
                   <ChevronIcon isOpen={isKindPickerOpen} />
                 </span>
               </button>
@@ -318,7 +310,7 @@ export function TransactionForm({
                     disabled={!isKindPickerOpen}
                   >
                     <legend className="sr-only">Escolha o tipo</legend>
-                    {(['expense', 'income'] as const).map((option) => (
+                    {TRANSACTION_KIND_ORDER.map((option) => (
                       <label
                         className="flex min-h-12 cursor-pointer items-center gap-3 border-b border-line/80 text-sm transition-colors duration-150 last:border-b-0 hover:bg-canvas/60 has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-accent motion-reduce:transition-none"
                         key={option}
@@ -342,9 +334,12 @@ export function TransactionForm({
                           type="radio"
                           value={option}
                         />
-                        <KindDot kind={option} />
+                        <TransactionKindDot
+                          className="size-2.5"
+                          kind={option}
+                        />
                         <span className="font-medium text-ink">
-                          {KIND_LABEL[option]}
+                          {TRANSACTION_KIND_META[option].label}
                         </span>
                         {kind === option ? <CheckIcon /> : null}
                       </label>
@@ -358,7 +353,7 @@ export function TransactionForm({
                 id={kindFootnoteId}
                 role={errors.kind ? 'alert' : undefined}
               >
-                {errors.kind ?? KIND_FOOTNOTE[kind]}
+                {errors.kind ?? TRANSACTION_KIND_META[kind].footnote}
               </p>
 
               <div className="mx-4 border-t border-line" />
@@ -458,44 +453,6 @@ function StandaloneField({
         </p>
       ) : null}
     </div>
-  )
-}
-
-function KindIcon({ kind }: { kind: TransactionKind }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`grid size-9 shrink-0 place-items-center rounded-2xl ${
-        kind === 'income'
-          ? 'bg-income-soft text-income'
-          : 'bg-expense-soft text-expense'
-      }`}
-    >
-      <svg className="size-4" fill="none" viewBox="0 0 24 24">
-        <path
-          d={
-            kind === 'income'
-              ? 'M12 19V5m0 0L7 10m5-5 5 5'
-              : 'M12 5v14m0 0 5-5m-5 5-5-5'
-          }
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-      </svg>
-    </span>
-  )
-}
-
-function KindDot({ kind }: { kind: TransactionKind }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`size-2.5 shrink-0 rounded-full ${
-        kind === 'income' ? 'bg-income' : 'bg-expense'
-      }`}
-    />
   )
 }
 

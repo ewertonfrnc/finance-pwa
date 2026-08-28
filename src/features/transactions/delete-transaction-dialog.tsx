@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 
 import { formatAmountCents } from './transaction-money'
+import { TRANSACTION_KIND_META } from './transaction-kind'
 import type { Transaction } from './transaction-types'
 
 type DeleteTransactionDialogProps = {
@@ -13,11 +14,6 @@ type DeleteTransactionDialogProps = {
   onConflictReload: () => void
   open: boolean
   transaction: Transaction
-}
-
-const KIND_LABEL: Record<string, string> = {
-  expense: 'Saída',
-  income: 'Entrada',
 }
 
 export function DeleteTransactionDialog({
@@ -40,7 +36,7 @@ export function DeleteTransactionDialog({
 
   const description =
     transaction.description ??
-    `${KIND_LABEL[transaction.kind] ?? transaction.kind} sem descrição`
+    `${TRANSACTION_KIND_META[transaction.kind].label} sem descrição`
   const amount = formatAmountCents(transaction.amount_cents)
 
   // Focus the cancel control when the dialog opens so keyboard users land on the safe action.

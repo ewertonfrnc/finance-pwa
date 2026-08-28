@@ -62,6 +62,15 @@ Route files only connect paths to feature-owned pages. Future Supabase calls
 belong in small feature services, and TanStack Query owns their remote cache.
 Shared client state will not be added until a concrete requirement exists.
 
+`src/features/transactions/transaction-kind.tsx` is the single owner of
+transaction-kind product presentation. It derives its ordered kind list from
+the generated `Constants.public.Enums.transaction_kind` and maps every kind,
+in one exhaustive `Record`, to its label, footnote, description placeholder,
+sign, named color classes, and inline SVG mark. The form, the list, and the
+delete dialog consume that record instead of repeating their own copy. The
+generated enum stays the type and runtime source of truth, so adding a value
+without product metadata fails type checking.
+
 ## Data boundary
 
 Versioned migrations own the PostgreSQL schema. `supabase db reset` applies
@@ -71,8 +80,14 @@ workflow, and seed data is not pushed to production.
 
 `starting_positions` stores one signed opening balance per user. It stays
 separate from `transactions`, so an opening balance never inflates income.
-`transactions` initially supports only one-time `income` and `expense` rows.
-Money uses integer centavos and financial dates use PostgreSQL `date`.
+`transactions` supports one-time `income`, `expense`, `daily`, and `savings`
+rows. Every amount is a positive magnitude and the kind carries the direction:
+`income` adds to available balance and the other three subtract from it.
+`daily` marks routine spending that feeds the projection delivered in
+roadmap step 8, and `savings` reserves value without being reclassified as
+an expense. A kind outside the enum fails while PostgreSQL casts the RPC
+argument, as `22P02`. Money uses integer centavos and financial dates use
+PostgreSQL `date`.
 
 RLS protects both tables. Authenticated users can read only rows whose
 `user_id` matches `auth.uid()`, and anonymous roles receive no table access.
@@ -135,8 +150,10 @@ those tokens instead of embedding theme colors.
 custom properties map the shipped legacy palette to semantic roles and expose
 those roles to Tailwind through `@theme inline`. Components consume classes
 such as `bg-panel`, `text-ink`, and `text-expense-ink`; they do not repeat
-palette values. The coral family maps the legacy red fill, soft background,
-ink, and ring separately from the orange expense category. Derived states and
+palette values. Each transaction kind owns a dot, soft background, and ink
+triple in both schemes, so `daily` and `savings` are named categories rather
+than reused expense colors. The coral family maps the legacy red fill, soft
+background, ink, and ring separately from the orange expense category. Derived states and
 shadows use `color-mix()` from existing tokens instead of adding
 component-specific colors. `index.html` and `vite.config.ts` duplicate the
 canvas values required by manifest metadata, and `index.html` supplies the

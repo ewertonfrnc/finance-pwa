@@ -41,6 +41,12 @@
   --color-expense: var(--finance-expense);
   --color-expense-soft: var(--finance-expense-soft);
   --color-expense-ink: var(--finance-expense-ink);
+  --color-daily: var(--finance-daily);
+  --color-daily-soft: var(--finance-daily-soft);
+  --color-daily-ink: var(--finance-daily-ink);
+  --color-savings: var(--finance-savings);
+  --color-savings-soft: var(--finance-savings-soft);
+  --color-savings-ink: var(--finance-savings-ink);
   --font-sans: var(--finance-font-sans);
   --font-mono: var(--finance-font-mono);
 }
@@ -91,6 +97,12 @@
   --finance-expense: #bf5317; /* saida.dot */
   --finance-expense-soft: #ffe9dc; /* saida.bg */
   --finance-expense-ink: #79320d; /* saida.ink */
+  --finance-daily: #a623cd; /* diario.dot */
+  --finance-daily-soft: #f6ddff; /* diario.bg */
+  --finance-daily-ink: #6c1984; /* diario.ink */
+  --finance-savings: #7cab2d; /* economia.dot */
+  --finance-savings-soft: #edf7db; /* economia.bg */
+  --finance-savings-ink: #4d7014; /* economia.ink */
   /* The brand mark paints its plate with `currentColor`, which is always ink.
      It keeps one accent in both schemes so the glyph stays legible on a plate
      that inverts. */
@@ -142,6 +154,12 @@
     --finance-expense: #b15c2d;
     --finance-expense-soft: #432a20;
     --finance-expense-ink: #fff2ea;
+    --finance-daily: #9f4bc0;
+    --finance-daily-soft: #3d2548;
+    --finance-daily-ink: #f8eaff;
+    --finance-savings: #779f47;
+    --finance-savings-soft: #303d25;
+    --finance-savings-ink: #f4ffe8;
     --finance-shadow-color: #000000; /* overlayStandard */
     --finance-shadow: 0 24px 70px
       color-mix(in srgb, var(--finance-shadow-color) 24%, transparent);

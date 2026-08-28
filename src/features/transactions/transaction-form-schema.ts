@@ -1,5 +1,6 @@
 import { getTransactionMonth } from './transaction-calendar'
 import { TRANSACTION_ERROR_COPY } from './transaction-errors'
+import { TRANSACTION_KIND_ORDER } from './transaction-kind'
 import { parseCentavoDigits } from './transaction-money'
 import {
   TRANSACTION_DESCRIPTION_MAX_LENGTH,
@@ -42,7 +43,7 @@ export function validateTransactionFormInput(
 ): TransactionFormValidationResult {
   const errors: TransactionFormFieldErrors = {}
 
-  if (input.kind !== 'income' && input.kind !== 'expense') {
+  if (!TRANSACTION_KIND_ORDER.includes(input.kind)) {
     errors.kind = TRANSACTION_ERROR_COPY.kindRequired
   }
 

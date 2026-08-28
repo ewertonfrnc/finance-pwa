@@ -47,21 +47,44 @@ The starting position is not income. Monthly income totals must include only
 
 ## One-time transactions
 
-The initial schema supports only one-time income and expense rows:
+The schema supports one-time transactions of four kinds:
 
-| Field              | Wire type             | Nullable | Meaning                                   |
-| ------------------ | --------------------- | -------- | ----------------------------------------- |
-| `id`               | UUID string           | No       | Client-generated mutation identifier      |
-| `user_id`          | UUID string           | No       | Authenticated owner                       |
-| `kind`             | `income` or `expense` | No       | Direction of the movement                 |
-| `amount_cents`     | positive integer      | No       | Magnitude in centavos                     |
-| `description`      | string                | Yes      | Trimmed user note, at most 120 characters |
-| `transaction_date` | `YYYY-MM-DD` string   | No       | Calendar date of the movement             |
-| `created_at`       | timestamp string      | No       | Server creation time                      |
-| `updated_at`       | timestamp string      | No       | Server update time                        |
+| Field              | Wire type                                  | Nullable | Meaning                                   |
+| ------------------ | ------------------------------------------ | -------- | ----------------------------------------- |
+| `id`               | UUID string                                | No       | Client-generated mutation identifier      |
+| `user_id`          | UUID string                                | No       | Authenticated owner                       |
+| `kind`             | `income`, `expense`, `daily`, or `savings` | No       | Direction and category of the movement    |
+| `amount_cents`     | positive integer                           | No       | Magnitude in centavos                     |
+| `description`      | string                                     | Yes      | Trimmed user note, at most 120 characters |
+| `transaction_date` | `YYYY-MM-DD` string                        | No       | Calendar date of the movement             |
+| `created_at`       | timestamp string                           | No       | Server creation time                      |
+| `updated_at`       | timestamp string                           | No       | Server update time                        |
 
 Recurrence, tags, category budgets, and monthly balance caches are not part of
 this schema.
+
+### Kind semantics
+
+`amount_cents` is always a positive magnitude. `kind` determines direction and
+category meaning:
+
+| Kind      | Label    | Available-balance effect | Category meaning                            |
+| --------- | -------- | ------------------------ | ------------------------------------------- |
+| `income`  | Entrada  | Adds the amount          | Money received                              |
+| `expense` | Saída    | Subtracts the amount     | Point expense                               |
+| `daily`   | Diário   | Subtracts the amount     | Routine daily spending                      |
+| `savings` | Economia | Subtracts the amount     | Value reserved outside the expense category |
+
+Only `income` adds to available balance; `expense`, `daily`, and `savings` all
+subtract from it. `daily` participates in the daily projection contract
+delivered in roadmap step 8; that projection is not implemented yet. `savings`
+subtracts from available balance like `expense`, but it is a distinct kind and
+must not be reclassified or aggregated as `expense`.
+
+A wire value outside `income`, `expense`, `daily`, and `savings` fails while
+PostgreSQL casts the RPC argument to `public.transaction_kind`. The stable
+code is `22P02`; no application fallback or compatibility label accepts an
+unsupported kind.
 
 ### Mutation RPCs
 
@@ -118,13 +141,30 @@ Database and Data API errors expose PostgreSQL codes:
 | `22023` | `amount_cents_out_of_range`        | Invalid transaction amount                        |
 | `22023` | `transaction_date_out_of_range`    | Invalid transaction date                          |
 | `22023` | `description_too_long`             | Normalized description exceeds 120 characters     |
+| `22P02` | PostgreSQL enum input error        | Unsupported transaction kind                      |
 | `23505` | `starting_position_already_exists` | Different starting position already exists        |
 | `23505` | `transaction_id_conflict`          | Transaction ID already represents other data      |
 | `23514` | Named check constraint             | Invalid persisted transaction value               |
-| `40001` | `transaction_conflict`             | Transaction changed after the client read it      |
 | `42501` | `authentication_required`          | RPC has no authenticated identity                 |
 | `42501` | PostgreSQL permission or RLS error | Authentication or authorization denied            |
 | `P0002` | `transaction_not_found`            | Transaction is missing or belongs to another user |
+| `PT409` | `transaction_conflict`             | Transaction changed after the client read it      |
 
 The UI may translate these codes into useful copy. It must not display raw SQL,
 policy names, tokens, or financial payloads in logs.
+
+### Conflict code: `PT409`
+
+`update_transaction` and `delete_transaction` raise `PT409` (HTTP 409) instead
+of `SQLSTATE 40001` when the caller's `p_expected_updated_at` no longer
+matches the row. PostgreSQL treats `40001` as `serialization_failure`, and
+local PostgREST 14.17 retries that transaction internally instead of
+returning it, so a stale-version conflict never reached the browser and the
+E2E request timed out. `PTxyz` is PostgREST's documented way for a function to
+choose its own HTTP status; `PT409` returns HTTP 409 once and is not treated
+as a serialization failure.
+
+The frontend still recognizes `40001` as the same recoverable conflict. That
+recognition exists only as rollout compatibility for an environment that has
+received the frontend but not yet the database migration that raises `PT409`;
+`PT409` is the canonical contract going forward.

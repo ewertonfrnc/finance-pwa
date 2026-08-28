@@ -30,7 +30,12 @@ const KNOWN_TRANSACTION_ERRORS: Record<string, string> = {
   '22023:transaction_kind_required': TRANSACTION_ERROR_COPY.kindRequired,
   '22023:transaction_version_required': TRANSACTION_ERROR_COPY.versionRequired,
   '23505:transaction_id_conflict': TRANSACTION_ERROR_COPY.idConflict,
+  // PT409 is the canonical conflict code. 40001 stays recognized here only
+  // as rollout compatibility for an environment that has the frontend but
+  // not yet the PT409 database migration. See docs/finance-rules.md
+  // "Error contract".
   '40001:transaction_conflict': TRANSACTION_ERROR_COPY.staleVersion,
+  'PT409:transaction_conflict': TRANSACTION_ERROR_COPY.staleVersion,
   'P0002:transaction_not_found': TRANSACTION_ERROR_COPY.notFound,
 }
 
@@ -54,10 +59,15 @@ function readTransactionErrorDetails(error: unknown) {
 
 // A stale version is the one failure with its own recovery path, so the UI
 // asks the question instead of matching the raw sqlstate in a component.
+// PT409 is the canonical code; 40001 is recognized only as rollout
+// compatibility until every environment carries the PT409 migration.
 export function isTransactionConflict(error: unknown) {
   const details = readTransactionErrorDetails(error)
 
-  return details?.code === '40001' && details.message === 'transaction_conflict'
+  return (
+    (details?.code === 'PT409' || details?.code === '40001') &&
+    details.message === 'transaction_conflict'
+  )
 }
 
 export function getTransactionErrorCopy(error: unknown) {

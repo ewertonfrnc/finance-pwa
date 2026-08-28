@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(52);
+select plan(58);
 
 select ok(
   (
@@ -79,6 +79,26 @@ values
     '2026-08-22',
     '2026-08-22 10:00:00+00',
     '2026-08-22 10:00:00+00'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000106',
+    '20000000-0000-4000-8000-000000000001',
+    'expense',
+    6000,
+    'Owner kind update',
+    '2026-08-24',
+    '2026-08-24 10:00:00+00',
+    '2026-08-24 10:00:00+00'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000107',
+    '20000000-0000-4000-8000-000000000001',
+    'savings',
+    7000,
+    'Owner kind delete',
+    '2026-08-25',
+    '2026-08-25 10:00:00+00',
+    '2026-08-25 10:00:00+00'
   ),
   (
     '20000000-0000-4000-8000-000000000201',
@@ -343,6 +363,59 @@ select is(
   'create should normalize a whitespace-only description to null'
 );
 
+select is(
+  (
+    public.create_transaction(
+      '20000000-0000-4000-8000-000000000113',
+      'daily',
+      1500,
+      'Lunch',
+      date '2026-08-25'
+    )
+  ).kind::text,
+  'daily',
+  'create should persist a daily transaction kind'
+);
+
+select is(
+  (
+    public.create_transaction(
+      '20000000-0000-4000-8000-000000000114',
+      'savings',
+      2500,
+      'Emergency fund',
+      date '2026-08-25'
+    )
+  ).kind::text,
+  'savings',
+  'create should persist a savings transaction kind'
+);
+
+select throws_ok(
+  $$
+    select public.create_transaction(
+      '20000000-0000-4000-8000-000000000115',
+      'transfer',
+      1000,
+      null,
+      date '2026-08-25'
+    )
+  $$,
+  '22P02',
+  null,
+  'create should reject an unsupported transaction kind'
+);
+
+select is(
+  (
+    select count(*)
+    from public.transactions
+    where id = '20000000-0000-4000-8000-000000000115'
+  ),
+  0::bigint,
+  'an unsupported transaction kind should not insert a row'
+);
+
 select throws_ok(
   $$
     insert into public.transactions (kind, amount_cents, transaction_date)
@@ -421,7 +494,7 @@ select throws_ok(
       date '2026-08-27'
     )
   $$,
-  '40001',
+  'PT409',
   'transaction_conflict',
   'update should reject a stale concurrency version'
 );
@@ -566,6 +639,21 @@ select throws_ok(
 
 select is(
   (
+    public.update_transaction(
+      '20000000-0000-4000-8000-000000000106',
+      timestamptz '2026-08-24 10:00:00+00',
+      'daily',
+      6000,
+      'Owner kind update',
+      date '2026-08-24'
+    )
+  ).kind::text,
+  'daily',
+  'update should change a row to a new transaction kind'
+);
+
+select is(
+  (
     public.delete_transaction(
       '20000000-0000-4000-8000-000000000102',
       timestamptz '2026-08-21 10:00:00+00'
@@ -583,6 +671,17 @@ select is(
   ),
   0::bigint,
   'delete should remove the owned transaction'
+);
+
+select is(
+  (
+    public.delete_transaction(
+      '20000000-0000-4000-8000-000000000107',
+      timestamptz '2026-08-25 10:00:00+00'
+    )
+  ).kind::text,
+  'savings',
+  'delete should return a row with a new transaction kind'
 );
 
 select lives_ok(
@@ -606,7 +705,7 @@ select throws_ok(
       timestamptz '2026-08-22 10:00:00+00'
     )
   $$,
-  '40001',
+  'PT409',
   'transaction_conflict',
   'delete should reject a stale concurrency version'
 );

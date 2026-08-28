@@ -606,6 +606,13 @@ Validation follow-up, 2026-08-27:
   application-level `SQLSTATE 40001` instead of returning it to the client, so
   a forward database correction is required outside this visual follow-up.
 
+Forward-fix note, 2026-08-27: roadmap step 6 delivers the forward database
+correction referenced above. `supabase/migrations/20260827020000_use_http_conflict_sqlstate.sql`
+replaces the stale-version `40001` raise with `PT409` in `update_transaction`
+and `delete_transaction`, which PostgREST returns as HTTP 409 without a retry.
+See [`06-transaction-kinds.md`](06-transaction-kinds.md), step 2, for the
+observed result of the previously timing-out conflict cases.
+
 Delivered commits:
 
 ```text
