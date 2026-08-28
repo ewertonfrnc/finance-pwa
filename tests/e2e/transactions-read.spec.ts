@@ -83,6 +83,26 @@ test.beforeEach(async ({ browserName }, testInfo) => {
       updated_at: '2026-08-26T10:00:00Z',
       user_id: otherUserId,
     },
+    {
+      amount_cents: 4500,
+      created_at: '2026-08-28T09:00:00Z',
+      description: 'Almoço da semana',
+      id: randomUUID(),
+      kind: 'daily',
+      transaction_date: '2026-08-28',
+      updated_at: '2026-08-28T09:00:00Z',
+      user_id: ownerId,
+    },
+    {
+      amount_cents: 60000,
+      created_at: '2026-08-27T09:00:00Z',
+      description: 'Reserva de emergência',
+      id: randomUUID(),
+      kind: 'savings',
+      transaction_date: '2026-08-27',
+      updated_at: '2026-08-27T09:00:00Z',
+      user_id: ownerId,
+    },
     ...scrollFixtures,
   ])
 })
@@ -112,10 +132,16 @@ test('should read only the signed-in user monthly history across states', async 
   ).toBeVisible()
   await expect(page.getByText('Salário de agosto')).toBeVisible()
   await expect(page.getByText('Mercado da semana')).toBeVisible()
+  await expect(page.getByText('Almoço da semana')).toBeVisible()
+  await expect(page.getByText('Reserva de emergência')).toBeVisible()
   await expect(page.getByText('R$ 5.000,00')).toBeVisible()
   await expect(page.getByText('R$ 125,50')).toBeVisible()
+  await expect(page.getByText('R$ 45,00')).toBeVisible()
+  await expect(page.getByText('R$ 600,00')).toBeVisible()
   await expect(page.getByText('Entrada', { exact: true })).toBeVisible()
   await expect(page.getByText('Saída', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Diário', { exact: true })).toBeVisible()
+  await expect(page.getByText('Economia', { exact: true })).toBeVisible()
   await expect(page.getByText('Internet de julho')).toHaveCount(0)
   await expect(page.getByText('Lançamento de outra pessoa')).toHaveCount(0)
 
@@ -220,6 +246,8 @@ test('should read only the signed-in user monthly history across states', async 
   await page.emulateMedia({ colorScheme: 'dark' })
   await expect(page.getByText('Entrada', { exact: true })).toBeVisible()
   await expect(page.getByText('Saída', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Diário', { exact: true })).toBeVisible()
+  await expect(page.getByText('Economia', { exact: true })).toBeVisible()
 
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' })
   await expect
