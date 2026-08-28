@@ -203,16 +203,25 @@ row locks, `security definer`, empty `search_path`, return rows, and grants.
 
 The safe hosted order is:
 
-1. deploy the frontend that recognizes `PT409` and `40001`;
-2. confirm the deployed commit is active;
-3. apply both forward migrations to the approved Supabase environment;
-4. verify a stale update and delete return HTTP 409 with
-   `PT409:transaction_conflict`.
+1. apply the enum migration `20260827010000_widen_transaction_kinds.sql` to the
+   approved Supabase environment. This is compatible with the old frontend,
+   which continues to send and render only `income` and `expense`;
+2. deploy the frontend that recognizes `PT409` and `40001` and exposes `daily`
+   and `savings`;
+3. confirm the deployed commit is active;
+4. apply the conflict migration `20260827020000_use_http_conflict_sqlstate.sql`;
+5. verify a stale update and delete return HTTP 409 with
+   `PT409:transaction_conflict` and that creating `daily` and `savings`
+   succeeds.
 
-Applying the conflict migration first would temporarily turn a recoverable
-conflict into generic UI copy. Applying the enum migration first is safe for
-the old frontend because it continues to send and render only the two existing
-kinds.
+Deploying the final squash artifact before step 1 would expose `daily` and
+`savings` while the production enum still accepts only `income` and `expense`.
+Any user choosing a new kind during that gap receives `22P02` and cannot save
+the transaction. The enum migration must go first, or the rollout must use a
+compatibility-only frontend artifact for step 2 that recognizes `PT409`/`40001`
+without exposing the new kinds. Applying the conflict migration before the
+dual-code frontend would temporarily turn a recoverable conflict into generic
+UI copy.
 
 Deployment, hosted database writes, and hosted smoke tests require explicit
 user authorization. Local completion does not imply those checks ran.
@@ -620,9 +629,11 @@ feat: widen the transaction kinds
 These checks do not block local implementation and remain explicit until the
 user authorizes external effects:
 
-- deploy the dual-code frontend before the conflict migration;
-- apply both forward migrations to `finance-pwa-dev` and then the approved
-  production project;
+- apply the enum migration `20260827010000` to `finance-pwa-dev` and then the
+  approved production project before exposing `daily` and `savings`;
+- deploy the dual-code frontend (recognizes `PT409`/`40001`, exposes four
+  kinds) and confirm the commit is active;
+- apply the conflict migration `20260827020000`;
 - observe `PT409` and HTTP 409 through each hosted Data API;
 - create and reload the four kinds in a Deploy Preview connected only to the
   development Supabase project;
