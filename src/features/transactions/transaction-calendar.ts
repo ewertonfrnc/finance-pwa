@@ -4,70 +4,31 @@ import type {
   TransactionMonth,
 } from './transaction-types'
 
-const monthPattern = /^(\d{4})-(\d{2})$/
-const datePattern = /^(\d{4})-(\d{2})-(\d{2})$/
-
-function pad(value: number, length = 2) {
-  return String(value).padStart(length, '0')
-}
-
-function readMonthParts(value: string) {
-  const match = monthPattern.exec(value)
-
-  if (!match) return null
-
-  const year = Number(match[1])
-  const month = Number(match[2])
-
-  if (year < 1 || year > 9999 || month < 1 || month > 12) return null
-
-  return { month, year }
-}
-
-function readDateParts(value: string) {
-  const match = datePattern.exec(value)
-
-  if (!match) return null
-
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-
-  if (
-    year < 1 ||
-    year > 9999 ||
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > daysInMonth(year, month)
-  ) {
-    return null
-  }
-
-  return { day, month, year }
-}
-
-function createLocalDate(year: number, month: number, day: number) {
-  const date = new Date(0)
-  date.setHours(12, 0, 0, 0)
-  date.setFullYear(year, month - 1, day)
-  return date
-}
+import {
+  createCalendarDate,
+  daysInMonth,
+  getLocalCurrentMonthIso,
+  getLocalTodayIsoDate,
+  parseCalendarDate,
+  parseCalendarMonth,
+  toIsoDate,
+  toIsoMonth,
+} from '../../lib/calendar-date'
 
 function capitalize(value: string) {
   return value.charAt(0).toLocaleUpperCase('pt-BR') + value.slice(1)
 }
 
 export function isTransactionMonth(value: unknown): value is TransactionMonth {
-  return typeof value === 'string' && readMonthParts(value) !== null
+  return typeof value === 'string' && parseCalendarMonth(value) !== null
 }
 
 export function getLocalCurrentMonth(today = new Date()): TransactionMonth {
-  return `${pad(today.getFullYear(), 4)}-${pad(today.getMonth() + 1)}`
+  return getLocalCurrentMonthIso(today) as TransactionMonth
 }
 
 export function getMonthBounds(month: TransactionMonth) {
-  const parts = readMonthParts(month)
+  const parts = parseCalendarMonth(month)
 
   if (!parts) throw new Error(`Invalid transaction month: ${month}`)
 
@@ -83,7 +44,7 @@ export function getMonthBounds(month: TransactionMonth) {
   return {
     monthEnd: null,
     monthStart,
-    nextMonthStart: `${pad(nextYear, 4)}-${pad(nextMonth)}-01`,
+    nextMonthStart: toIsoDate(nextYear, nextMonth, 1),
   }
 }
 
@@ -91,7 +52,7 @@ export function shiftTransactionMonth(
   month: TransactionMonth,
   offset: -1 | 1,
 ): TransactionMonth | null {
-  const parts = readMonthParts(month)
+  const parts = parseCalendarMonth(month)
 
   if (!parts) throw new Error(`Invalid transaction month: ${month}`)
 
@@ -101,25 +62,25 @@ export function shiftTransactionMonth(
 
   if (year < 1 || year > 9999) return null
 
-  return `${pad(year, 4)}-${pad(nextMonth)}`
+  return toIsoMonth(year, nextMonth) as TransactionMonth
 }
 
 export function getDefaultTransactionDate(
   month: TransactionMonth,
   today = new Date(),
 ) {
-  const parts = readMonthParts(month)
+  const parts = parseCalendarMonth(month)
 
   if (!parts) throw new Error(`Invalid transaction month: ${month}`)
 
   const currentMonth = getLocalCurrentMonth(today)
 
   if (month === currentMonth) {
-    return `${currentMonth}-${pad(today.getDate())}`
+    return getLocalTodayIsoDate(today)
   }
 
   const day = Math.min(today.getDate(), daysInMonth(parts.year, parts.month))
-  return `${month}-${pad(day)}`
+  return toIsoDate(parts.year, parts.month, day)
 }
 
 export function groupTransactionsByDate(
@@ -145,7 +106,7 @@ export function groupTransactionsByDate(
 }
 
 export function formatTransactionMonth(month: TransactionMonth) {
-  const parts = readMonthParts(month)
+  const parts = parseCalendarMonth(month)
 
   if (!parts) throw new Error(`Invalid transaction month: ${month}`)
 
@@ -153,12 +114,12 @@ export function formatTransactionMonth(month: TransactionMonth) {
     new Intl.DateTimeFormat('pt-BR', {
       month: 'long',
       year: 'numeric',
-    }).format(createLocalDate(parts.year, parts.month, 1)),
+    }).format(createCalendarDate(parts.year, parts.month, 1)),
   )
 }
 
 export function formatTransactionDate(value: string) {
-  const parts = readDateParts(value)
+  const parts = parseCalendarDate(value)
 
   if (!parts) throw new Error(`Invalid transaction date: ${value}`)
 
@@ -167,16 +128,16 @@ export function formatTransactionDate(value: string) {
       day: '2-digit',
       month: 'long',
       weekday: 'long',
-    }).format(createLocalDate(parts.year, parts.month, parts.day)),
+    }).format(createCalendarDate(parts.year, parts.month, parts.day)),
   )
 }
 
 export function getTransactionMonth(date: string): TransactionMonth {
-  const parts = readDateParts(date)
+  const parts = parseCalendarDate(date)
 
   if (!parts) throw new Error(`Invalid transaction date: ${date}`)
 
-  return `${pad(parts.year, 4)}-${pad(parts.month)}`
+  return toIsoMonth(parts.year, parts.month) as TransactionMonth
 }
 
 const weekdayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' })
@@ -195,7 +156,7 @@ export function formatTransactionDateFootnote(
   date: string,
   today = new Date(),
 ) {
-  const parts = readDateParts(date)
+  const parts = parseCalendarDate(date)
 
   if (!parts) throw new Error(`Invalid transaction date: ${date}`)
 
@@ -211,7 +172,7 @@ export function formatTransactionDateFootnote(
     parts.year === todayParts.year
   ) {
     const weekday = weekdayFormatter.format(
-      createLocalDate(parts.year, parts.month, parts.day),
+      createCalendarDate(parts.year, parts.month, parts.day),
     )
     return `Hoje · ${weekday}`
   }
@@ -219,8 +180,8 @@ export function formatTransactionDateFootnote(
   // Compare local noon instants so the day count never shifts across a DST
   // transition between the two dates.
   const dayDifference = Math.round(
-    (createLocalDate(parts.year, parts.month, parts.day).getTime() -
-      createLocalDate(
+    (createCalendarDate(parts.year, parts.month, parts.day).getTime() -
+      createCalendarDate(
         todayParts.year,
         todayParts.month,
         todayParts.day,
@@ -237,13 +198,4 @@ export function formatTransactionDateFootnote(
         )
 
   return `${formatTransactionDate(date)} · ${relative}`
-}
-
-function daysInMonth(year: number, month: number) {
-  if (month === 2) {
-    const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
-    return isLeapYear ? 29 : 28
-  }
-
-  return [4, 6, 9, 11].includes(month) ? 30 : 31
 }
