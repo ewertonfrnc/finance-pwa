@@ -44,15 +44,10 @@ function focusFirstInvalidField(
   errors: StartingPositionFieldErrors,
   refs: {
     amount: React.RefObject<HTMLInputElement | null>
-    effectiveOn: React.RefObject<HTMLInputElement | null>
   },
 ) {
   if (errors.amount) {
     refs.amount.current?.focus()
-    return
-  }
-  if (errors.effectiveOn) {
-    refs.effectiveOn.current?.focus()
   }
 }
 
@@ -65,24 +60,18 @@ export function StartingPositionForm({
   const fieldId = useId()
   const isOnline = useNetworkStatus()
 
-  const [initialEffectiveOn] = useState(() => getLocalTodayIsoDate())
   const [amountDigits, setAmountDigits] = useState('')
   const [direction, setDirection] =
     useState<StartingPositionDirection>('available')
-  const [effectiveOn, setEffectiveOn] = useState(initialEffectiveOn)
   const [errors, setErrors] = useState<StartingPositionFieldErrors>({})
   const [reviewPayload, setReviewPayload] =
     useState<StartingPositionPayload | null>(null)
 
   const amountRef = useRef<HTMLInputElement>(null)
-  const dateRef = useRef<HTMLInputElement>(null)
 
   const isReviewing = reviewPayload !== null
   const isDirty =
-    amountDigits !== '' ||
-    direction !== 'available' ||
-    effectiveOn !== initialEffectiveOn ||
-    isReviewing
+    amountDigits !== '' || direction !== 'available' || isReviewing
   const blocksNavigation = isDirty
 
   useUnsavedChangesGuard(blocksNavigation)
@@ -116,6 +105,8 @@ export function StartingPositionForm({
     event.preventDefault()
     if (isReviewing) return
 
+    const effectiveOn = getLocalTodayIsoDate()
+
     const result = validateStartingPositionFormInput({
       amountDigits,
       direction,
@@ -126,7 +117,6 @@ export function StartingPositionForm({
       setErrors(result.errors)
       focusFirstInvalidField(result.errors, {
         amount: amountRef,
-        effectiveOn: dateRef,
       })
       return
     }
@@ -307,8 +297,8 @@ export function StartingPositionForm({
           <div className="mx-auto w-full max-w-2xl space-y-5 px-4 pt-6 sm:px-6">
             <div className="rounded-3xl bg-panel px-4 py-3 ring-1 ring-line/60">
               <p className="text-sm leading-6 text-muted">
-                Informe o saldo na abertura do dia escolhido. Lançamentos do
-                mesmo dia entram depois dele.
+                Informe o saldo na abertura de hoje. Lançamentos de hoje entram
+                depois dele — o foco é daqui pra frente.
               </p>
             </div>
 
@@ -409,53 +399,6 @@ export function StartingPositionForm({
                 nos dois.
               </p>
             </fieldset>
-
-            <div>
-              <label
-                className="flex min-h-15 cursor-pointer items-center gap-3 rounded-3xl bg-panel px-4 ring-1 ring-line/60 transition focus-within:ring-2 focus-within:ring-accent"
-                htmlFor={`${fieldId}-date`}
-              >
-                <span
-                  className="grid size-9 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent-ink"
-                  aria-hidden="true"
-                >
-                  <svg className="size-4" fill="none" viewBox="0 0 24 24">
-                    <path
-                      d="M7 3v3m10-3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                </span>
-                <span className="font-medium text-ink">Data de abertura</span>
-                <span className="ml-auto rounded-full bg-subtle px-3 py-1.5 transition-shadow focus-within:ring-2 focus-within:ring-accent">
-                  <input
-                    aria-describedby={
-                      errors.effectiveOn ? `${fieldId}-date-error` : undefined
-                    }
-                    aria-invalid={errors.effectiveOn ? true : undefined}
-                    aria-label="Data de abertura"
-                    className="min-h-8 w-40 max-w-full bg-transparent text-right text-sm font-semibold text-ink outline-none"
-                    id={`${fieldId}-date`}
-                    onChange={(event) => setEffectiveOn(event.target.value)}
-                    ref={dateRef}
-                    type="date"
-                    value={effectiveOn}
-                  />
-                </span>
-              </label>
-              {errors.effectiveOn ? (
-                <p
-                  className="px-1 pt-2 text-xs font-medium text-coral-ink"
-                  id={`${fieldId}-date-error`}
-                  role="alert"
-                >
-                  {errors.effectiveOn}
-                </p>
-              ) : null}
-            </div>
 
             <p className="px-1 text-xs text-muted">
               O ponto de partida pode ser zero, positivo ou negativo. Ele não

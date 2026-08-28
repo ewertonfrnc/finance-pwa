@@ -97,7 +97,6 @@ describe('StartingPositionForm', () => {
 
   it('should default to zero available balance and the device-local current date', async () => {
     await renderForm()
-    const today = getLocalTodayIsoDate()
 
     expect(screen.getByLabelText('Saldo inicial')).toHaveValue('')
     expect(screen.getByLabelText('Saldo inicial')).toHaveAttribute(
@@ -106,7 +105,13 @@ describe('StartingPositionForm', () => {
     )
     expect(screen.getByRole('radio', { name: 'Disponível' })).toBeChecked()
     expect(screen.getByRole('radio', { name: 'No vermelho' })).not.toBeChecked()
-    expect(screen.getByLabelText('Data de abertura')).toHaveValue(today)
+    expect(screen.queryByLabelText('Data de abertura')).not.toBeInTheDocument()
+
+    // Review should show today as the effective date.
+    typeAmount('100')
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
+    const today = getLocalTodayIsoDate()
+    expect(await screen.findByText(today)).toBeVisible()
   })
 
   it('should keep positive, zero, and negative values reachable with touch and keyboard', async () => {
@@ -145,18 +150,14 @@ describe('StartingPositionForm', () => {
     const onSubmit = vi.fn<(payload: StartingPositionPayload) => void>()
     await renderForm({ onSubmit })
 
-    fireEvent.change(screen.getByLabelText('Data de abertura'), {
-      target: { value: '' },
-    })
+    // With the date removed, the only validation is amount magnitude.
+    // An empty amount is valid (zero), so submitting with defaults should go to review
+    // and not call the service directly.
     fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
 
     expect(onSubmit).not.toHaveBeenCalled()
-    expect(
-      await screen.findByText(
-        'Escolha uma data válida para o ponto de partida.',
-      ),
-    ).toBeVisible()
-    expect(screen.getByLabelText('Data de abertura')).toHaveFocus()
+    expect(await screen.findByText('Revise seu ponto de partida')).toBeVisible()
+    expect(screen.getByText('R$ 0,00')).toBeVisible()
   })
 
   it('should show review without calling Supabase on the first valid submit', async () => {
@@ -178,9 +179,6 @@ describe('StartingPositionForm', () => {
     await renderForm()
     typeAmount('7777')
     fireEvent.click(screen.getByRole('radio', { name: 'No vermelho' }))
-    fireEvent.change(screen.getByLabelText('Data de abertura'), {
-      target: { value: '2026-09-15' },
-    })
     fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
     expect(await screen.findByText('−R$ 77,77')).toBeVisible()
 
@@ -188,7 +186,6 @@ describe('StartingPositionForm', () => {
 
     expect(await screen.findByLabelText('Saldo inicial')).toHaveValue('77,77')
     expect(screen.getByRole('radio', { name: 'No vermelho' })).toBeChecked()
-    expect(screen.getByLabelText('Data de abertura')).toHaveValue('2026-09-15')
   })
 
   it('should disable confirmation while offline and associate its explanation', async () => {
