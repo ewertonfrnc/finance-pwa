@@ -103,8 +103,12 @@ describe('StartingPositionForm', () => {
       'placeholder',
       '0,00',
     )
-    expect(screen.getByRole('radio', { name: 'Disponível' })).toBeChecked()
-    expect(screen.getByRole('radio', { name: 'No vermelho' })).not.toBeChecked()
+    expect(
+      screen.queryByRole('radio', { name: 'Disponível' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('radio', { name: 'No vermelho' }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Data de abertura')).not.toBeInTheDocument()
 
     // Review should show today as the effective date.
@@ -114,35 +118,32 @@ describe('StartingPositionForm', () => {
     expect(await screen.findByText(today)).toBeVisible()
   })
 
-  it('should keep positive, zero, and negative values reachable with touch and keyboard', async () => {
+  it('should keep positive and zero values reachable with touch and keyboard', async () => {
     const onSubmit = vi.fn<(payload: StartingPositionPayload) => void>()
     await renderForm({ onSubmit })
 
-    // Positive: Disponível + 5000 -> 50,00
+    // Positive: 5000 -> 50,00
     typeAmount('5000')
     expect(screen.getByLabelText('Saldo inicial')).toHaveValue('50,00')
     fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
     expect(await screen.findByText('Revise seu ponto de partida')).toBeVisible()
     expect(screen.getByText('R$ 50,00')).toBeVisible()
+    expect(screen.getByText('R$ 50,00')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Voltar e corrigir' }))
     expect(await screen.findByRole('button', { name: 'Revisar' })).toBeVisible()
 
-    // Zero magnitude stays zero regardless of direction
+    // Zero stays zero
     fireEvent.change(screen.getByLabelText('Saldo inicial'), {
       target: { value: '' },
     })
-    // typeAmount('0') would result in '' -> '' but we test direct empty
-    fireEvent.click(screen.getByRole('radio', { name: 'No vermelho' }))
     fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
     expect(await screen.findByText('R$ 0,00')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Voltar e corrigir' }))
 
-    // Negative: No vermelho + 5000 -> −R$ 50,00
-    fireEvent.click(screen.getByRole('radio', { name: 'Disponível' }))
+    // Another positive
     typeAmount('2500')
-    fireEvent.click(screen.getByRole('radio', { name: 'No vermelho' }))
     fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
-    expect(await screen.findByText('−R$ 25,00')).toBeVisible()
+    expect(await screen.findByText('R$ 25,00')).toBeVisible()
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
@@ -178,14 +179,12 @@ describe('StartingPositionForm', () => {
   it('should preserve every field when returning from review', async () => {
     await renderForm()
     typeAmount('7777')
-    fireEvent.click(screen.getByRole('radio', { name: 'No vermelho' }))
     fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
-    expect(await screen.findByText('−R$ 77,77')).toBeVisible()
+    expect(await screen.findByText('R$ 77,77')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Voltar e corrigir' }))
 
     expect(await screen.findByLabelText('Saldo inicial')).toHaveValue('77,77')
-    expect(screen.getByRole('radio', { name: 'No vermelho' })).toBeChecked()
   })
 
   it('should disable confirmation while offline and associate its explanation', async () => {

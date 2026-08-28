@@ -11,7 +11,6 @@ import {
 import { useNetworkStatus } from '../../lib/use-network-status'
 import {
   validateStartingPositionFormInput,
-  type StartingPositionDirection,
   type StartingPositionFieldErrors,
   type StartingPositionPayload,
 } from './starting-position-schema'
@@ -61,8 +60,6 @@ export function StartingPositionForm({
   const isOnline = useNetworkStatus()
 
   const [amountDigits, setAmountDigits] = useState('')
-  const [direction, setDirection] =
-    useState<StartingPositionDirection>('available')
   const [errors, setErrors] = useState<StartingPositionFieldErrors>({})
   const [reviewPayload, setReviewPayload] =
     useState<StartingPositionPayload | null>(null)
@@ -70,8 +67,7 @@ export function StartingPositionForm({
   const amountRef = useRef<HTMLInputElement>(null)
 
   const isReviewing = reviewPayload !== null
-  const isDirty =
-    amountDigits !== '' || direction !== 'available' || isReviewing
+  const isDirty = amountDigits !== '' || isReviewing
   const blocksNavigation = isDirty
 
   useUnsavedChangesGuard(blocksNavigation)
@@ -109,7 +105,7 @@ export function StartingPositionForm({
 
     const result = validateStartingPositionFormInput({
       amountDigits,
-      direction,
+      direction: 'available',
       effectiveOn,
     })
 
@@ -297,8 +293,9 @@ export function StartingPositionForm({
           <div className="mx-auto w-full max-w-2xl space-y-5 px-4 pt-6 sm:px-6">
             <div className="rounded-3xl bg-panel px-4 py-3 ring-1 ring-line/60">
               <p className="text-sm leading-6 text-muted">
-                Informe o saldo na abertura de hoje. Lançamentos de hoje entram
-                depois dele — o foco é daqui pra frente.
+                Informe quanto você tem agora somando suas contas. Esse é o
+                saldo na abertura de hoje — lançamentos de hoje entram depois, o
+                foco é daqui pra frente.
               </p>
             </div>
 
@@ -354,55 +351,10 @@ export function StartingPositionForm({
               ) : null}
             </div>
 
-            <fieldset className="rounded-3xl bg-panel p-4 ring-1 ring-line/60">
-              <legend className="px-1 text-sm font-semibold text-muted">
-                Como está sua conta nesse dia?
-              </legend>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <label
-                  className={`flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-4 text-sm font-semibold transition focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent ${
-                    direction === 'available'
-                      ? 'border-accent bg-accent text-accent-contrast'
-                      : 'border-line bg-subtle text-ink hover:bg-panel'
-                  }`}
-                >
-                  <input
-                    checked={direction === 'available'}
-                    className="sr-only"
-                    name={`${fieldId}-direction`}
-                    onChange={() => setDirection('available')}
-                    type="radio"
-                    value="available"
-                  />
-                  Disponível
-                </label>
-                <label
-                  className={`flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-4 text-sm font-semibold transition focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent ${
-                    direction === 'negative'
-                      ? 'border-coral bg-coral text-coral-contrast'
-                      : 'border-line bg-subtle text-ink hover:bg-panel'
-                  }`}
-                >
-                  <input
-                    checked={direction === 'negative'}
-                    className="sr-only"
-                    name={`${fieldId}-direction`}
-                    onChange={() => setDirection('negative')}
-                    type="radio"
-                    value="negative"
-                  />
-                  No vermelho
-                </label>
-              </div>
-              <p className="px-1 pt-2 text-xs text-muted">
-                Use &quot;No vermelho&quot; para saldo negativo. Zero fica igual
-                nos dois.
-              </p>
-            </fieldset>
-
             <p className="px-1 text-xs text-muted">
-              O ponto de partida pode ser zero, positivo ou negativo. Ele não
-              poderá ser alterado nesta versão.
+              Some o saldo que você tem agora nas suas contas. O ponto de
+              partida pode ser zero ou positivo e não poderá ser alterado nesta
+              versão.
             </p>
           </div>
         </div>
