@@ -5,20 +5,12 @@ import {
   groupTransactionsByDate,
 } from './transaction-calendar'
 import { formatAmountCents } from './transaction-money'
-import type {
-  Transaction,
-  TransactionKind,
-  TransactionMonth,
-} from './transaction-types'
+import { TRANSACTION_KIND_META, TransactionKindBadge } from './transaction-kind'
+import type { Transaction, TransactionMonth } from './transaction-types'
 
 type TransactionListProps = {
   month: TransactionMonth
   transactions: readonly Transaction[]
-}
-
-const kindCopy: Record<TransactionKind, string> = {
-  expense: 'Saída',
-  income: 'Entrada',
 }
 
 export function TransactionList({ month, transactions }: TransactionListProps) {
@@ -46,27 +38,27 @@ export function TransactionList({ month, transactions }: TransactionListProps) {
                   search={{ month }}
                   to="/app/transactions/$transactionId/edit"
                 >
-                  <TransactionKindIcon kind={transaction.kind} />
+                  <TransactionKindBadge
+                    className="size-10"
+                    kind={transaction.kind}
+                    markClassName="size-5"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-ink">
                       {transaction.description ??
-                        `${kindCopy[transaction.kind]} sem descrição`}
+                        `${TRANSACTION_KIND_META[transaction.kind].label} sem descrição`}
                     </p>
                     <p className="mt-0.5 text-sm text-muted">
-                      {kindCopy[transaction.kind]}
+                      {TRANSACTION_KIND_META[transaction.kind].label}
                     </p>
                   </div>
 
                   <p
-                    className={`shrink-0 text-right font-mono font-semibold tabular-nums ${
-                      transaction.kind === 'income'
-                        ? 'text-income-ink'
-                        : 'text-expense-ink'
-                    }`}
+                    className={`shrink-0 text-right font-mono font-semibold tabular-nums ${TRANSACTION_KIND_META[transaction.kind].amountClassName}`}
                   >
                     <span aria-hidden="true">
-                      {transaction.kind === 'income' ? '+' : '−'}{' '}
+                      {TRANSACTION_KIND_META[transaction.kind].sign}{' '}
                     </span>
                     {formatAmountCents(transaction.amount_cents)}
                   </p>
@@ -100,32 +92,5 @@ function DisclosureIcon() {
         strokeWidth="1.8"
       />
     </svg>
-  )
-}
-
-function TransactionKindIcon({ kind }: { kind: TransactionKind }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`grid size-10 shrink-0 place-items-center rounded-2xl ${
-        kind === 'income'
-          ? 'bg-income-soft text-income'
-          : 'bg-expense-soft text-expense'
-      }`}
-    >
-      <svg className="size-5" fill="none" viewBox="0 0 24 24">
-        <path
-          d={
-            kind === 'income'
-              ? 'M12 19V5m0 0L7 10m5-5 5 5'
-              : 'M12 5v14m0 0 5-5m-5 5-5-5'
-          }
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-      </svg>
-    </span>
   )
 }

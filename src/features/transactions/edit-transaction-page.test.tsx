@@ -135,6 +135,27 @@ describe('EditTransactionPage', () => {
     expect(screen.getByRole('button', { name: 'Tipo: Saída' })).toBeVisible()
   })
 
+  it('should open a persisted new kind, change it, and submit the new value', async () => {
+    serviceMocks.readTransaction.mockResolvedValue(persisted({ kind: 'daily' }))
+    serviceMocks.updateTransaction.mockResolvedValue(
+      persisted({ kind: 'savings', updated_at: '2026-08-26T09:00:00Z' }),
+    )
+    await renderEditRoute()
+
+    await screen.findByRole('heading', { name: 'Editar lançamento' })
+    expect(screen.getByRole('button', { name: 'Tipo: Diário' })).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tipo: Diário' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Economia' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    await waitFor(() =>
+      expect(serviceMocks.updateTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'savings' }),
+      ),
+    )
+  })
+
   it('should offer a safe return when the row is missing or owned by someone else', async () => {
     serviceMocks.readTransaction.mockResolvedValue(null)
     const router = await renderEditRoute()
@@ -231,7 +252,7 @@ describe('EditTransactionPage', () => {
         }),
       )
     serviceMocks.updateTransaction.mockRejectedValue({
-      code: '40001',
+      code: 'PT409',
       message: 'transaction_conflict',
     })
     await renderEditRoute()
@@ -428,7 +449,7 @@ describe('EditTransactionPage', () => {
         }),
       )
     serviceMocks.deleteTransaction.mockRejectedValue({
-      code: '40001',
+      code: 'PT409',
       message: 'transaction_conflict',
     })
     await renderEditRoute()

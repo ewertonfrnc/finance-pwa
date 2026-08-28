@@ -5,6 +5,7 @@ import {
   validateTransactionFormInput,
   type TransactionFormInput,
 } from './transaction-form-schema'
+import { TRANSACTION_KIND_ORDER } from './transaction-kind'
 
 function input(overrides: Partial<TransactionFormInput> = {}) {
   return {
@@ -53,6 +54,16 @@ describe('validateTransactionFormInput', () => {
     expect(result.ok).toBe(true)
     expect(result.ok && result.payload.description).toBeNull()
   })
+
+  it.each(TRANSACTION_KIND_ORDER)(
+    'should accept every generated kind, including %s',
+    (kind) => {
+      const result = validateTransactionFormInput(input({ kind }))
+
+      expect(result.ok).toBe(true)
+      expect(result.ok && result.payload.kind).toBe(kind)
+    },
+  )
 
   it('should reject an unsupported kind', () => {
     const result = validateTransactionFormInput(

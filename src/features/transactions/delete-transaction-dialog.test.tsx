@@ -69,6 +69,22 @@ describe('DeleteTransactionDialog', () => {
     expect(screen.getByText('R$ 50,00')).toBeVisible()
   })
 
+  it('should fall back to "Diário sem descrição" for a daily transaction', () => {
+    renderDialog({
+      transaction: transaction({ description: null, kind: 'daily' }),
+    })
+
+    expect(screen.getByText(/Diário sem descrição ·/)).toBeVisible()
+  })
+
+  it('should fall back to "Economia sem descrição" for a savings transaction', () => {
+    renderDialog({
+      transaction: transaction({ description: null, kind: 'savings' }),
+    })
+
+    expect(screen.getByText(/Economia sem descrição ·/)).toBeVisible()
+  })
+
   it('should call onCancel and not onConfirm when cancel is clicked', () => {
     const { onCancel, onConfirm } = renderDialog()
 

@@ -161,16 +161,60 @@ describe('TransactionForm', () => {
     expect(
       screen.getByText('Reduz o saldo do dia como gasto pontual.'),
     ).toBeVisible()
+    expect(screen.getByLabelText('Descrição (opcional)')).toHaveAttribute(
+      'placeholder',
+      'Onde foi parar essa grana?',
+    )
 
     fireEvent.click(picker)
 
     expect(picker).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('radio', { name: 'Entrada' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Saída' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Diário' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Economia' })).toBeInTheDocument()
+
     fireEvent.click(screen.getByRole('radio', { name: 'Entrada' }))
 
-    expect(
-      screen.getByRole('button', { name: 'Tipo: Entrada' }),
-    ).toHaveAttribute('aria-expanded', 'false')
+    const updatedTrigger = screen.getByRole('button', {
+      name: 'Tipo: Entrada',
+    })
+
+    expect(updatedTrigger).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByText('Aumenta o saldo do dia.')).toBeVisible()
+    expect(screen.getByLabelText('Descrição (opcional)')).toHaveAttribute(
+      'placeholder',
+      'De onde veio essa grana?',
+    )
+    // Selecting a radio closes the picker and returns focus to its trigger.
+    expect(updatedTrigger).toHaveFocus()
+  })
+
+  it('should show the daily and savings copy and submit a new-kind payload', async () => {
+    const onSubmit = vi.fn<(payload: TransactionPayload) => void>()
+    await renderForm({ onSubmit })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tipo: Saída' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Diário' }))
+
+    expect(screen.getByText('Conta como gasto diário da rotina.')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tipo: Diário' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Economia' }))
+
+    expect(
+      screen.getByText('Reserva valor e também reduz o saldo disponível.'),
+    ).toBeVisible()
+
+    typeAmount('1500')
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar' }))
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      amount_cents: 1500,
+      description: null,
+      kind: 'savings',
+      transaction_date: today,
+    })
   })
 
   it('should keep the confirm action available and report the invalid field on submit', async () => {
