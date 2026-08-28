@@ -32,6 +32,7 @@ describe('getTransactionErrorCopy', () => {
     ],
     ['23505', 'transaction_id_conflict', TRANSACTION_ERROR_COPY.idConflict],
     ['P0002', 'transaction_not_found', TRANSACTION_ERROR_COPY.notFound],
+    ['PT409', 'transaction_conflict', TRANSACTION_ERROR_COPY.staleVersion],
     ['40001', 'transaction_conflict', TRANSACTION_ERROR_COPY.staleVersion],
     [
       '42501',
@@ -70,10 +71,28 @@ describe('getTransactionErrorCopy', () => {
     )
   })
 
-  it('should recognize only the stale version failure as recoverable by reloading', () => {
+  it('should recognize the canonical PT409 stale version failure as recoverable by reloading', () => {
+    expect(
+      isTransactionConflict({ code: 'PT409', message: 'transaction_conflict' }),
+    ).toBe(true)
+  })
+
+  it('should also recognize the 40001 stale version failure during rollout compatibility', () => {
     expect(
       isTransactionConflict({ code: '40001', message: 'transaction_conflict' }),
     ).toBe(true)
+  })
+
+  it('should not treat a matching code with a different message as a conflict', () => {
+    expect(
+      isTransactionConflict({ code: 'PT409', message: 'unexpected' }),
+    ).toBe(false)
+    expect(
+      isTransactionConflict({ code: '40001', message: 'unexpected' }),
+    ).toBe(false)
+  })
+
+  it('should not recognize an unrelated error as a conflict', () => {
     expect(
       isTransactionConflict({
         code: 'P0002',
