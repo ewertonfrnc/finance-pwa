@@ -41,10 +41,12 @@ function typeAmount(digits: string) {
 }
 
 async function renderPage({
+  onAlreadySaved = vi.fn<() => void>(),
   onComplete = vi.fn<() => void>(),
   onLogout = vi.fn<() => void>(),
   userId = 'user-a',
 }: {
+  onAlreadySaved?: () => void
   onComplete?: () => void
   onLogout?: () => void
   userId?: string
@@ -56,6 +58,7 @@ async function renderPage({
   const pageRoute = createRoute({
     component: () => (
       <StartingPositionPage
+        onAlreadySaved={onAlreadySaved}
         onComplete={onComplete}
         onLogout={onLogout}
         userId={userId}
@@ -198,5 +201,46 @@ describe('StartingPositionPage', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Sair' })[0])
     expect(onLogout).toHaveBeenCalledTimes(1)
     expect(supabaseMocks.rpc).not.toHaveBeenCalled()
+  })
+
+  it('should refetch the authoritative row and call onAlreadySaved on 23505', async () => {
+    const onAlreadySaved = vi.fn<() => void>()
+    const onComplete = vi.fn<() => void>()
+    supabaseMocks.rpc.mockResolvedValue({
+      data: null,
+      error: { code: '23505', message: 'starting_position_already_exists' },
+    })
+    supabaseMocks.from.mockImplementation(
+      () =>
+        ({
+          abortSignal: vi.fn<() => unknown>().mockReturnValue({
+            maybeSingle: vi.fn<() => unknown>().mockResolvedValue({
+              data: {
+                balance_cents: 9999,
+                created_at: '2026-08-27T12:00:00Z',
+                effective_on: '2026-08-27',
+                user_id: 'user-a',
+              },
+              error: null,
+            }),
+          }),
+          select: vi.fn<() => unknown>().mockReturnThis(),
+        }) as never,
+    )
+
+    await renderPage({ onAlreadySaved, onComplete })
+    typeAmount('5000')
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar' }))
+    expect(await screen.findByText('R$ 50,00')).toBeVisible()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Confirmar ponto de partida' }),
+    )
+
+    await waitFor(() => expect(onAlreadySaved).toHaveBeenCalledTimes(1))
+    expect(onComplete).not.toHaveBeenCalled()
+    expect(
+      screen.queryByText('Um ponto de partida já foi salvo'),
+    ).not.toBeInTheDocument()
   })
 })

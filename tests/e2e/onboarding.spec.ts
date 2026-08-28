@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
+import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
 
 import {
@@ -265,6 +266,91 @@ test.describe('starting position onboarding', () => {
       await expect(page).toHaveURL('/onboarding')
       await expect(
         page.getByRole('heading', { name: 'Ponto de partida' }),
+      ).toBeVisible()
+    } finally {
+      await deleteLocalAuthUser(user.id)
+    }
+  })
+
+  test('should show the authoritative saved position when a conflicting other-tab insert wins', async ({
+    page,
+  }) => {
+    const email = `onboarding-conflict-${randomUUID()}@example.com`
+    const user = await createLocalAuthUser({ email, password })
+
+    try {
+      await page.goto('/login')
+      await page.getByLabel('Email').fill(email)
+      await page.getByLabel('Senha').fill(password)
+      await page.getByRole('button', { name: 'Entrar' }).click()
+      await expect(page).toHaveURL('/onboarding')
+
+      const offlineReadyAction = page.getByRole('button', { name: 'Entendi' })
+      await offlineReadyAction
+        .waitFor({ state: 'visible', timeout: 2_000 })
+        .catch(() => undefined)
+      if (await offlineReadyAction.isVisible()) await offlineReadyAction.click()
+
+      await page.getByLabel('Saldo inicial').fill('5000')
+      await page.getByRole('button', { name: 'Revisar' }).click()
+      await expect(
+        page.getByRole('heading', { name: 'Revise seu ponto de partida' }),
+      ).toBeVisible()
+      await expect(page.getByText('R$ 50,00')).toBeVisible()
+
+      // Simulate another tab/device saving a different position first
+      // via the same user session (not service_role) so the RPC's auth.uid()
+      // sees it as the same owner.
+      {
+        const supabaseUrl =
+          process.env.LOCAL_SUPABASE_URL ?? 'http://127.0.0.1:54321'
+        const publishableKey =
+          process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+          'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
+        const userClient = createClient(supabaseUrl, publishableKey)
+        const { error: signInError } = await userClient.auth.signInWithPassword(
+          { email, password },
+        )
+        if (signInError) throw signInError
+        const { error } = await userClient.rpc('initialize_starting_position', {
+          p_balance_cents: 8888,
+          p_effective_on: '2026-08-27',
+        })
+        if (error) throw error
+        await userClient.auth.signOut()
+      }
+
+      await page.waitForTimeout(500)
+
+      await page
+        .getByRole('button', { name: 'Confirmar ponto de partida' })
+        .click()
+
+      await expect(page).toHaveURL(/\/app\/starting-position/)
+      await expect(page).toHaveURL(/notice=already-saved/)
+      await expect(
+        page.getByRole('heading', { name: 'Ponto de partida' }),
+      ).toBeVisible()
+      await expect(
+        page.getByText('Um ponto de partida já foi salvo com outros valores.'),
+      ).toBeVisible()
+      await expect(page.getByText('R$ 88,88')).toBeVisible()
+      await expect(page.getByText('2026-08-27')).toBeVisible()
+      // Rejected draft must not appear
+      await expect(page.getByText('R$ 50,00')).toHaveCount(0)
+      await expect(
+        page.getByText('O valor exibido abaixo foi mantido.'),
+      ).toBeVisible()
+
+      // Back path keeps the same workspace month
+      const backLink = page
+        .getByRole('link', { name: 'Voltar para lançamentos' })
+        .first()
+      await expect(backLink).toHaveAttribute('href', /\/app\?month=\d{4}-\d{2}/)
+      await backLink.click()
+      await expect(page).toHaveURL(/\/app\?month=\d{4}-\d{2}$/)
+      await expect(
+        page.getByRole('heading', { name: 'Lançamentos' }),
       ).toBeVisible()
     } finally {
       await deleteLocalAuthUser(user.id)

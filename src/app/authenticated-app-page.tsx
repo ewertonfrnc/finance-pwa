@@ -48,20 +48,30 @@ export function AuthenticatedAppPage({
 
             <div className="flex shrink-0 items-center gap-2">
               <GlassCapsule className="pointer-events-auto">
-                <button
-                  aria-label={isPending ? 'Saindo...' : 'Sair'}
-                  className="grid size-11 place-items-center rounded-full text-muted transition hover:bg-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-50"
-                  disabled={isPending}
-                  onClick={handleLogout}
-                  type="button"
-                >
-                  <LogoutIcon />
-                </button>
+                <div className="flex items-center">
+                  <Link
+                    aria-label="Ponto de partida"
+                    className="grid size-11 shrink-0 place-items-center rounded-full text-muted transition hover:bg-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                    search={{ month }}
+                    to="/app/starting-position"
+                  >
+                    <StartingPositionIcon />
+                  </Link>
+                  <button
+                    aria-label={isPending ? 'Saindo...' : 'Sair'}
+                    className="grid size-11 shrink-0 place-items-center rounded-full text-muted transition hover:bg-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-50"
+                    disabled={isPending}
+                    onClick={handleLogout}
+                    type="button"
+                  >
+                    <LogoutIcon />
+                  </button>
+                </div>
               </GlassCapsule>
 
               <Link
                 aria-label="Adicionar"
-                className="pointer-events-auto grid size-11 place-items-center rounded-full bg-ink text-canvas shadow-(--finance-shadow-subtle) transition hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="pointer-events-auto grid size-11 shrink-0 place-items-center rounded-full bg-ink text-canvas shadow-(--finance-shadow-subtle) transition hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 search={{ month }}
                 to="/app/transactions/new"
               >
@@ -109,6 +119,20 @@ function PlusIcon() {
         d="M12 5v14M5 12h14"
         stroke="currentColor"
         strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  )
+}
+
+function StartingPositionIcon() {
+  return (
+    <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M6 3v18M6 3h10l-2 3 2 3H6"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         strokeWidth="1.8"
       />
     </svg>

@@ -8,6 +8,7 @@ import {
 import { useNetworkStatus } from '../lib/use-network-status'
 import { StartingPositionPage } from '../features/starting-position/starting-position-page'
 import { startingPositionQueryOptions } from '../features/starting-position/starting-position-queries'
+import { getLocalCurrentMonth } from '../features/transactions/transaction-calendar'
 import { signOutLocally } from '../features/auth/auth-service'
 
 export const Route = createFileRoute('/_authenticated/onboarding')({
@@ -33,6 +34,13 @@ export const Route = createFileRoute('/_authenticated/onboarding')({
   errorComponent: OnboardingError,
 })
 
+function handleAlreadySaved() {
+  const month = getLocalCurrentMonth()
+  window.location.replace(
+    `/app/starting-position?month=${month}&notice=already-saved`,
+  )
+}
+
 function OnboardingRoute() {
   const { session } = Route.useRouteContext()
   const router = useRouter()
@@ -52,6 +60,7 @@ function OnboardingRoute() {
 
   return (
     <StartingPositionPage
+      onAlreadySaved={handleAlreadySaved}
       onComplete={handleComplete}
       onLogout={() => void handleLogout()}
       userId={session.user.id}

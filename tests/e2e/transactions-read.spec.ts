@@ -192,8 +192,16 @@ test('should read only the signed-in user monthly history across states', async 
     name: 'Mês anterior',
   })
   const nextMonthButton = page.getByRole('button', { name: 'Próximo mês' })
+  const startingPositionLink = page.getByRole('link', {
+    name: 'Ponto de partida',
+  })
   const logoutButton = page.getByRole('button', { name: 'Sair' })
   const addButton = page.getByRole('link', { name: 'Adicionar' })
+
+  await expect(startingPositionLink).toHaveAttribute(
+    'href',
+    '/app/starting-position?month=2026-08',
+  )
 
   await page.evaluate(() => {
     if (document.activeElement instanceof HTMLElement) {
@@ -204,6 +212,8 @@ test('should read only the signed-in user monthly history across states', async 
   await expect(previousMonthButton).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(nextMonthButton).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(startingPositionLink).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(logoutButton).toBeFocused()
   await page.keyboard.press('Tab')

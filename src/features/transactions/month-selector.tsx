@@ -17,7 +17,7 @@ export function MonthSelector({ month, onMonthChange }: MonthSelectorProps) {
     <div className="flex min-w-0 items-center">
       <button
         aria-label="Mês anterior"
-        className="grid size-11 place-items-center rounded-full text-ink transition hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-35"
+        className="grid size-11 shrink-0 place-items-center rounded-full text-ink transition hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-35"
         disabled={!previousMonth}
         onClick={() => {
           if (previousMonth) onMonthChange(previousMonth)
@@ -33,7 +33,7 @@ export function MonthSelector({ month, onMonthChange }: MonthSelectorProps) {
 
       <button
         aria-label="Próximo mês"
-        className="grid size-11 place-items-center rounded-full text-ink transition hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-35"
+        className="grid size-11 shrink-0 place-items-center rounded-full text-ink transition hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-35"
         disabled={!nextMonth}
         onClick={() => {
           if (nextMonth) onMonthChange(nextMonth)

@@ -20,6 +20,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthenticatedPositionedAppRouteImport } from './routes/_authenticated._positioned.app'
+import { Route as AuthenticatedPositionedAppStartingPositionRouteImport } from './routes/_authenticated._positioned.app_.starting-position'
 import { Route as AuthenticatedPositionedAppTransactionsNewRouteImport } from './routes/_authenticated._positioned.app_.transactions.new'
 import { Route as AuthenticatedPositionedAppTransactionsTransactionIdEditRouteImport } from './routes/_authenticated._positioned.app_.transactions.$transactionId.edit'
 
@@ -77,6 +78,12 @@ const AuthenticatedPositionedAppRoute =
     path: '/app',
     getParentRoute: () => AuthenticatedPositionedRoute,
   } as any)
+const AuthenticatedPositionedAppStartingPositionRoute =
+  AuthenticatedPositionedAppStartingPositionRouteImport.update({
+    id: '/app_/starting-position',
+    path: '/app/starting-position',
+    getParentRoute: () => AuthenticatedPositionedRoute,
+  } as any)
 const AuthenticatedPositionedAppTransactionsNewRoute =
   AuthenticatedPositionedAppTransactionsNewRouteImport.update({
     id: '/app_/transactions/new',
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/app': typeof AuthenticatedPositionedAppRoute
+  '/app/starting-position': typeof AuthenticatedPositionedAppStartingPositionRoute
   '/app/transactions/new': typeof AuthenticatedPositionedAppTransactionsNewRoute
   '/app/transactions/$transactionId/edit': typeof AuthenticatedPositionedAppTransactionsTransactionIdEditRoute
 }
@@ -113,6 +121,7 @@ export interface FileRoutesByTo {
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/app': typeof AuthenticatedPositionedAppRoute
+  '/app/starting-position': typeof AuthenticatedPositionedAppStartingPositionRoute
   '/app/transactions/new': typeof AuthenticatedPositionedAppTransactionsNewRoute
   '/app/transactions/$transactionId/edit': typeof AuthenticatedPositionedAppTransactionsTransactionIdEditRoute
 }
@@ -129,6 +138,7 @@ export interface FileRoutesById {
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/_authenticated/_positioned/app': typeof AuthenticatedPositionedAppRoute
+  '/_authenticated/_positioned/app_/starting-position': typeof AuthenticatedPositionedAppStartingPositionRoute
   '/_authenticated/_positioned/app_/transactions/new': typeof AuthenticatedPositionedAppTransactionsNewRoute
   '/_authenticated/_positioned/app_/transactions/$transactionId/edit': typeof AuthenticatedPositionedAppTransactionsTransactionIdEditRoute
 }
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/auth/update-password'
     | '/app'
+    | '/app/starting-position'
     | '/app/transactions/new'
     | '/app/transactions/$transactionId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/auth/update-password'
     | '/app'
+    | '/app/starting-position'
     | '/app/transactions/new'
     | '/app/transactions/$transactionId/edit'
   id:
@@ -172,6 +184,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/auth/update-password'
     | '/_authenticated/_positioned/app'
+    | '/_authenticated/_positioned/app_/starting-position'
     | '/_authenticated/_positioned/app_/transactions/new'
     | '/_authenticated/_positioned/app_/transactions/$transactionId/edit'
   fileRoutesById: FileRoutesById
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPositionedAppRouteImport
       parentRoute: typeof AuthenticatedPositionedRoute
     }
+    '/_authenticated/_positioned/app_/starting-position': {
+      id: '/_authenticated/_positioned/app_/starting-position'
+      path: '/app/starting-position'
+      fullPath: '/app/starting-position'
+      preLoaderRoute: typeof AuthenticatedPositionedAppStartingPositionRouteImport
+      parentRoute: typeof AuthenticatedPositionedRoute
+    }
     '/_authenticated/_positioned/app_/transactions/new': {
       id: '/_authenticated/_positioned/app_/transactions/new'
       path: '/app/transactions/new'
@@ -285,6 +305,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPositionedRouteChildren {
   AuthenticatedPositionedAppRoute: typeof AuthenticatedPositionedAppRoute
+  AuthenticatedPositionedAppStartingPositionRoute: typeof AuthenticatedPositionedAppStartingPositionRoute
   AuthenticatedPositionedAppTransactionsNewRoute: typeof AuthenticatedPositionedAppTransactionsNewRoute
   AuthenticatedPositionedAppTransactionsTransactionIdEditRoute: typeof AuthenticatedPositionedAppTransactionsTransactionIdEditRoute
 }
@@ -292,6 +313,8 @@ interface AuthenticatedPositionedRouteChildren {
 const AuthenticatedPositionedRouteChildren: AuthenticatedPositionedRouteChildren =
   {
     AuthenticatedPositionedAppRoute: AuthenticatedPositionedAppRoute,
+    AuthenticatedPositionedAppStartingPositionRoute:
+      AuthenticatedPositionedAppStartingPositionRoute,
     AuthenticatedPositionedAppTransactionsNewRoute:
       AuthenticatedPositionedAppTransactionsNewRoute,
     AuthenticatedPositionedAppTransactionsTransactionIdEditRoute:
