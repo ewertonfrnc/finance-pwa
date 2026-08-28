@@ -1,6 +1,6 @@
 # Starting-position onboarding implementation plan
 
-Status: in progress — steps 1–3 delivered on 2026-08-28, steps 4–6 pending
+Status: delivered locally on 2026-08-28 — 8 commits, 77 pgTAP, 292 Vitest, 56 Playwright, 50 precached; hosted/device deferred
 
 Last reviewed: 2026-08-28
 
@@ -637,6 +637,43 @@ The pull request squash commit is:
 ```text
 feat: add starting position onboarding
 ```
+
+## Observed local gate on 2026-08-28 (`feat/starting-position` `8d148e1`)
+
+```bash
+bunx supabase db reset # 4 migrations: 20260825010000, 20260825020000, 20260827010000, 20260827020000
+bunx supabase test db # 77 pgTAP across 2 files, PASS
+bun run db:types && git diff --exit-code -- src/lib/supabase/database.types.ts # clean (no schema change)
+bun run check # 0 oxlint warnings, prettier ok
+bunx tsc --noEmit # ok
+bun run test # 292 Vitest across 35 files
+bun run test:e2e:local # 56 Playwright (onboarding 7×2, transactions-*, auth, bootstrap) on mobile-chromium 375×667 and desktop-chromium 1280×800
+bun run build # 50 precached Workbox entries, workbox.runtimeCaching: [] (vite.config.ts:58), no Supabase/Auth/financial runtime cache
+git diff --check # 0
+git diff --unified=0 -- '*.tsx' '*.css' | rg '^\+.*[-:]\[[^]]+\]' # 0 (no avoidable bracket syntax)
+rg "sb_secret_N7UND0UgjKTVK" dist # 0 (no service_role in artifact)
+rg "supabase" dist/sw.js -c # 0
+```
+
+Branch commits:
+
+```text
+b4507e6 refactor: share finance value primitives
+77797df feat: add starting position client boundary
+73bc961 feat: build starting position onboarding
+7b09d2e fix: use today for onboarding effective date
+9ed316c fix: restrict starting position to zero or positive
+d532b15 feat: gate finance routes by starting position
+8d148e1 feat: expose the saved starting position
+```
+
+Visual observations (local, `375×667` and `1280×800`, light/dark):
+
+- onboarding entry `Informe quanto você tem agora…` → review `R$` + long date + `Esse valor vira seu ponto de partida…` → `Confirmar` → workspace `Lançamentos`
+- `already-saved` detail shows `R$ 88,88` + `2026-08-27` + `Um ponto de partida já foi salvo… O valor exibido abaixo foi mantido.` not the `R$ 50,00` draft
+- workspace `Ponto de partida` 44×44 inside account capsule, `shrink-0`, no overflow, tab order `Mês anterior → Próximo mês → Ponto de partida → Sair → Adicionar`
+- `month-selector` buttons `shrink-0` keep 44×44 at 375
+- offline/disconnected states keep draft and show retry without trap
 
 ## Deferred hosted and device checks
 

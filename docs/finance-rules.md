@@ -1,6 +1,6 @@
 # Finance rules
 
-Last reviewed: 2026-08-26
+Last reviewed: 2026-08-28
 
 ## Money
 
@@ -9,8 +9,11 @@ R$ 125.50 and never sends a decimal monetary value.
 
 Transaction amounts are positive magnitudes from 1 through
 9,007,199,254,740,991 centavos. `kind` determines whether a transaction adds or
-subtracts money. Starting positions use a signed amount in the same safe
-integer range, so a user can begin with a positive, zero, or negative balance.
+subtracts money. Starting positions are signed in PostgreSQL from
+`-9007199254740991` through `9007199254740991` centavos, so a negative opening
+can be represented, but the shipped onboarding only sends zero or positive; the
+form shows `R$ 0,00` for an empty draft and `formatSignedCents` (U+2212) for
+any saved negative row rendered in the detail.
 
 Currency symbols, decimal separators, and localized formatting belong only in
 the presentation layer.
@@ -22,7 +25,16 @@ Financial dates cross the Data API as `YYYY-MM-DD` strings and use PostgreSQL
 must not convert these values through a timezone.
 
 `starting_positions.effective_on` means the balance at the opening of that
-calendar date. Transactions on that date apply after the opening position.
+calendar date. Transactions on that date apply after the opening position. The
+shipped UI fixes `effective_on` to the device-local `YYYY-MM-DD` (`getLocalTodayIsoDate`,
+no `toISOString` or UTC conversion) and tells the user “Informe quanto você
+tem agora somando suas contas. Esse é o saldo na abertura de hoje —
+lançamentos de hoje entram depois, o foco é daqui pra frente.” and “Some o
+saldo que você tem agora nas suas contas. O ponto de partida pode ser zero ou
+positivo e não poderá ser alterado nesta versão.” The review shows the signed
+`R$` value, the long localized date, and “Esse valor vira seu ponto de partida
+e não poderá ser alterado nesta versão. Lançamentos do mesmo dia entram depois
+dele.”
 
 ## Starting position
 
@@ -39,8 +51,20 @@ Clients initialize the row through
 `initialize_starting_position(p_balance_cents, p_effective_on)`. The function
 uses `auth.uid()` and does not accept a user ID. Repeating the same request
 returns the existing row, which makes an onboarding retry safe. A second
-request with different values fails with `23505` and
-`starting_position_already_exists`.
+request with different values fails with `23505`
+`starting_position_already_exists`. The shipped client keeps the populated
+review values after every failure, disables `Confirmar ponto de partida` while
+offline or pending (with `Sem conexão. O rascunho continua aqui; conecte-se
+para confirmar.` or `Salvando ponto de partida…` associated via
+`aria-describedby`), and on `23505` refetches the authoritative row and opens
+`/app/starting-position?notice=already-saved`, which shows “Um ponto de partida
+já foi salvo com outros valores. O valor exibido abaixo foi mantido. O rascunho
+que você enviou não foi salvo.” The row is immutable in this release: no
+`update`/`delete` RPC, no table `UPDATE`/`DELETE` grant, and RLS only allows
+`select`/`insert` for the owner. The detail at `/app/starting-position` renders
+the saved `R$` and `YYYY-MM-DD` + long date and “Esse é o saldo na abertura de
+… Lançamentos do mesmo dia entram depois dele. Esse valor não pode ser alterado
+nesta versão.” with a `44×44` back link to the same `?month=`.
 
 The starting position is not income. Monthly income totals must include only
 `transactions` rows whose `kind` is `income`.
@@ -119,9 +143,13 @@ must never reach a `VITE_` variable.
 
 Anonymous users have no table or function privileges. Authenticated users can
 read their own starting position and transactions. They can initialize their
-own starting position, but cannot update or delete it. Direct transaction
-inserts, updates, and deletes remain closed; authenticated transaction writes
-use only the mutation RPCs above.
+own starting position (`select`, `insert` on `starting_positions`,
+`execute` on `initialize_starting_position`), but cannot update or delete it;
+the workspace exposes the saved row at `/app/starting-position` via a `44×44`
+`Ponto de partida` link inside the account capsule, with `shrink-0` so month
+buttons keep `44×44` at `375×667`. Direct transaction inserts, updates, and
+deletes remain closed; authenticated transaction writes use only the mutation
+RPCs above.
 
 RLS compares `auth.uid()` with `user_id`. A missing row in an authenticated
 query can mean either that the row does not exist or that it belongs to another
@@ -151,7 +179,15 @@ Database and Data API errors expose PostgreSQL codes:
 | `PT409` | `transaction_conflict`             | Transaction changed after the client read it      |
 
 The UI may translate these codes into useful copy. It must not display raw SQL,
-policy names, tokens, or financial payloads in logs.
+policy names, tokens, or financial payloads in logs. The starting-position
+client maps `${code}:${message}`: `22023:balance_cents_out_of_range` →
+`Informe um saldo suportado.`, `22023:effective_on_out_of_range` → `Escolha uma
+data válida para o ponto de partida.`, `42501:authentication_required` →
+`Sua sessão expirou. Entre novamente para continuar.`, other `42501` →
+`Você não tem permissão para esta ação.`,
+`23505:starting_position_already_exists` → refetch the authoritative row and
+open `/app/starting-position?notice=already-saved`, unknown → `Não foi
+possível salvar o ponto de partida. Tente novamente.`
 
 ### Conflict code: `PT409`
 
