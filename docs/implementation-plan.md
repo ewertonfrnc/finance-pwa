@@ -593,6 +593,9 @@ Status: pending
 
 Branch: `feat/starting-position`
 
+Detailed plan:
+[`docs/plans/07-starting-position-onboarding.md`](plans/07-starting-position-onboarding.md)
+
 Create:
 
 - the onboarding flow that calls `initialize_starting_position` for a user who
@@ -601,11 +604,14 @@ Create:
   and never traps a user who already has one;
 - the retry path, since an identical repeat is safe and a conflicting repeat
   returns `23505`;
-- a later path to inspect the recorded position, so a wrong entry is not
-  permanent from the user's point of view.
+- a review state before the immutable insert and a later read-only path to
+  inspect the recorded position.
 
 The data boundary and the RPC already exist. This step delivers only the UI and
-the routing rule.
+the routing rule. The current contract does not allow a saved position to be
+updated or deleted, so this step must not claim that an incorrect persisted
+value can be corrected. Expanding that contract requires a separate decision
+and a forward migration.
 
 Acceptance criteria:
 
@@ -616,6 +622,8 @@ Acceptance criteria:
   show an error.
 - A user who abandons onboarding and returns resumes it rather than losing the
   entry point.
+- A user reviews the signed balance and opening date before the irreversible
+  insert and can inspect the authoritative saved values later.
 
 Validation:
 
