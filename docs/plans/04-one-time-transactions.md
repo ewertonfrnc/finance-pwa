@@ -163,6 +163,17 @@ Components translate known codes and stable messages into Portuguese. They use
 generic retry copy for unknown provider failures and never render raw SQL,
 policy names, JWT details, or financial payloads.
 
+Forward-fix note, 2026-08-27: this table and the verification records below
+describe `40001` as it was designed and observed at the time. Local PostgREST
+14.17 retries `SQLSTATE 40001` (`serialization_failure`) internally instead of
+returning it, which timed out the stale update/delete E2E variants (see
+[`05-design-system-ios.md`](05-design-system-ios.md), Validation follow-up,
+2026-08-27). Roadmap step 6 replaces the stale-version raise with `PT409` in
+`supabase/migrations/20260827020000_use_http_conflict_sqlstate.sql` and keeps
+`40001` recognized in the frontend only as rollout compatibility. See
+[`06-transaction-kinds.md`](06-transaction-kinds.md), step 2, and
+`docs/finance-rules.md`, "Error contract", for the current contract.
+
 ### Monthly read contract
 
 - Represent a selected month in the URL as `?month=YYYY-MM`. Invalid or missing
