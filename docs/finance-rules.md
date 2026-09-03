@@ -1,6 +1,6 @@
 # Finance rules
 
-Last reviewed: 2026-08-28
+Last reviewed: 2026-09-02
 
 ## Money
 
@@ -136,6 +136,65 @@ version. Update returns a strictly newer `updated_at`; a stale version fails
 without changing or deleting the newer row. Missing IDs and IDs owned by
 another user both return `transaction_not_found`.
 
+## Daily spending setting
+
+Each authenticated user has at most one mutable row in
+`daily_spending_settings`:
+
+| Field                  | Wire type        | Nullable | Meaning                                   |
+| ---------------------- | ---------------- | -------- | ----------------------------------------- |
+| `user_id`              | UUID string      | No       | Owner derived from the access token       |
+| `monthly_amount_cents` | integer          | No       | Routine-spending monthly total, 0 or more |
+| `days_per_month`       | integer          | No       | Divisor chosen by the user, 28 through 31 |
+| `daily_amount_cents`   | integer          | No       | Server-derived, see below                 |
+| `created_at`           | timestamp string | No       | Server creation time                      |
+| `updated_at`           | timestamp string | No       | Concurrency version                       |
+
+`monthly_amount_cents` is 0 through 9,007,199,254,740,991 centavos. Zero is a
+valid, explicit value meaning routine-spending projection is disabled; it is
+distinct from having no row at all, which means daily setup has not been
+completed. `days_per_month` is 28 through 31.
+
+`daily_amount_cents` is a generated, stored column computed by PostgreSQL as
+integer division, truncating toward zero:
+
+```text
+daily_amount_cents = monthly_amount_cents / days_per_month
+```
+
+Because both operands are non-negative, this truncation is equivalent to
+`floor`. The calculator's five category estimates are summed by the client
+into `monthly_amount_cents` before the request; the direct-entry path
+normalizes the desired daily amount into `monthly_amount_cents` as
+`daily_amount_cents * days_per_month` before the request. Neither the category
+breakdown nor the client-computed daily amount is sent or stored; the server
+always recomputes `daily_amount_cents` from the persisted monthly amount and
+divisor.
+
+The browser writes the setting only through
+`set_daily_spending(p_monthly_amount_cents, p_days_per_month,
+p_expected_updated_at)`. It derives the owner from `auth.uid()` and does not
+accept a user ID. The function behaves as:
+
+- no row plus a `null` expected version creates the row;
+- a retry with the same normalized values and a `null` version returns the
+  existing row unchanged (idempotent; not a version bump);
+- a row already exists, a `null` version is supplied, and the values differ:
+  the call fails with `PT409:daily_spending_conflict` instead of overwriting a
+  row created by another tab or device;
+- an existing row requires its exact `updated_at` to change; a mismatched or
+  missing version on an existing row fails with
+  `PT409:daily_spending_conflict` and leaves the saved row untouched;
+- a successful change returns a strictly newer `updated_at`, using the same
+  `greatest(clock_timestamp(), updated_at + interval '1 microsecond')` pattern
+  as the transaction mutation RPCs.
+
+Authenticated users receive only `select` on `daily_spending_settings`; RLS
+restricts it to the owner's row. Direct `insert`, `update`, and `delete` stay
+revoked for `authenticated` and `anon`; `set_daily_spending` is the only
+browser write path. `service_role` keeps direct `select`, `insert`, `update`,
+and `delete` for maintenance.
+
 ## Authorization
 
 The browser uses a publishable key. A secret key or legacy `service_role` key
@@ -159,24 +218,27 @@ user. The client must not reveal which case occurred.
 
 Database and Data API errors expose PostgreSQL codes:
 
-| Code    | Stable message or source           | Meaning                                           |
-| ------- | ---------------------------------- | ------------------------------------------------- |
-| `22023` | `balance_cents_out_of_range`       | Invalid starting balance                          |
-| `22023` | `effective_on_out_of_range`        | Invalid starting date                             |
-| `22023` | `transaction_id_required`          | Missing transaction mutation ID                   |
-| `22023` | `transaction_kind_required`        | Missing transaction kind                          |
-| `22023` | `transaction_version_required`     | Missing update or delete concurrency version      |
-| `22023` | `amount_cents_out_of_range`        | Invalid transaction amount                        |
-| `22023` | `transaction_date_out_of_range`    | Invalid transaction date                          |
-| `22023` | `description_too_long`             | Normalized description exceeds 120 characters     |
-| `22P02` | PostgreSQL enum input error        | Unsupported transaction kind                      |
-| `23505` | `starting_position_already_exists` | Different starting position already exists        |
-| `23505` | `transaction_id_conflict`          | Transaction ID already represents other data      |
-| `23514` | Named check constraint             | Invalid persisted transaction value               |
-| `42501` | `authentication_required`          | RPC has no authenticated identity                 |
-| `42501` | PostgreSQL permission or RLS error | Authentication or authorization denied            |
-| `P0002` | `transaction_not_found`            | Transaction is missing or belongs to another user |
-| `PT409` | `transaction_conflict`             | Transaction changed after the client read it      |
+| Code    | Stable message or source            | Meaning                                           |
+| ------- | ----------------------------------- | ------------------------------------------------- |
+| `22023` | `balance_cents_out_of_range`        | Invalid starting balance                          |
+| `22023` | `effective_on_out_of_range`         | Invalid starting date                             |
+| `22023` | `transaction_id_required`           | Missing transaction mutation ID                   |
+| `22023` | `transaction_kind_required`         | Missing transaction kind                          |
+| `22023` | `transaction_version_required`      | Missing update or delete concurrency version      |
+| `22023` | `amount_cents_out_of_range`         | Invalid transaction amount                        |
+| `22023` | `transaction_date_out_of_range`     | Invalid transaction date                          |
+| `22023` | `description_too_long`              | Normalized description exceeds 120 characters     |
+| `22023` | `monthly_amount_cents_out_of_range` | Invalid daily-setting monthly amount              |
+| `22023` | `days_per_month_out_of_range`       | Invalid daily-setting divisor                     |
+| `22P02` | PostgreSQL enum input error         | Unsupported transaction kind                      |
+| `23505` | `starting_position_already_exists`  | Different starting position already exists        |
+| `23505` | `transaction_id_conflict`           | Transaction ID already represents other data      |
+| `23514` | Named check constraint              | Invalid persisted transaction value               |
+| `42501` | `authentication_required`           | RPC has no authenticated identity                 |
+| `42501` | PostgreSQL permission or RLS error  | Authentication or authorization denied            |
+| `P0002` | `transaction_not_found`             | Transaction is missing or belongs to another user |
+| `PT409` | `transaction_conflict`              | Transaction changed after the client read it      |
+| `PT409` | `daily_spending_conflict`           | Daily setting changed or exists with other values |
 
 The UI may translate these codes into useful copy. It must not display raw SQL,
 policy names, tokens, or financial payloads in logs. The starting-position

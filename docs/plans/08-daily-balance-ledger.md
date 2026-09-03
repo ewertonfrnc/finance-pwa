@@ -453,6 +453,31 @@ financial payloads.
 
 ### 1. Establish the daily-spending database boundary
 
+Status: complete
+
+Observed: `bunx supabase db reset` applied
+`20260902010000_daily_spending_settings.sql` after the four migrations already
+on `main`. `bunx supabase test db` passed at `Files=3, Tests=106`, with
+`daily_spending_test.sql` contributing `plan(29)`. `bun run db:types`
+regenerated `daily_spending_settings` and `set_daily_spending`, and
+`bunx tsc --noEmit`, `bun run check`, and `git diff --check` were clean.
+
+Two contract corrections came out of implementation. A missing row cannot be
+locked by `select ... for update`, so two tabs creating the setting at the same
+instant raised a raw `23505` unique violation instead of the documented
+`PT409:daily_spending_conflict`; the insert now absorbs the collision with
+`on conflict (user_id) do nothing` and falls through to the existing-row rules,
+matching `initialize_starting_position`. `daily_amount_cents` was also
+declared `not null`, because the type generator otherwise emits
+`number | null` for a generated column and step 2 would carry a null branch
+that the schema cannot produce.
+
+`bun run test` passed at 292 Vitest tests. One unrelated pre-existing flake
+appeared in roughly one run out of five:
+`forgot-password-page.test.tsx` → `should request recovery with a trimmed email
+and current origin callback`. It predates this branch and is not caused by this
+step.
+
 Create:
 
 - `supabase/migrations/20260902010000_daily_spending_settings.sql`;

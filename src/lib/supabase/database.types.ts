@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      daily_spending_settings: {
+        Row: {
+          created_at: string
+          daily_amount_cents: number
+          days_per_month: number
+          monthly_amount_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_amount_cents?: number
+          days_per_month: number
+          monthly_amount_cents: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          daily_amount_cents?: number
+          days_per_month?: number
+          monthly_amount_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       starting_positions: {
         Row: {
           balance_cents: number
@@ -123,6 +150,27 @@ export type Database = {
         SetofOptions: {
           from: '*'
           to: 'starting_positions'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_daily_spending: {
+        Args: {
+          p_days_per_month: number
+          p_expected_updated_at: string
+          p_monthly_amount_cents: number
+        }
+        Returns: {
+          created_at: string
+          daily_amount_cents: number
+          days_per_month: number
+          monthly_amount_cents: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'daily_spending_settings'
           isOneToOne: true
           isSetofReturn: false
         }
