@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const authServiceMocks = vi.hoisted(() => ({
@@ -46,15 +46,13 @@ describe('ForgotPasswordPage', () => {
 
     submitRecovery()
 
-    await waitFor(() =>
-      expect(authServiceMocks.requestPasswordRecovery).toHaveBeenCalledWith({
-        email: 'user@example.com',
-        redirectTo: `${window.location.origin}/auth/update-password`,
-      }),
-    )
     expect(
-      screen.getByRole('heading', { name: 'Confira seu email.' }),
+      await screen.findByRole('heading', { name: 'Confira seu email.' }),
     ).toBeVisible()
+    expect(authServiceMocks.requestPasswordRecovery).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      redirectTo: `${window.location.origin}/auth/update-password`,
+    })
     expect(screen.getByRole('status')).toHaveTextContent(
       'Se houver uma conta com esse email, você receberá um link para criar uma nova senha.',
     )

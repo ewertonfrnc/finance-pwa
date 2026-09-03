@@ -472,11 +472,15 @@ declared `not null`, because the type generator otherwise emits
 `number | null` for a generated column and step 2 would carry a null branch
 that the schema cannot produce.
 
-`bun run test` passed at 292 Vitest tests. One unrelated pre-existing flake
-appeared in roughly one run out of five:
+`bun run test` passed at 292 Vitest tests. Two unrelated pre-existing flakes
+surfaced while running the gate repeatedly, both predating this branch:
 `forgot-password-page.test.tsx` → `should request recovery with a trimmed email
-and current origin callback`. It predates this branch and is not caused by this
-step.
+and current origin callback` and `register-page.test.tsx` → `should register
+with a trimmed email and the current origin callback`. Both awaited the mock
+call with `waitFor` and then asserted the success heading synchronously, so the
+assertion raced the re-render that follows the awaited request. Both now await
+the heading with `findByRole` first. Fixed on this branch before step 2 so a
+false red does not train the gate to be ignored.
 
 Create:
 

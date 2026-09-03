@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const authServiceMocks = vi.hoisted(() => ({
@@ -88,16 +88,14 @@ describe('RegisterPage', () => {
 
     fillRegistration()
 
-    await waitFor(() =>
-      expect(authServiceMocks.registerWithEmail).toHaveBeenCalledWith({
-        email: 'user@example.com',
-        emailRedirectTo: `${window.location.origin}/auth/confirm`,
-        password: 'password-123',
-      }),
-    )
     expect(
-      screen.getByRole('heading', { name: 'Confira seu email.' }),
+      await screen.findByRole('heading', { name: 'Confira seu email.' }),
     ).toBeVisible()
+    expect(authServiceMocks.registerWithEmail).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      emailRedirectTo: `${window.location.origin}/auth/confirm`,
+      password: 'password-123',
+    })
     expect(screen.getByRole('status')).toHaveTextContent('user@example.com')
   })
 
