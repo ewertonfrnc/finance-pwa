@@ -1,8 +1,8 @@
 # Finance PWA implementation plan
 
-Status: in progress — steps 1–6 delivered, step 7 delivered locally on 2026-08-28
+Status: in progress — steps 1–7 delivered, step 8 planned on 2026-09-02
 
-Last updated: 2026-08-28
+Last updated: 2026-09-02
 
 ## Outcome
 
@@ -37,6 +37,8 @@ dependency for implementation.
   amounts comparable.
 - Transactions carry four kinds: `income`, `expense`, `daily`, and `savings`.
   The enum is widened through a forward migration.
+- Future routine-spending projection uses an explicit, editable daily target.
+  It is never inferred from transaction history.
 - The monthly screen is a daily balance ledger with one row per calendar day,
   not a list of transactions. A list of transactions belongs to the day detail.
 
@@ -46,6 +48,8 @@ The first beta includes:
 
 - registration, login, logout, and password recovery;
 - a starting financial position;
+- an explicit daily spending target, entered directly or calculated from
+  temporary category estimates;
 - one-time transactions across the four kinds;
 - a daily balance ledger for the selected month;
 - the day detail with its transaction list;
@@ -66,7 +70,8 @@ The first beta excludes:
 - monthly balance caching;
 - a custom Go API;
 - tags and detailed category budgets unless user validation makes them a
-  release requirement.
+  release requirement. The step 8 calculator does not persist its category
+  breakdown or classify transactions.
 
 ## Contract boundary
 
@@ -589,7 +594,8 @@ Deferred from this step:
 
 ### 7. Deliver starting-position onboarding
 
-Status: delivered locally on 2026-08-28
+Status: completed on 2026-09-02 and merged to `main` in `149d1b9` through pull
+request #9
 
 Branch: `feat/starting-position` (8 commits: `b4507e6`, `77797df`, `73bc961`, `7b09d2e`, `9ed316c`, `d532b15`, `8d148e1`, and this documentation commit)
 
@@ -651,20 +657,27 @@ Implementation record, 2026-08-28:
 - error mapping observed: `22023:balance_cents_out_of_range` → `Informe um saldo suportado.`, `22023:effective_on_out_of_range` → `Escolha uma data válida…`, `42501:authentication_required` → `Sua sessão expirou…`, other `42501` → `Você não tem permissão…`, `23505:starting_position_already_exists` → refetch + `notice=already-saved`, unknown → `Não foi possível salvar…`;
 - deferred hosted/device checks remain in `docs/plans/07-starting-position-onboarding.md: Deferred hosted and device checks` (Netlify preview with `finance-pwa-dev`, iPhone/Android PWA install, offline, native date picker).
 
-Delivered squash merge will be:
+Delivered merge:
 
 ```text
-feat: add starting position onboarding
+149d1b9 Merge pull request #9 from ewertonfrnc/feat/starting-position
 ```
 
 ### 8. Add the daily balance ledger
 
-Status: pending
+Status: planned on 2026-09-02
 
 Branch: `feat/month-balance`
 
+Detailed plan:
+[`docs/plans/08-daily-balance-ledger.md`](plans/08-daily-balance-ledger.md)
+
 Create:
 
+- an owner-only daily spending setting with an editable target;
+- an assisted calculator that sums temporary monthly estimates for food,
+  transportation, leisure, shopping, and health, plus a direct-entry path;
+- a review state that explains the monthly total, divisor, and daily result;
 - a documented RPC contract for daily running and projected balance across a
   month;
 - PostgreSQL tests for carry-forward, day-by-day results, and the daily
@@ -680,21 +693,35 @@ Create:
   today rule with a labeled pill in the margin;
 - loading, empty, error, and negative-balance states.
 
-Implement the calculation without a persisted month cache. Measure the query
-before proposing one.
+Category estimates are calculation aids only. Persist the monthly total,
+divisor, and server-derived daily target, not category budgets or links between
+categories and transactions.
 
-Evaluate replacing the absolute tier thresholds with a runway derived from the
-user's own daily spending. Fixed bands of R$ 2.000 and R$ 1.000 describe one
-spending level and turn into noise at any other.
+Implement the balance calculation without a persisted month cache. Measure the
+query before proposing one. Future projection uses only the unrecorded part of
+the target for each date, so a future `daily` transaction is not counted twice.
+
+Replace absolute currency thresholds with a runway derived from the configured
+daily target. Fixed bands of R$ 2.000 and R$ 1.000 describe one spending level
+and turn into noise at any other.
 
 Acceptance criteria:
 
 - The user sees the opening balance, movements, running balance, and projected
   closing balance for a selected month.
+- A user calculates a daily target from monthly estimates or enters the target
+  directly, can skip setup, and can change a saved target later.
+- A missing setting produces no inferred routine-spending projection and shows
+  a setup action without blocking the workspace.
 - Every calendar day of the month has a row, including days without movement,
-  and each row carries the balance at the close of that day.
-- Adding, editing, or deleting a transaction updates the affected month.
-- A month without transactions has an intentional empty state.
+  and each row on or after the starting position carries its closing balance.
+  Earlier rows explain why balance is not available.
+- A future day projects `max(target - recorded daily spending, 0)`; today and
+  past days project zero.
+- Adding, editing, or deleting a transaction updates the affected day and all
+  cached months whose carry-forward can change.
+- A month without transactions keeps every calendar row and explains that no
+  movements were recorded.
 - Negative projections are communicated without hiding the amount or using
   shame-based language.
 - The tier of a row is distinguishable without relying on hue.
@@ -709,14 +736,14 @@ bun run db:types
 bun run check
 bunx tsc --noEmit
 bun run test
-bun run test:e2e:local -- balance
+bun run test:e2e:local -- daily-spending balance day-detail transactions
 bun run build
 ```
 
 Proposed commit:
 
 ```text
-feat: add the daily balance ledger
+feat: add daily spending and balance ledger
 ```
 
 ### 9. Add recurring transactions
