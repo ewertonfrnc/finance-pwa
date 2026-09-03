@@ -1,8 +1,8 @@
 # Finance PWA implementation plan
 
-Status: in progress
+Status: in progress — steps 1–6 delivered, step 7 delivered locally on 2026-08-28
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 ## Outcome
 
@@ -589,9 +589,9 @@ Deferred from this step:
 
 ### 7. Deliver starting-position onboarding
 
-Status: pending
+Status: delivered locally on 2026-08-28
 
-Branch: `feat/starting-position`
+Branch: `feat/starting-position` (8 commits: `b4507e6`, `77797df`, `73bc961`, `7b09d2e`, `9ed316c`, `d532b15`, `8d148e1`, and this documentation commit)
 
 Detailed plan:
 [`docs/plans/07-starting-position-onboarding.md`](plans/07-starting-position-onboarding.md)
@@ -638,6 +638,20 @@ bun run build
 ```
 
 Proposed commit:
+
+```text
+feat: add starting position onboarding
+```
+
+Implementation record, 2026-08-28:
+
+- branch `feat/starting-position` delivered `b4507e6` (shared `brl-money`/`calendar-date` primitives), `77797df` (client boundary: `starting-position-types/service/queries/mutations/schema/errors`), `73bc961` (entry/review/retry flow with `StartingPositionForm`/`Page` and `getLocalTodayIsoDate`), `7b09d2e` (fix `effective_on` to device-local today, remove date picker), `9ed316c` (restrict to zero/positive, remove negative toggle), `d532b15` (gate: `_authenticated._positioned` + `_authenticated.onboarding`, `routeTree.gen` with 3 renames, `finance-admin` fixture, 12 `protected-navigation` tests, `onboarding.spec` 7 cases, all preexisting E2E updated to returning users), `8d148e1` (detail: `StartingPositionDetailPage` + `/_positioned/app/starting-position`, `Ponto de partida` 44×44 in account capsule with `shrink-0`, `23505` already-saved → `notice=already-saved` via `window.location`, `month-selector` `shrink-0`, conflict E2E + `transactions-read` tab order);
+- local gate on `8d148e1`: `supabase db reset` applied 4 migrations, `77` pgTAP across `2` files, `database.types.ts` reproducible (`git diff --exit-code` clean), `0` `oxlint` warnings, `292` Vitest across `35` files, `56` Playwright (`auth`, `bootstrap`, `onboarding`, `transactions-*`) on `mobile-chromium` (`375×667`) and `desktop-chromium` (`1280×800`) with `50` precached Workbox entries and `workbox.runtimeCaching: []` so Supabase/Auth/financial are never cached, no bracket-syntax Tailwind, no `report.html`/`test-results` artifacts, build contains no `service_role` or financial fixture;
+- copy observed: “Informe quanto você tem agora somando suas contas. Esse é o saldo na abertura de hoje — lançamentos de hoje entram depois, o foco é daqui pra frente.” / “Some o saldo que você tem agora nas suas contas. O ponto de partida pode ser zero ou positivo e não poderá ser alterado nesta versão.” / review “Esse valor vira seu ponto de partida e não poderá ser alterado nesta versão. Lançamentos do mesmo dia entram depois dele.” / detail “Esse é o saldo na abertura de … Lançamentos do mesmo dia entram depois dele. Esse valor não pode ser alterado nesta versão.” / already-saved “Um ponto de partida já foi salvo com outros valores. O valor exibido abaixo foi mantido.”;
+- error mapping observed: `22023:balance_cents_out_of_range` → `Informe um saldo suportado.`, `22023:effective_on_out_of_range` → `Escolha uma data válida…`, `42501:authentication_required` → `Sua sessão expirou…`, other `42501` → `Você não tem permissão…`, `23505:starting_position_already_exists` → refetch + `notice=already-saved`, unknown → `Não foi possível salvar…`;
+- deferred hosted/device checks remain in `docs/plans/07-starting-position-onboarding.md: Deferred hosted and device checks` (Netlify preview with `finance-pwa-dev`, iPhone/Android PWA install, offline, native date picker).
+
+Delivered squash merge will be:
 
 ```text
 feat: add starting position onboarding

@@ -15,6 +15,7 @@ import {
   createLocalAuthUser,
   deleteLocalAuthUser,
 } from './support/auth-admin'
+import { createLocalStartingPositionFixture } from './support/finance-admin'
 import { readContrastRatio } from './support/contrast'
 
 const password = 'local-password-123'
@@ -28,6 +29,11 @@ test.beforeEach(async ({ browserName }, testInfo) => {
 
   const user = await createLocalAuthUser({ email, password })
   userId = user.id
+  await createLocalStartingPositionFixture({
+    balance_cents: 10000,
+    effective_on: '2026-08-27',
+    user_id: userId,
+  })
 })
 
 test.afterEach(async () => {

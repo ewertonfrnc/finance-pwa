@@ -1,8 +1,8 @@
 # Authentication contract
 
-Status: delivered locally; hosted recovery verified, confirmation pending
+Status: delivered locally; hosted recovery verified, confirmation pending; starting-position gate delivered locally on 2026-08-28
 
-Last reviewed: 2026-08-25
+Last reviewed: 2026-08-28
 
 ## Scope
 
@@ -18,17 +18,23 @@ confirmation and recovery URLs.
 
 ## Route contract
 
-| Route                   | Access            | Result                                                                                            |
-| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------- |
-| `/login`                | Public-only       | Signs in and opens a validated internal destination or `/app`.                                    |
-| `/register`             | Public-only       | Creates an unconfirmed account and asks the visitor to check their email.                         |
-| `/forgot-password`      | Public-only       | Shows the same completion message for every well-formed email address.                            |
-| `/auth/confirm`         | Public callback   | Consumes email confirmation, removes sensitive URL data, then opens `/app` or a safe retry state. |
-| `/auth/update-password` | Recovery callback | Accepts a new password only while a valid recovery session exists.                                |
-| `/app`                  | Authenticated     | Shows the authenticated placeholder and a logout action.                                          |
+| Route                    | Access                           | Result                                                                                                             |
+| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `/login`                 | Public-only                      | Signs in and opens a validated internal destination, `/onboarding`, or `/app` depending on the starting position.  |
+| `/register`              | Public-only                      | Creates an unconfirmed account and asks the visitor to check their email.                                          |
+| `/forgot-password`       | Public-only                      | Shows the same completion message for every well-formed email address.                                             |
+| `/auth/confirm`          | Public callback                  | Consumes email confirmation, removes sensitive URL data, then opens `/onboarding` or `/app` or a safe retry state. |
+| `/auth/update-password`  | Recovery callback                | Accepts a new password only while a valid recovery session exists.                                                 |
+| `/onboarding`            | Authenticated without a position | Shows the entry/review/confirm flow for the opening balance and a logout action.                                   |
+| `/onboarding`            | Authenticated with a position    | Replaces the URL with `/app?month=YYYY-MM`. Never flashes the form.                                                |
+| `/app`                   | Authenticated with a position    | Shows the workspace with the month navigation and the `Ponto de partida` action.                                   |
+| `/app/starting-position` | Authenticated with a position    | Shows the saved `R$` value, `effective_on` (long + `YYYY-MM-DD`), opening semantics, and immutable copy.           |
+| Any positioned route     | Authenticated without a position | Replaces the URL with `/onboarding` before any transaction request runs.                                           |
 
-An authenticated user who opens `/login` or `/register` goes to `/app`. The
-home route and `/offline` remain available in every auth state.
+An authenticated user who opens `/login` or `/register` goes to `/app` when a
+starting position exists and to `/onboarding` otherwise. The home route and
+`/offline` remain available in every auth state. A password-recovery session
+still cannot open any private route and is sent to `/auth/update-password`.
 
 ## Auth state and authorization
 
@@ -38,9 +44,14 @@ mounting the router. This prevents a stored session from flashing the login
 page and prevents private content from rendering before an anonymous redirect.
 
 TanStack Router receives the resolved state through its router context. A
-pathless `_authenticated` route protects `/app` in `beforeLoad`. This is a UI
-boundary only. PostgreSQL grants and RLS remain the authorization boundary for
-financial data.
+pathless `_authenticated` route protects every private path in `beforeLoad`.
+`_authenticated._positioned` is a second pathless guard that fetches
+`['starting-position', userId]` with `staleTime: 'static'` for a saved row and
+`0` for `null`; a `null` row redirects to `/onboarding`, a rejected read
+renders the retry/logout error state, and a row is returned in route context.
+`_authenticated.onboarding` does the inverse and redirects to `/app` when a row
+already exists. These are UI boundaries only. PostgreSQL grants and RLS remain
+the authorization boundary for financial data.
 
 The session stays in React context, not Zustand or TanStack Query. When the
 authenticated user ID changes or becomes anonymous, the application clears the
@@ -140,13 +151,17 @@ CI starts the full local Supabase stack, resets and tests the database, runs
 browser tests through the local launcher, and stops the stack in an `always`
 cleanup step.
 
-The complete local delivery gate passed on 2026-08-25. A clean database reset
-applied the versioned migration and seed, all 19 pgTAP checks passed, generated
-database types stayed unchanged, and static checks, TypeScript, 85 Vitest
-tests, and the PWA production build passed. All 18 Playwright cases passed in
-mobile and desktop Chromium against real local GoTrue and Mailpit services.
-Those browser cases cover registration, confirmation, login, reload, logout,
-recovery reload and route isolation, new-password login, home, offline,
+The complete local delivery gate passed on 2026-08-28. A clean database reset
+applied the four migrations and seed, all 77 pgTAP checks passed, generated
+database types stayed unchanged, and static checks, TypeScript, 292 Vitest
+tests, and the PWA production build (50 precached) passed. All 56 Playwright
+cases passed in `mobile-chromium` (`375×667`) and `desktop-chromium`
+(`1280×800`) against real local GoTrue and Mailpit services. Those browser
+cases cover registration, confirmation, login, onboarding (new-user
+registration → onboarding → workspace, redirect of financial routes without a
+position, bypass for returning users, idempotent retry, offline/retry without
+trap, resume after leaving, and the `23505` already-saved detail), reload,
+logout, recovery reload and route isolation, new-password login, home, offline,
 not-found recovery, manifest, and service-worker registration.
 
 Pull request #4 received the distinct preview

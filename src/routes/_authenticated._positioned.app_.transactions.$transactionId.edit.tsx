@@ -4,7 +4,7 @@ import { EditTransactionPage } from '../features/transactions/edit-transaction-p
 import { isTransactionMonth } from '../features/transactions/transaction-calendar'
 
 export const Route = createFileRoute(
-  '/_authenticated/app_/transactions/$transactionId/edit',
+  '/_authenticated/_positioned/app_/transactions/$transactionId/edit',
 )({
   component: EditTransactionRoute,
   validateSearch: (search: Record<string, unknown>): { month?: string } => ({

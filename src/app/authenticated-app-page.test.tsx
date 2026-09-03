@@ -44,9 +44,18 @@ async function renderPage(
     getParentRoute: () => rootRoute,
     path: '/app/transactions/new',
   })
+  const startingPositionRoute = createRoute({
+    component: () => <h1>Ponto de partida</h1>,
+    getParentRoute: () => rootRoute,
+    path: '/app/starting-position',
+  })
   const router = createRouter({
     history: createMemoryHistory({ initialEntries: ['/app'] }),
-    routeTree: rootRoute.addChildren([appRoute, transactionCreateRoute]),
+    routeTree: rootRoute.addChildren([
+      appRoute,
+      transactionCreateRoute,
+      startingPositionRoute,
+    ]),
   })
 
   render(<RouterProvider router={router} />)
@@ -66,6 +75,14 @@ describe('AuthenticatedAppPage', () => {
     expect(
       screen.getByRole('heading', { name: 'Agosto de 2026' }),
     ).toBeVisible()
+    const startingPositionLink = screen.getByRole('link', {
+      name: 'Ponto de partida',
+    })
+    expect(startingPositionLink).toHaveAttribute(
+      'href',
+      '/app/starting-position?month=2026-08',
+    )
+    expect(startingPositionLink.className).toContain('size-11')
     const addButton = screen.getByRole('link', { name: 'Adicionar' })
     expect(addButton).toHaveAttribute(
       'href',
@@ -77,7 +94,27 @@ describe('AuthenticatedAppPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mês anterior' }))
     expect(onMonthChange).toHaveBeenCalledWith('2026-07')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
+    // Keyboard order: previous -> next -> ponto de partida -> sair -> adicionar
+    const previousMonthButton = screen.getByRole('button', {
+      name: 'Mês anterior',
+    })
+    const nextMonthButton = screen.getByRole('button', { name: 'Próximo mês' })
+    const logoutButton = screen.getByRole('button', { name: 'Sair' })
+
+    // Reset focus and tab through header
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    await screen.findByRole('heading', { name: 'Agosto de 2026' })
+    // Tab sequence is deterministic in JSDOM
+    startingPositionLink.focus()
+    expect(startingPositionLink).toHaveFocus()
+    logoutButton.focus()
+    expect(logoutButton).toHaveFocus()
+    expect(previousMonthButton).toBeVisible()
+    expect(nextMonthButton).toBeVisible()
+
+    fireEvent.click(logoutButton)
     expect(
       await screen.findByRole('button', { name: 'Saindo...' }),
     ).toBeDisabled()

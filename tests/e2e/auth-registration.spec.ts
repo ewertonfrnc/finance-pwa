@@ -54,6 +54,21 @@ test('should create an account, confirm it from Mailpit, and open the app', asyn
   const message = await findMailpitMessageByRecipient(email)
   await page.goto(readMailpitMessageLink(message))
 
+  await expect(page).toHaveURL('/onboarding')
+  await expect(
+    page.getByRole('heading', { name: 'Ponto de partida' }),
+  ).toBeVisible()
+
+  // Complete onboarding: 5000 cents available on today's date.
+  await page.getByLabel('Saldo inicial').fill('5000')
+  await expect(page.getByLabel('Saldo inicial')).toHaveValue('50,00')
+  await page.getByRole('button', { name: 'Revisar' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Revise seu ponto de partida' }),
+  ).toBeVisible()
+  await expect(page.getByText('R$ 50,00')).toBeVisible()
+  await page.getByRole('button', { name: 'Confirmar ponto de partida' }).click()
+
   await expect(page).toHaveURL(/\/app\?month=\d{4}-\d{2}$/)
   await expect(page.getByRole('heading', { name: 'Lançamentos' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
@@ -62,6 +77,14 @@ test('should create an account, confirm it from Mailpit, and open the app', asyn
   expect(finalUrl.origin).toBe('http://127.0.0.1:4173')
   expect(finalUrl.hash).toBe('')
   expect(finalUrl.search).toMatch(/^\?month=\d{4}-\d{2}$/)
+
+  // Reload should bypass onboarding for the returning user.
+  await page.reload()
+  await expect(page).toHaveURL(finalUrl.pathname + finalUrl.search)
+  await expect(page.getByRole('heading', { name: 'Lançamentos' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Ponto de partida' }),
+  ).toHaveCount(0)
 })
 
 test('should remove an expired callback error before showing a retry path', async ({

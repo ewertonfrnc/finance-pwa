@@ -3,7 +3,10 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 import { createLocalAuthUser, deleteLocalAuthUser } from './support/auth-admin'
-import { createLocalTransactionFixtures } from './support/finance-admin'
+import {
+  createLocalStartingPositionFixture,
+  createLocalTransactionFixtures,
+} from './support/finance-admin'
 
 const password = 'local-password-123'
 
@@ -25,6 +28,11 @@ test.beforeEach(async ({ browserName }, testInfo) => {
   ])
   ownerId = owner.id
   otherUserId = otherUser.id
+  await createLocalStartingPositionFixture({
+    balance_cents: 5000,
+    effective_on: '2026-08-27',
+    user_id: ownerId,
+  })
 
   const scrollFixtures = Array.from({ length: 20 }, (_, index) => {
     const day = 23 - index
@@ -184,8 +192,16 @@ test('should read only the signed-in user monthly history across states', async 
     name: 'Mês anterior',
   })
   const nextMonthButton = page.getByRole('button', { name: 'Próximo mês' })
+  const startingPositionLink = page.getByRole('link', {
+    name: 'Ponto de partida',
+  })
   const logoutButton = page.getByRole('button', { name: 'Sair' })
   const addButton = page.getByRole('link', { name: 'Adicionar' })
+
+  await expect(startingPositionLink).toHaveAttribute(
+    'href',
+    '/app/starting-position?month=2026-08',
+  )
 
   await page.evaluate(() => {
     if (document.activeElement instanceof HTMLElement) {
@@ -196,6 +212,8 @@ test('should read only the signed-in user monthly history across states', async 
   await expect(previousMonthButton).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(nextMonthButton).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(startingPositionLink).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(logoutButton).toBeFocused()
   await page.keyboard.press('Tab')
