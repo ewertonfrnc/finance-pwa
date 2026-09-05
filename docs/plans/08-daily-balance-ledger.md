@@ -527,6 +527,21 @@ feat: add daily spending settings
 
 ### 2. Deliver the daily-target setup and edit flow
 
+This step ships as two commits. The file count is more than one focused review
+can carry, and roadmap step 7 already proved the split works for the same shape
+of feature: `77797df` landed the starting-position client boundary and
+`73bc961` landed its UI.
+
+Until step 6 adds `Ajustar diário` beside the projection explanation,
+`/app/daily-spending` is reachable only by its URL and by the onboarding
+redirect. That is deliberate. The browser test navigates directly and still
+proves reload and edit. Adding a third action to the workspace capsule now
+would cost a fresh 44 by 44 and no-overflow pass at `360` and `375` — the month
+selector already needed `shrink-0` when step 7 added the second action — and
+step 6 would take it back out.
+
+#### 2a. Add the daily-spending client boundary
+
 Create:
 
 - `src/features/daily-spending/daily-spending-types.ts`;
@@ -534,7 +549,47 @@ Create:
 - `src/features/daily-spending/daily-spending-queries.ts`;
 - `src/features/daily-spending/daily-spending-mutations.ts` and test;
 - `src/features/daily-spending/daily-spending-schema.ts` and test;
-- `src/features/daily-spending/daily-spending-errors.ts` and test;
+- `src/features/daily-spending/daily-spending-errors.ts` and test.
+
+The read uses direct table access with `.maybeSingle()` and no `user_id`
+filter, forwards an `AbortSignal`, and keys on `['daily-spending', userId]`.
+The mutation sends only `p_monthly_amount_cents`, `p_days_per_month`, and
+`p_expected_updated_at`, and writes the returned row into the exact key. The
+schema normalizes both entry modes and rejects a direct daily value whose
+`daily_amount_cents * days_per_month` would exceed the JavaScript-safe integer
+limit. The error module maps `${code}:${message}` to Portuguese copy without
+exposing a provider payload.
+
+Acceptance criteria:
+
+- category-mode input sums five estimates into a monthly total and divisor;
+- direct-mode input normalizes to the monthly total that reproduces the exact
+  daily value;
+- zero is accepted and is distinct from an absent setting in the returned type;
+- a direct value that would overflow the safe integer limit is rejected before
+  any request;
+- `22023:monthly_amount_cents_out_of_range`,
+  `22023:days_per_month_out_of_range`, `PT409:daily_spending_conflict`, and
+  `42501:authentication_required` map to distinct Portuguese copy.
+
+Validation:
+
+```bash
+bun run check
+bunx tsc --noEmit
+bun run test -- src/features/daily-spending
+```
+
+Proposed commit:
+
+```text
+feat: add daily spending client boundary
+```
+
+#### 2b. Build the daily-target setup page
+
+Create:
+
 - `src/features/daily-spending/daily-spending-form.tsx` and test;
 - `src/features/daily-spending/daily-spending-page.tsx` and test;
 - `src/routes/_authenticated._positioned.app_.daily-spending.tsx`;
@@ -550,8 +605,9 @@ Update:
   fixture.
 
 Use the existing BRL parser, calendar helpers, unsaved-changes boundary,
-offline hook, query client, and full-page form conventions. Do not add Zustand
-or persist category inputs.
+offline hook, query client, and full-page form conventions. The divisor control
+reuses the four-way shape already proven by `transaction-kind.tsx`. Do not add
+Zustand or persist category inputs.
 
 Acceptance criteria:
 
@@ -562,6 +618,7 @@ Acceptance criteria:
 - the direct path preserves the exact daily value after normalization;
 - the page states that category estimates are not saved as category budgets;
 - reload reads the authoritative setting, and edit updates it;
+- a saved zero reopens as zero, and `Agora não` never writes a zero row;
 - stale edit keeps the draft and offers an explicit reload;
 - offline confirmation is disabled without losing fields;
 - abandoning a dirty form triggers the existing discard behavior;
